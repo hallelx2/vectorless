@@ -33,11 +33,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/vectorlessflow/vectorless",
+    "url": "https://github.com/hallelx2/vectorless",
     "directory": "packages/ts-sdk"
   },
   "homepage": "https://vectorless.store",
-  "bugs": "https://github.com/vectorlessflow/vectorless/issues",
+  "bugs": "https://github.com/hallelx2/vectorless/issues",
   "keywords": [
     "vectorless",
     "document-retrieval",

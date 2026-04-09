@@ -61,7 +61,7 @@ The Next.js app at `apps/web/` — includes:
 
 1. **Go to** Cloudflare Dashboard → Workers & Pages → Create → Pages → Connect to Git
 
-2. **Connect GitHub**: Authorize → Select `vectorlessflow/vectorless`
+2. **Connect GitHub**: Authorize → Select `hallelx2/vectorless`
 
 3. **Configure build settings:**
    ```
@@ -104,7 +104,7 @@ The Next.js app at `apps/web/` — includes:
 ### Fallback: Vercel
 
 If Cloudflare Pages doesn't work well with the Next.js server components:
-1. Go to https://vercel.com → Import → `vectorlessflow/vectorless`
+1. Go to https://vercel.com → Import → `hallelx2/vectorless`
 2. Root directory: `apps/web`
 3. Same environment variables as above
 4. Custom domain: `vectorless.store` → add CNAME in Cloudflare pointing to `cname.vercel-dns.com`
@@ -127,7 +127,7 @@ The Fastify server at `apps/api/` — handles:
 ### Option A: Deploy via Railway Dashboard (easiest)
 
 1. **Create account** at https://railway.app
-2. **New Project** → Deploy from GitHub → Select `vectorlessflow/vectorless`
+2. **New Project** → Deploy from GitHub → Select `hallelx2/vectorless`
 3. **Settings**:
    ```
    Root Directory:    apps/api
@@ -283,7 +283,7 @@ git tag py-sdk-v0.2.0 && git push --tags
 ### Phase 2: API Server (Railway)
 
 - [ ] Create Railway account at https://railway.app
-- [ ] Connect GitHub repo `vectorlessflow/vectorless`
+- [ ] Connect GitHub repo `hallelx2/vectorless`
 - [ ] Create service → Root directory: `apps/api`
 - [ ] Set all environment variables (see list above)
 - [ ] Deploy → get Railway public URL (e.g., `vectorless-api.up.railway.app`)
@@ -296,7 +296,7 @@ git tag py-sdk-v0.2.0 && git push --tags
 
 ### Phase 3: Dashboard (Cloudflare Pages)
 
-- [ ] Cloudflare → Pages → Create → Connect GitHub → `vectorlessflow/vectorless`
+- [ ] Cloudflare → Pages → Create → Connect GitHub → `hallelx2/vectorless`
 - [ ] Configure: Root directory `apps/web`, framework Next.js
 - [ ] Set environment variables (DATABASE_URL, auth, API URL)
 - [ ] Deploy → get `vectorless.pages.dev`

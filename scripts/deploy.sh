@@ -16,7 +16,7 @@
 
 set -e
 
-REPO="vectorlessflow/vectorless"
+REPO="hallelx2/vectorless"
 DOMAIN="vectorless.store"
 API_DOMAIN="api.vectorless.store"
 

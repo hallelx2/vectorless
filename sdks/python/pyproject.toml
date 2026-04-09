@@ -23,8 +23,8 @@ dependencies = [
 [project.urls]
 Homepage = "https://vectorless.store"
 Documentation = "https://docs.vectorless.store"
-Repository = "https://github.com/vectorlessflow/vectorless"
-Issues = "https://github.com/vectorlessflow/vectorless/issues"
+Repository = "https://github.com/hallelx2/vectorless"
+Issues = "https://github.com/hallelx2/vectorless/issues"
 
 [project.optional-dependencies]
 dev = [
