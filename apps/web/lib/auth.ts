@@ -21,7 +21,11 @@ export const auth = betterAuth({
     expiresIn: 60 * 60 * 24 * 7, // 7 days
     updateAfter: 60 * 60 * 24, // 1 day
   },
-  trustedOrigins: [process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"],
+  trustedOrigins: [
+    process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+    process.env.BETTER_AUTH_URL || "http://localhost:3000",
+    "https://vectorless.halleluyaholudele.workers.dev",
+  ],
 });
 
 export type Session = typeof auth.$Infer.Session;
