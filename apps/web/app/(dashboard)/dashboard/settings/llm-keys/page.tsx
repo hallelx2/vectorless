@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Card,
   CardContent,
@@ -122,8 +122,14 @@ export default function LLMKeysPage() {
     setIsLoading(false);
   }, []);
 
+  // Load keys on mount
+  const hasFetched = useRef(false);
   useEffect(() => {
-    fetchKeys();
+    if (!hasFetched.current) {
+      hasFetched.current = true;
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      fetchKeys();
+    }
   }, [fetchKeys]);
 
   const handleAdd = async () => {

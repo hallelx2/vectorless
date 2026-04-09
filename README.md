@@ -1,8 +1,29 @@
-# Vectorless — Full Product Documentation
+<div align="center">
+
+# Vectorless
+
+**Document retrieval for the reasoning era.**
+
+[![CI](https://github.com/hallelx2/vectorless/actions/workflows/ci.yml/badge.svg)](https://github.com/hallelx2/vectorless/actions/workflows/ci.yml)
+[![npm](https://img.shields.io/npm/v/vectorless?color=blue&label=npm)](https://www.npmjs.com/package/vectorless)
+[![PyPI](https://img.shields.io/pypi/v/vectorless?color=blue&label=pypi)](https://pypi.org/project/vectorless/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Python](https://img.shields.io/badge/Python-3.9+-blue?logo=python&logoColor=white)](https://python.org)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js&logoColor=white)](https://nextjs.org)
+[![Fastify](https://img.shields.io/badge/Fastify-5-black?logo=fastify&logoColor=white)](https://fastify.dev)
+
+[Website](https://vectorless.store) | [API Docs](https://api.vectorless.store/health) | [npm](https://www.npmjs.com/package/vectorless) | [PyPI](https://pypi.org/project/vectorless/)
+
+</div>
+
+---
+
+# Full Product Documentation
 
 **Version:** 1.0  
-**Status:** Internal — Design & Architecture Phase  
-**Last Updated:** April 2025
+**Status:** Active Development  
+**Last Updated:** April 2026
 
 ---
 
