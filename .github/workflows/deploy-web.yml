@@ -7,7 +7,6 @@ on:
       - "apps/web/**"
       - "packages/shared/**"
 
-  # Allow manual trigger
   workflow_dispatch:
 
 jobs:
@@ -33,9 +32,9 @@ jobs:
       - name: Build shared package
         run: pnpm --filter=@vectorless/shared build
 
-      - name: Build with next-on-pages
+      - name: Build Next.js app
         working-directory: apps/web
-        run: npx @cloudflare/next-on-pages
+        run: pnpm build
         env:
           DATABASE_URL: ${{ secrets.DASHBOARD_DATABASE_URL }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
@@ -44,9 +43,16 @@ jobs:
           VECTORLESS_API_URL: https://api.vectorless.store
           NODE_ENV: production
 
+      - name: Prepare deploy output
+        run: |
+          mkdir -p apps/web/out
+          # Copy static assets for Pages
+          cp -r apps/web/.next/static apps/web/out/_next/static
+          cp -r apps/web/public/* apps/web/out/ 2>/dev/null || true
+
       - name: Deploy to Cloudflare Pages
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CF_API_TOKEN }}
           accountId: ${{ secrets.CF_ACCOUNT_ID }}
-          command: pages deploy apps/web/.vercel/output/static --project-name=vectorless
+          command: pages deploy apps/web/out --project-name=vectorless
