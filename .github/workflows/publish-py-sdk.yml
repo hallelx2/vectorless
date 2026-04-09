@@ -1,0 +1,48 @@
+name: Publish Python SDK
+
+on:
+  push:
+    tags: ["py-sdk-v*"]
+
+jobs:
+  test:
+    name: Test Python SDK
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install dependencies
+        working-directory: sdks/python
+        run: uv pip install -e ".[dev]" --system
+
+      - name: Run tests
+        working-directory: sdks/python
+        run: pytest tests/test_client.py -v
+
+  publish:
+    name: Build & Publish to PyPI
+    runs-on: ubuntu-latest
+    needs: test
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: astral-sh/setup-uv@v5
+
+      - name: Build package
+        working-directory: sdks/python
+        run: uv build
+
+      - name: Publish to PyPI
+        working-directory: sdks/python
+        run: uv publish --token ${{ secrets.PYPI_TOKEN }}

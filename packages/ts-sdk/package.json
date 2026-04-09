@@ -1,0 +1,54 @@
+{
+  "name": "vectorless",
+  "version": "0.1.0",
+  "description": "Official TypeScript SDK for Vectorless — document retrieval for the reasoning era",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": ["dist", "README.md", "LICENSE"],
+  "sideEffects": false,
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src/"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "@types/node": "^20",
+    "tsup": "^8.5.0",
+    "typescript": "^5.9.0",
+    "vitest": "^3.2.0"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/vectorlessflow/vectorless",
+    "directory": "packages/ts-sdk"
+  },
+  "homepage": "https://vectorless.store",
+  "bugs": "https://github.com/vectorlessflow/vectorless/issues",
+  "keywords": [
+    "vectorless",
+    "document-retrieval",
+    "rag",
+    "llm",
+    "ai",
+    "document-parsing",
+    "table-of-contents",
+    "sdk"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

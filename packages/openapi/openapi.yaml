@@ -1,0 +1,466 @@
+openapi: 3.1.0
+info:
+  title: Vectorless API
+  description: Document retrieval for the reasoning era
+  version: 0.1.0
+  contact:
+    name: Vectorless
+    url: https://vectorless.store
+
+servers:
+  - url: https://api.vectorless.store
+    description: Production
+  - url: http://localhost:3001
+    description: Local development
+
+security:
+  - BearerAuth: []
+
+paths:
+  /v1/documents:
+    post:
+      operationId: addDocument
+      summary: Upload and ingest a document
+      description: Accepts a file upload or URL, creates a document record, and enqueues background ingestion.
+      tags: [Documents]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The document file (PDF, DOCX, TXT)
+                source_url:
+                  type: string
+                  format: uri
+                  description: URL to fetch (mutually exclusive with file)
+                source_type:
+                  type: string
+                  enum: [pdf, docx, txt, url]
+                toc_strategy:
+                  type: string
+                  enum: [extract, generate, hybrid]
+                  default: extract
+                embed_sections:
+                  type: boolean
+                  default: false
+                title:
+                  type: string
+      responses:
+        "202":
+          description: Document accepted for processing
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [doc_id, status]
+                properties:
+                  doc_id:
+                    type: string
+                  status:
+                    type: string
+                    enum: [processing]
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+
+    get:
+      operationId: listDocuments
+      summary: List all documents
+      tags: [Documents]
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+        - name: cursor
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of documents
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [documents, has_more]
+                properties:
+                  documents:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/DocumentSummary"
+                  next_cursor:
+                    type: string
+                    nullable: true
+                  has_more:
+                    type: boolean
+
+  /v1/documents/{docId}:
+    get:
+      operationId: getDocument
+      summary: Get document details
+      tags: [Documents]
+      parameters:
+        - $ref: "#/components/parameters/DocId"
+      responses:
+        "200":
+          description: Document details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DocumentDetail"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    delete:
+      operationId: deleteDocument
+      summary: Delete a document and all its sections
+      tags: [Documents]
+      parameters:
+        - $ref: "#/components/parameters/DocId"
+      responses:
+        "204":
+          description: Document deleted
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /v1/documents/{docId}/toc:
+    get:
+      operationId: getToC
+      summary: Get document Table of Contents manifest
+      tags: [Retrieval]
+      parameters:
+        - $ref: "#/components/parameters/DocId"
+      responses:
+        "200":
+          description: ToC manifest
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ToCManifest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "409":
+          $ref: "#/components/responses/Conflict"
+
+  /v1/documents/{docId}/sections/{sectionId}:
+    get:
+      operationId: fetchSection
+      summary: Fetch a single section
+      tags: [Retrieval]
+      parameters:
+        - $ref: "#/components/parameters/DocId"
+        - name: sectionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Section content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Section"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /v1/documents/{docId}/sections/batch:
+    post:
+      operationId: fetchSections
+      summary: Fetch multiple sections in parallel
+      tags: [Retrieval]
+      parameters:
+        - $ref: "#/components/parameters/DocId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [section_ids]
+              properties:
+                section_ids:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 1
+                  maxItems: 100
+      responses:
+        "200":
+          description: Sections in document order
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [sections]
+                properties:
+                  sections:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Section"
+
+  /v1/documents/{docId}/search:
+    post:
+      operationId: searchSections
+      summary: Vector similarity search (hybrid mode)
+      tags: [Retrieval]
+      parameters:
+        - $ref: "#/components/parameters/DocId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query:
+                  type: string
+                  minLength: 1
+                top_k:
+                  type: integer
+                  minimum: 1
+                  maximum: 50
+                  default: 5
+                threshold:
+                  type: number
+                  minimum: 0
+                  maximum: 1
+                  default: 0.5
+      responses:
+        "200":
+          description: Similar sections
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [sections]
+                properties:
+                  sections:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: "#/components/schemas/Section"
+                        - type: object
+                          properties:
+                            similarity:
+                              type: number
+
+  /health:
+    get:
+      operationId: healthCheck
+      summary: Health check
+      tags: [System]
+      security: []
+      responses:
+        "200":
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  service:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: "API key with `vl_` prefix"
+
+  parameters:
+    DocId:
+      name: docId
+      in: path
+      required: true
+      schema:
+        type: string
+
+  schemas:
+    PageRange:
+      type: object
+      required: [start, end]
+      properties:
+        start:
+          type: integer
+        end:
+          type: integer
+
+    ToCEntry:
+      type: object
+      required: [section_id, title, summary, link]
+      properties:
+        section_id:
+          type: string
+        title:
+          type: string
+        summary:
+          type: string
+        page_range:
+          $ref: "#/components/schemas/PageRange"
+          nullable: true
+        link:
+          type: string
+
+    ToCManifest:
+      type: object
+      required: [doc_id, title, source_type, section_count, created_at, sections]
+      properties:
+        doc_id:
+          type: string
+        title:
+          type: string
+        source_type:
+          type: string
+          enum: [pdf, docx, txt, url]
+        section_count:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        sections:
+          type: array
+          items:
+            $ref: "#/components/schemas/ToCEntry"
+
+    Section:
+      type: object
+      required: [section_id, doc_id, title, content, order_index, token_count]
+      properties:
+        section_id:
+          type: string
+        doc_id:
+          type: string
+        title:
+          type: string
+        summary:
+          type: string
+          nullable: true
+        content:
+          type: string
+        page_range:
+          $ref: "#/components/schemas/PageRange"
+          nullable: true
+        order_index:
+          type: integer
+        token_count:
+          type: integer
+
+    DocumentSummary:
+      type: object
+      required: [doc_id, title, source_type, status, created_at]
+      properties:
+        doc_id:
+          type: string
+        title:
+          type: string
+        source_type:
+          type: string
+          enum: [pdf, docx, txt, url]
+        section_count:
+          type: integer
+          nullable: true
+        status:
+          type: string
+          enum: [processing, ready, failed]
+        created_at:
+          type: string
+          format: date-time
+
+    DocumentDetail:
+      allOf:
+        - $ref: "#/components/schemas/DocumentSummary"
+        - type: object
+          properties:
+            toc_strategy:
+              type: string
+              enum: [extract, generate, hybrid]
+            toc:
+              $ref: "#/components/schemas/ToCManifest"
+              nullable: true
+            original_file_url:
+              type: string
+              nullable: true
+            error_message:
+              type: string
+              nullable: true
+            metadata:
+              type: object
+              nullable: true
+            updated_at:
+              type: string
+              format: date-time
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message, status]
+          properties:
+            code:
+              type: string
+              enum:
+                - validation_error
+                - authentication_error
+                - not_found
+                - conflict
+                - payload_too_large
+                - rate_limit_exceeded
+                - server_error
+            message:
+              type: string
+            status:
+              type: integer
+            request_id:
+              type: string
+            field_errors:
+              type: object
+              additionalProperties:
+                type: array
+                items:
+                  type: string
+
+  responses:
+    BadRequest:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Unauthorized:
+      description: Authentication error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+    Conflict:
+      description: Resource conflict (e.g., still processing)
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
