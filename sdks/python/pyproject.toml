@@ -1,5 +1,5 @@
 [project]
-name = "vectorless"
+name = "vectorless-sdk"
 version = "0.1.0"
 description = "Official Python SDK for Vectorless — document retrieval for the reasoning era"
 readme = "README.md"

@@ -1,4 +1,4 @@
-# Vectorless -- Python SDK
+# Vectorless SDK -- Python
 
 Official Python SDK for [Vectorless](https://vectorless.store) -- document retrieval for the reasoning era.
 
@@ -7,9 +7,9 @@ Supports both **sync** and **async** clients. Full type hints with Pydantic v2.
 ## Installation
 
 ```bash
-pip install vectorless
+pip install vectorless-sdk
 # or
-uv add vectorless
+uv add vectorless-sdk
 ```
 
 ## Quick Start

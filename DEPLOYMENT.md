@@ -320,7 +320,7 @@ git tag py-sdk-v0.2.0 && git push --tags
 - [ ] Publish TS SDK: `git tag ts-sdk-v0.1.0 && git push --tags`
 - [ ] Verify: `npm install vectorless` → test import
 - [ ] Publish Python SDK: `git tag py-sdk-v0.2.0 && git push --tags`
-- [ ] Verify: `pip install vectorless --upgrade` → test import
+- [ ] Verify: `pip install vectorless-sdk --upgrade` → test import
 
 ### Phase 6: End-to-End Verification
 
