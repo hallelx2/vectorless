@@ -31,8 +31,8 @@ jobs:
       - name: Build TypeScript SDK
         run: pnpm --filter=vectorless build
 
-      - name: Run tests
-        run: pnpm --filter=vectorless test -- __tests__/client.test.ts
+      - name: Run unit tests
+        run: cd packages/ts-sdk && npx vitest run __tests__/client.test.ts
 
       - name: Publish to npm
         run: cd packages/ts-sdk && npm publish --access public --provenance
