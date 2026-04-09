@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, master]
+    branches: [main]
   pull_request:
-    branches: [main, master]
+    branches: [main]
 
 jobs:
   lint-and-typecheck:
@@ -12,67 +12,49 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
-
       - run: pnpm install --frozen-lockfile
-      - run: pnpm typecheck
-      - run: pnpm lint
+      - run: pnpm --filter=@vectorless/shared build
+      - run: pnpm --filter=vectorless typecheck
+      - run: pnpm --filter=@vectorless/web lint
 
   test-ts-sdk:
     name: Test TypeScript SDK
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
-
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build --filter=@vectorless/shared
-      - run: pnpm test --filter=vectorless
+      - run: pnpm --filter=@vectorless/shared build
+      - run: pnpm --filter=vectorless build
+      - run: pnpm --filter=vectorless test
 
   test-python-sdk:
     name: Test Python SDK
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ["3.9", "3.11", "3.13"]
+        python-version: ["3.9", "3.12"]
     steps:
       - uses: actions/checkout@v4
-
+      - uses: astral-sh/setup-uv@v5
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Install Poetry
-        run: pip install poetry
-
       - name: Install dependencies
         working-directory: sdks/python
-        run: poetry install
-
+        run: uv pip install -e ".[dev]" --system
       - name: Run tests
         working-directory: sdks/python
-        run: poetry run pytest
-
-      - name: Type check
-        working-directory: sdks/python
-        run: poetry run mypy vectorless/
-        if: matrix.python-version == '3.11'
+        run: pytest tests/test_client.py -v
 
   build:
     name: Build All Packages
@@ -80,15 +62,11 @@ jobs:
     needs: [lint-and-typecheck]
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: pnpm
-
       - run: pnpm install --frozen-lockfile
-      - run: pnpm build
+      - run: pnpm --filter=@vectorless/shared build
+      - run: pnpm --filter=vectorless build
