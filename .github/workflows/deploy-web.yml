@@ -1,0 +1,52 @@
+name: Deploy Web to Cloudflare Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/web/**"
+      - "packages/shared/**"
+
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    name: Build & Deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build shared package
+        run: pnpm --filter=@vectorless/shared build
+
+      - name: Build Next.js app
+        run: pnpm --filter=@vectorless/web build
+        env:
+          DATABASE_URL: ${{ secrets.DASHBOARD_DATABASE_URL }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
+          BETTER_AUTH_URL: https://vectorless.pages.dev
+          NEXT_PUBLIC_APP_URL: https://vectorless.pages.dev
+          VECTORLESS_API_URL: https://api.vectorless.store
+          NODE_ENV: production
+
+      - name: Deploy to Cloudflare Pages
+        run: npx wrangler pages deploy apps/web/.next --project-name=vectorless
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CF_ACCOUNT_ID }}
