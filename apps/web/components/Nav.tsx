@@ -16,11 +16,11 @@ export default function Nav() {
         </Link>
         <div className="hidden md:flex items-center gap-2">
           <Link href="#how-it-works" className="text-[14px] font-medium text-text-dark px-4 py-2 rounded-full hover:bg-black/5 transition-colors">How It Works</Link>
-          <Link href="#docs" className="text-[14px] font-medium text-text-dark px-4 py-2 rounded-full hover:bg-black/5 transition-colors">Docs</Link>
+          <Link href="/dashboard" className="text-[14px] font-medium text-text-dark px-4 py-2 rounded-full hover:bg-black/5 transition-colors">Docs</Link>
           <Link href="#pricing" className="text-[14px] font-medium text-text-dark px-4 py-2 rounded-full hover:bg-black/5 transition-colors">Pricing</Link>
           <div className="w-[1px] h-4 bg-border-gray mx-2"></div>
-          <Link href="#login" className="text-[14px] font-medium text-text-dark px-4 py-2 hover:text-primary-500 transition-colors">Login</Link>
-          <Link href="#early-access" className="bg-bg-dark text-white px-5 py-2.5 rounded-full text-[14px] font-medium hover:bg-black transition-colors ml-2">
+          <Link href="/login" className="text-[14px] font-medium text-text-dark px-4 py-2 hover:text-primary-500 transition-colors">Login</Link>
+          <Link href="/register" className="bg-bg-dark text-white px-5 py-2.5 rounded-full text-[14px] font-medium hover:bg-black transition-colors ml-2">
             Get Started
           </Link>
         </div>
@@ -33,11 +33,11 @@ export default function Nav() {
       {isOpen && (
         <div className="md:hidden absolute top-20 left-0 right-0 bg-white border-b border-border-light p-6 flex flex-col gap-4 shadow-lg">
           <Link href="#how-it-works" onClick={() => setIsOpen(false)} className="text-[14px] font-medium text-text-dark p-2 rounded-lg hover:bg-black/5">How It Works</Link>
-          <Link href="#docs" onClick={() => setIsOpen(false)} className="text-[14px] font-medium text-text-dark p-2 rounded-lg hover:bg-black/5">Docs</Link>
+          <Link href="/dashboard" onClick={() => setIsOpen(false)} className="text-[14px] font-medium text-text-dark p-2 rounded-lg hover:bg-black/5">Docs</Link>
           <Link href="#pricing" onClick={() => setIsOpen(false)} className="text-[14px] font-medium text-text-dark p-2 rounded-lg hover:bg-black/5">Pricing</Link>
           <div className="h-[1px] w-full bg-border-light my-2"></div>
-          <Link href="#login" onClick={() => setIsOpen(false)} className="text-[14px] font-medium text-text-dark p-2 rounded-lg hover:bg-black/5">Login</Link>
-          <Link href="#early-access" onClick={() => setIsOpen(false)} className="bg-bg-dark text-white px-4 py-3 rounded-full text-[14px] font-medium hover:bg-black transition-colors flex items-center justify-center mt-2">
+          <Link href="/login" onClick={() => setIsOpen(false)} className="text-[14px] font-medium text-text-dark p-2 rounded-lg hover:bg-black/5">Login</Link>
+          <Link href="/register" onClick={() => setIsOpen(false)} className="bg-bg-dark text-white px-4 py-3 rounded-full text-[14px] font-medium hover:bg-black transition-colors flex items-center justify-center mt-2">
             Get Started
           </Link>
         </div>
