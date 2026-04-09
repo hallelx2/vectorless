@@ -45,9 +45,9 @@ jobs:
 
       - name: Prepare deploy output
         run: |
-          mkdir -p apps/web/out
+          mkdir -p apps/web/out/_next
           # Copy static assets for Pages
-          cp -r apps/web/.next/static apps/web/out/_next/static
+          cp -r apps/web/.next/static apps/web/out/_next/
           cp -r apps/web/public/* apps/web/out/ 2>/dev/null || true
 
       - name: Deploy to Cloudflare Pages
