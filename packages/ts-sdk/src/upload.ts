@@ -36,8 +36,12 @@ export async function prepareUpload(
       (source as File).name ?? "document"
     );
   } else {
-    // Buffer or ArrayBuffer
-    const bytes = source instanceof ArrayBuffer ? new Uint8Array(source) : new Uint8Array(source as ArrayBuffer);
+    // Buffer or ArrayBuffer — convert to Uint8Array for Blob compatibility
+    const bytes = new Uint8Array(
+      source instanceof ArrayBuffer
+        ? source
+        : (source as { buffer: ArrayBuffer; byteOffset: number; byteLength: number }).buffer
+    );
     formData.append("file", new Blob([bytes]), "document");
   }
 
