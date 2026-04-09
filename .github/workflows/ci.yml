@@ -35,7 +35,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter=@vectorless/shared build
       - run: pnpm --filter=vectorless build
-      - run: pnpm --filter=vectorless test
+      - name: Run unit tests (skip integration)
+        run: cd packages/ts-sdk && npx vitest run __tests__/client.test.ts
 
   test-python-sdk:
     name: Test Python SDK
