@@ -3,7 +3,7 @@
   "buildCommand": "cd ../.. && pnpm --filter=@vectorless/shared build",
   "outputDirectory": "public",
   "functions": {
-    "api/index.ts": {
+    "api/index.js": {
       "maxDuration": 300
     }
   },
