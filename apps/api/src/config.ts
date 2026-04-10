@@ -29,7 +29,7 @@ function loadConfig() {
   if (!parsed.success) {
     const errors = parsed.error.flatten().fieldErrors;
     console.error("❌ Invalid environment variables:", JSON.stringify(errors));
-    throw new Error(`Missing env vars: ${Object.keys(errors).join(", ")}`);
+    throw new Error(`Invalid env vars: ${JSON.stringify(errors)}`);
   }
   return parsed.data;
 }
