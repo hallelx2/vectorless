@@ -1,11 +1,14 @@
-import type { FastifyInstance } from "fastify";
+import { Hono } from "hono";
+import type { Variables } from "../app.js";
 
-export async function healthRoutes(app: FastifyInstance) {
-  app.get("/health", async () => {
-    return {
-      status: "ok",
-      service: "vectorless-api",
-      timestamp: new Date().toISOString(),
-    };
+const app = new Hono<{ Variables: Variables }>();
+
+app.get("/health", async (c) => {
+  return c.json({
+    status: "ok",
+    service: "vectorless-api",
+    timestamp: new Date().toISOString(),
   });
-}
+});
+
+export { app as healthRoutes };
