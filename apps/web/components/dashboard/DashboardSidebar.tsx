@@ -77,7 +77,10 @@ export default function DashboardSidebar({
 
   const isActive = (href: string) => {
     if (href === "/dashboard") return pathname === "/dashboard";
-    return pathname.startsWith(href);
+    // Exact match for leaf routes that are also prefixes of other routes
+    // (e.g. /dashboard/settings should not match /dashboard/settings/llm-keys)
+    if (href === "/dashboard/settings") return pathname === "/dashboard/settings";
+    return pathname === href || pathname.startsWith(href + "/");
   };
 
   return (
