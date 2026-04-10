@@ -1,4 +1,3 @@
-import type { IncomingMessage, ServerResponse } from "node:http";
 import Fastify from "fastify";
 import cors from "@fastify/cors";
 import multipart from "@fastify/multipart";
@@ -23,10 +22,8 @@ app.register(sectionRoutes, { prefix: "/v1" });
 app.register(llmKeyRoutes, { prefix: "/v1" });
 app.register(ingestWebhookRoutes, { prefix: "/v1/webhooks" });
 
-export default async function handler(
-  req: IncomingMessage,
-  res: ServerResponse
-) {
+// @ts-ignore - Vercel serverless handler
+export default async function handler(req: any, res: any) {
   await app.ready();
   app.server.emit("request", req, res);
 }
