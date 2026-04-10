@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
+import { VectorlessDot } from './VectorlessIcon';
 
 export default function Nav() {
   const [isOpen, setIsOpen] = useState(false);
@@ -11,7 +12,7 @@ export default function Nav() {
     <nav className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md z-50 border-b border-border-light">
       <div className="flex items-center justify-between px-6 md:px-12 h-20 max-w-[1200px] mx-auto">
         <Link href="/" className="font-display text-2xl font-medium tracking-tight text-text-dark flex items-center gap-2">
-          <div className="w-4 h-4 rounded-full bg-brand-pink"></div>
+          <VectorlessDot size={20} />
           Vectorless
         </Link>
         <div className="hidden md:flex items-center gap-2">

@@ -14,6 +14,7 @@ import {
   Bot,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { VectorlessDot } from "@/components/VectorlessIcon";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -97,7 +98,7 @@ export default function DashboardSidebar({
             href="/dashboard"
             className="flex items-center gap-2 overflow-hidden"
           >
-            <div className="h-4 w-4 shrink-0 rounded-full bg-brand-pink" />
+            <VectorlessDot size={20} />
             <span
               className={cn(
                 "font-display text-lg font-medium tracking-tight text-text-dark whitespace-nowrap transition-all duration-300",
