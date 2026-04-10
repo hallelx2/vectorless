@@ -44,8 +44,8 @@ jobs:
         env:
           DATABASE_URL: ${{ secrets.DASHBOARD_DATABASE_URL }}
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET }}
-          BETTER_AUTH_URL: https://vectorless.pages.dev
-          NEXT_PUBLIC_APP_URL: https://vectorless.pages.dev
+          BETTER_AUTH_URL: https://vectorless.halleluyaholudele.workers.dev
+          NEXT_PUBLIC_APP_URL: https://vectorless.halleluyaholudele.workers.dev
           VECTORLESS_API_URL: https://api.vectorless.store
           NODE_ENV: production
           CLOUDFLARE_API_TOKEN: ${{ secrets.CF_API_TOKEN }}
