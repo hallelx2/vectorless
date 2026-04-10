@@ -219,6 +219,7 @@ function TraceStep({
   const [open, setOpen] = useState(status === "done");
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (status === "done") setOpen(true);
   }, [status]);
 
