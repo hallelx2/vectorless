@@ -1,28 +1,57 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
-// TODO: When Fastify API is running, proxy to it with real auth
+const getApiConfig = () => ({
+  url: process.env.VECTORLESS_API_URL || "https://api.vectorless.store",
+  key: process.env.VECTORLESS_INTERNAL_API_KEY || "",
+});
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ docId: string; sectionId: string }> }
 ) {
-  const { docId, sectionId } = await params;
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  // Mock section data until Fastify API is ready
-  return NextResponse.json({
-    doc_id: docId,
-    section_id: sectionId,
-    order: 5,
-    title: "Pharmacological Treatment: First-Line Agents",
-    summary:
-      "Comprehensive review of first-line antihypertensive drug classes including ACE inhibitors, ARBs, calcium channel blockers, and thiazide diuretics. Provides dosing recommendations, contraindications, common side effects, and evidence from major clinical trials.",
-    page_range: "29-42",
-    token_count: 4512,
-    content:
-      "5. Pharmacological Treatment: First-Line Agents\n\n5.1 Overview\n\nWhen lifestyle modifications alone are insufficient to achieve target blood pressure levels, pharmacological therapy should be initiated. The selection of initial antihypertensive therapy should be individualized based on patient characteristics, comorbidities, potential adverse effects, drug interactions, and cost considerations.\n\nFour major classes of antihypertensive agents are recommended as first-line therapy:\n- Angiotensin-Converting Enzyme (ACE) Inhibitors\n- Angiotensin II Receptor Blockers (ARBs)\n- Calcium Channel Blockers (CCBs)\n- Thiazide/Thiazide-type Diuretics\n\n5.2 ACE Inhibitors\n\nMechanism: ACE inhibitors block the conversion of angiotensin I to angiotensin II, reducing vasoconstriction and aldosterone secretion.\n\nRecommended Agents and Dosing:\n- Lisinopril: 10-40 mg once daily\n- Enalapril: 5-40 mg daily (in 1-2 divided doses)\n- Ramipril: 2.5-20 mg daily (in 1-2 divided doses)\n\nKey Evidence: The HOPE trial demonstrated that ramipril reduced cardiovascular events by 22% in high-risk patients.\n\nContraindications: Pregnancy, history of angioedema, bilateral renal artery stenosis.",
-    metadata: {
-      doc_title: "Clinical Guidelines for Hypertension",
-      source_type: "pdf",
-    },
-  });
+  const { docId, sectionId } = await params;
+  const { url: apiUrl, key: apiKey } = getApiConfig();
+
+  if (!apiKey) {
+    return NextResponse.json(
+      { error: "API key not configured" },
+      { status: 500 }
+    );
+  }
+
+  try {
+    const res = await fetch(
+      `${apiUrl}/v1/documents/${docId}/sections/${sectionId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      return NextResponse.json(
+        { error: errBody?.error || `Section not found: ${res.status}` },
+        { status: res.status }
+      );
+    }
+
+    const data = await res.json();
+    return NextResponse.json(data);
+  } catch (err) {
+    console.error("Failed to fetch section from Vectorless API:", err);
+    return NextResponse.json(
+      { error: "Failed to fetch section" },
+      { status: 500 }
+    );
+  }
 }

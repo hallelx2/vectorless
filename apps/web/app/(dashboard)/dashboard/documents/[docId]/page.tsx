@@ -1,4 +1,8 @@
+"use client";
+
+import { useState, useEffect, useCallback, use } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -9,6 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft,
   Trash2,
@@ -17,59 +22,38 @@ import {
   Hash,
   FileType,
   GitBranch,
+  Loader2,
 } from "lucide-react";
 
-// Mock data - will be replaced with real API call
-const mockDocument = {
-  id: "doc_1",
-  title: "Q4 2025 Annual Report",
-  source_type: "PDF",
-  toc_strategy: "hybrid",
-  status: "ready" as const,
-  created_at: "2026-04-06T14:30:00Z",
-  section_count: 42,
-  sections: [
-    {
-      id: "sec_1",
-      title: "Executive Summary",
-      summary: "High-level overview of Q4 performance and key achievements.",
-      page_range: "1-3",
-    },
-    {
-      id: "sec_2",
-      title: "Financial Highlights",
-      summary:
-        "Revenue, net income, and operating margins for the quarter.",
-      page_range: "4-12",
-    },
-    {
-      id: "sec_3",
-      title: "Product & Engineering",
-      summary:
-        "Major product launches, platform improvements, and engineering milestones.",
-      page_range: "13-21",
-    },
-    {
-      id: "sec_4",
-      title: "Go-to-Market & Growth",
-      summary:
-        "Customer acquisition metrics, marketing campaigns, and partnerships.",
-      page_range: "22-30",
-    },
-    {
-      id: "sec_5",
-      title: "People & Culture",
-      summary: "Headcount growth, diversity metrics, and team highlights.",
-      page_range: "31-36",
-    },
-    {
-      id: "sec_6",
-      title: "Outlook & Strategy",
-      summary: "Forward-looking guidance and strategic priorities for 2026.",
-      page_range: "37-42",
-    },
-  ],
-};
+interface DocumentDetail {
+  doc_id: string;
+  title: string;
+  source_type: string;
+  toc_strategy: string;
+  status: string;
+  section_count: number;
+  token_count?: number;
+  created_at: string;
+  updated_at?: string;
+  metadata?: Record<string, unknown>;
+}
+
+interface TocSection {
+  section_id: string;
+  order: number;
+  title: string;
+  summary: string;
+  page_range: string;
+  token_count?: number;
+}
+
+interface TocData {
+  doc_id: string;
+  title: string;
+  toc_strategy: string;
+  section_count: number;
+  sections: TocSection[];
+}
 
 const statusColors: Record<string, string> = {
   ready: "bg-emerald-100 text-emerald-700 border-emerald-200",
@@ -77,13 +61,104 @@ const statusColors: Record<string, string> = {
   failed: "bg-red-100 text-red-700 border-red-200",
 };
 
-export default async function DocumentDetailPage({
+export default function DocumentDetailPage({
   params,
 }: {
   params: Promise<{ docId: string }>;
 }) {
-  const { docId } = await params;
-  const doc = mockDocument; // Will be fetched by docId
+  const { docId } = use(params);
+  const router = useRouter();
+
+  const [doc, setDoc] = useState<DocumentDetail | null>(null);
+  const [toc, setToc] = useState<TocData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [docRes, tocRes] = await Promise.all([
+          fetch(`/api/dashboard/documents/${docId}`),
+          fetch(`/api/dashboard/documents/${docId}/toc`),
+        ]);
+
+        if (!docRes.ok) {
+          setError("Document not found");
+          return;
+        }
+
+        const docData = await docRes.json();
+        setDoc(docData);
+
+        if (tocRes.ok) {
+          const tocData = await tocRes.json();
+          setToc(tocData);
+        }
+      } catch {
+        setError("Failed to load document");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchData();
+  }, [docId]);
+
+  const handleDelete = useCallback(async () => {
+    if (!confirm("Are you sure you want to delete this document? This action cannot be undone.")) return;
+    setIsDeleting(true);
+    try {
+      const res = await fetch(`/api/dashboard/documents/${docId}`, {
+        method: "DELETE",
+      });
+      if (res.ok) {
+        router.push("/dashboard/documents");
+      }
+    } catch {
+      setIsDeleting(false);
+    }
+  }, [docId, router]);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-[150px]" />
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-[300px]" />
+          <Skeleton className="h-5 w-[200px]" />
+        </div>
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="space-y-4 lg:col-span-2">
+            <Skeleton className="h-[400px] w-full" />
+          </div>
+          <Skeleton className="h-[300px] w-full" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !doc) {
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/dashboard/documents">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Documents
+          </Link>
+        </Button>
+        <div className="flex flex-col items-center justify-center py-20">
+          <h2 className="text-lg font-medium text-foreground">
+            {error || "Document not found"}
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            The document may have been deleted or does not exist.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const sections = toc?.sections || [];
 
   return (
     <div className="space-y-6">
@@ -102,10 +177,10 @@ export default async function DocumentDetailPage({
             {doc.title}
           </h1>
           <div className="flex flex-wrap items-center gap-2">
-            <Badge variant="secondary" className="font-mono text-xs">
+            <Badge variant="secondary" className="font-mono text-xs uppercase">
               {doc.source_type}
             </Badge>
-            <Badge variant="outline" className={statusColors[doc.status]}>
+            <Badge variant="outline" className={statusColors[doc.status] || ""}>
               {doc.status}
             </Badge>
           </div>
@@ -120,8 +195,14 @@ export default async function DocumentDetailPage({
           <Button
             variant="outline"
             className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
+            onClick={handleDelete}
+            disabled={isDeleting}
           >
-            <Trash2 className="h-4 w-4" />
+            {isDeleting ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Trash2 className="h-4 w-4" />
+            )}
             Delete
           </Button>
         </div>
@@ -134,36 +215,48 @@ export default async function DocumentDetailPage({
             <CardHeader>
               <CardTitle className="text-base">Table of Contents</CardTitle>
               <CardDescription>
-                {doc.sections.length} sections extracted from this document
+                {sections.length > 0
+                  ? `${sections.length} sections extracted from this document`
+                  : "No sections available yet"}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {doc.sections.map((section, index) => (
+              {sections.length === 0 && doc.status === "processing" && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Document is still being processed...
+                </div>
+              )}
+              {sections.map((section, index) => (
                 <Link
-                  key={section.id}
-                  href={`/dashboard/documents/${docId}/sections/${section.id}`}
+                  key={section.section_id}
+                  href={`/dashboard/documents/${docId}/sections/${section.section_id}`}
                   className="block rounded-lg border p-4 transition-colors hover:border-primary/30 hover:bg-muted/50"
                 >
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 space-y-1">
                       <div className="flex items-center gap-2">
                         <span className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 text-xs font-medium text-primary">
-                          {index + 1}
+                          {section.order ?? index + 1}
                         </span>
                         <h3 className="text-sm font-medium text-foreground">
                           {section.title}
                         </h3>
                       </div>
-                      <p className="text-sm text-muted-foreground pl-8">
-                        {section.summary}
-                      </p>
+                      {section.summary && (
+                        <p className="text-sm text-muted-foreground pl-8">
+                          {section.summary}
+                        </p>
+                      )}
                     </div>
-                    <Badge
-                      variant="secondary"
-                      className="shrink-0 text-xs font-mono"
-                    >
-                      pp. {section.page_range}
-                    </Badge>
+                    {section.page_range && (
+                      <Badge
+                        variant="secondary"
+                        className="shrink-0 text-xs font-mono"
+                      >
+                        pp. {section.page_range}
+                      </Badge>
+                    )}
                   </div>
                 </Link>
               ))}
@@ -189,7 +282,7 @@ export default async function DocumentDetailPage({
               <FileType className="h-4 w-4 text-muted-foreground" />
               <div>
                 <p className="text-xs text-muted-foreground">Source Type</p>
-                <p className="text-sm text-foreground">{doc.source_type}</p>
+                <p className="text-sm text-foreground uppercase">{doc.source_type}</p>
               </div>
             </div>
             <Separator />
@@ -198,7 +291,7 @@ export default async function DocumentDetailPage({
               <div>
                 <p className="text-xs text-muted-foreground">ToC Strategy</p>
                 <p className="text-sm capitalize text-foreground">
-                  {doc.toc_strategy}
+                  {doc.toc_strategy || "N/A"}
                 </p>
               </div>
             </div>

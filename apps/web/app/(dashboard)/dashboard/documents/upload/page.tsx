@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -32,6 +33,7 @@ import {
 } from "lucide-react";
 
 export default function UploadDocumentPage() {
+  const router = useRouter();
   const [dragActive, setDragActive] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [url, setUrl] = useState("");
@@ -39,6 +41,7 @@ export default function UploadDocumentPage() {
   const [tocStrategy, setTocStrategy] = useState("extract");
   const [embedSections, setEmbedSections] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const handleDrag = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -70,9 +73,61 @@ export default function UploadDocumentPage() {
 
   const handleUpload = async () => {
     setIsUploading(true);
-    // Placeholder: real upload logic will go here
-    await new Promise((resolve) => setTimeout(resolve, 2000));
-    setIsUploading(false);
+    setUploadError(null);
+
+    try {
+      let res: Response;
+
+      if (selectedFile) {
+        // File upload via multipart/form-data
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        if (title.trim()) formData.append("title", title.trim());
+        formData.append("toc_strategy", tocStrategy);
+        if (embedSections) formData.append("embed_sections", "true");
+
+        res = await fetch("/api/dashboard/documents", {
+          method: "POST",
+          body: formData,
+        });
+      } else if (url.trim()) {
+        // URL-based ingestion via JSON
+        res = await fetch("/api/dashboard/documents", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            url: url.trim(),
+            title: title.trim() || undefined,
+            toc_strategy: tocStrategy,
+            embed_sections: embedSections,
+          }),
+        });
+      } else {
+        setIsUploading(false);
+        return;
+      }
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        setUploadError(errBody?.error || `Upload failed: ${res.status}`);
+        setIsUploading(false);
+        return;
+      }
+
+      const data = await res.json();
+      // Redirect to the new document page
+      const newDocId = data.doc_id || data.id;
+      if (newDocId) {
+        router.push(`/dashboard/documents/${newDocId}`);
+      } else {
+        router.push("/dashboard/documents");
+      }
+    } catch (err) {
+      setUploadError(
+        err instanceof Error ? err.message : "Upload failed. Please try again."
+      );
+      setIsUploading(false);
+    }
   };
 
   const canUpload = selectedFile || url.trim().length > 0;
@@ -255,6 +310,13 @@ export default function UploadDocumentPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Error message */}
+      {uploadError && (
+        <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-4">
+          <p className="text-sm text-destructive">{uploadError}</p>
+        </div>
+      )}
 
       {/* Actions */}
       <div className="flex items-center justify-end gap-3">

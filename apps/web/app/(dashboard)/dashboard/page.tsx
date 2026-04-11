@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "@/lib/auth-client";
 import {
@@ -11,6 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -27,88 +29,17 @@ import {
   Upload,
   FlaskConical,
   Plus,
-  TrendingUp,
-  TrendingDown,
   ArrowRight,
 } from "lucide-react";
 
-const stats = [
-  {
-    label: "Total Documents",
-    value: "24",
-    trend: "+3",
-    trendUp: true,
-    icon: FileText,
-    description: "from last week",
-  },
-  {
-    label: "Total Sections",
-    value: "1,248",
-    trend: "+87",
-    trendUp: true,
-    icon: Layers,
-    description: "from last week",
-  },
-  {
-    label: "API Requests (today)",
-    value: "3,421",
-    trend: "-12%",
-    trendUp: false,
-    icon: Activity,
-    description: "vs yesterday",
-  },
-  {
-    label: "Active API Keys",
-    value: "5",
-    trend: "+1",
-    trendUp: true,
-    icon: Key,
-    description: "from last week",
-  },
-];
-
-const recentDocuments = [
-  {
-    id: "doc_1",
-    title: "Q4 2025 Annual Report",
-    type: "PDF",
-    sections: 42,
-    status: "ready" as const,
-    createdAt: "2 hours ago",
-  },
-  {
-    id: "doc_2",
-    title: "Technical Architecture Overview",
-    type: "PDF",
-    sections: 18,
-    status: "ready" as const,
-    createdAt: "5 hours ago",
-  },
-  {
-    id: "doc_3",
-    title: "Product Requirements Document",
-    type: "DOCX",
-    sections: 0,
-    status: "processing" as const,
-    createdAt: "1 day ago",
-  },
-  {
-    id: "doc_4",
-    title: "API Integration Guide",
-    type: "TXT",
-    sections: 12,
-    status: "ready" as const,
-    createdAt: "2 days ago",
-  },
-  {
-    id: "doc_5",
-    title: "Meeting Notes - Sprint Review",
-    type: "TXT",
-    sections: 0,
-    status: "failed" as const,
-    createdAt: "3 days ago",
-  },
-];
+interface Document {
+  doc_id: string;
+  title: string;
+  source_type: string;
+  section_count: number;
+  status: string;
+  created_at: string;
+}
 
 const statusColors: Record<string, string> = {
   ready: "bg-emerald-100 text-emerald-700 border-emerald-200",
@@ -116,9 +47,82 @@ const statusColors: Record<string, string> = {
   failed: "bg-red-100 text-red-700 border-red-200",
 };
 
+function formatRelativeTime(dateStr: string): string {
+  const now = new Date();
+  const date = new Date(dateStr);
+  const diffMs = now.getTime() - date.getTime();
+  const diffMinutes = Math.floor(diffMs / (1000 * 60));
+  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffMinutes < 1) return "just now";
+  if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes !== 1 ? "s" : ""} ago`;
+  if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
+  if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
+  return new Date(dateStr).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
 export default function DashboardOverviewPage() {
   const { data: session } = useSession();
   const firstName = session?.user?.name?.split(" ")[0] || "there";
+
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchDocuments() {
+      try {
+        const res = await fetch("/api/dashboard/documents");
+        if (!res.ok) throw new Error("Failed to fetch");
+        const data = await res.json();
+        setDocuments(data.documents || []);
+      } catch {
+        setDocuments([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchDocuments();
+  }, []);
+
+  // Derive stats from real data
+  const totalDocuments = documents.length;
+  const totalSections = documents.reduce((sum, d) => sum + (d.section_count || 0), 0);
+  const readyCount = documents.filter((d) => d.status === "ready").length;
+  const processingCount = documents.filter((d) => d.status === "processing").length;
+
+  const recentDocuments = documents.slice(0, 5);
+
+  const stats = [
+    {
+      label: "Total Documents",
+      value: isLoading ? "--" : totalDocuments.toLocaleString(),
+      icon: FileText,
+      description: `${readyCount} ready, ${processingCount} processing`,
+    },
+    {
+      label: "Total Sections",
+      value: isLoading ? "--" : totalSections.toLocaleString(),
+      icon: Layers,
+      description: "across all documents",
+    },
+    {
+      label: "Ready Documents",
+      value: isLoading ? "--" : readyCount.toLocaleString(),
+      icon: Activity,
+      description: "available for querying",
+    },
+    {
+      label: "Processing",
+      value: isLoading ? "--" : processingCount.toLocaleString(),
+      icon: Key,
+      description: "currently being processed",
+    },
+  ];
 
   return (
     <div className="space-y-8">
@@ -144,21 +148,13 @@ export default function DashboardOverviewPage() {
                 <stat.icon className="h-4 w-4 text-muted-foreground" />
               </div>
               <div className="mt-3 flex items-baseline gap-2">
-                <span className="text-3xl font-semibold tracking-tight text-foreground">
-                  {stat.value}
-                </span>
-                <span
-                  className={`inline-flex items-center gap-0.5 text-xs font-medium ${
-                    stat.trendUp ? "text-emerald-600" : "text-red-500"
-                  }`}
-                >
-                  {stat.trendUp ? (
-                    <TrendingUp className="h-3 w-3" />
-                  ) : (
-                    <TrendingDown className="h-3 w-3" />
-                  )}
-                  {stat.trend}
-                </span>
+                {isLoading ? (
+                  <Skeleton className="h-8 w-[60px]" />
+                ) : (
+                  <span className="text-3xl font-semibold tracking-tight text-foreground">
+                    {stat.value}
+                  </span>
+                )}
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
                 {stat.description}
@@ -186,48 +182,69 @@ export default function DashboardOverviewPage() {
             </Button>
           </CardHeader>
           <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Sections</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Created</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentDocuments.map((doc) => (
-                  <TableRow key={doc.id}>
-                    <TableCell className="font-medium">
-                      <Link
-                        href={`/dashboard/documents/${doc.id}`}
-                        className="hover:text-primary transition-colors"
-                      >
-                        {doc.title}
-                      </Link>
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant="secondary" className="font-mono text-xs">
-                        {doc.type}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{doc.sections}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={statusColors[doc.status]}
-                      >
-                        {doc.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right text-muted-foreground">
-                      {doc.createdAt}
-                    </TableCell>
-                  </TableRow>
+            {isLoading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="flex items-center gap-4">
+                    <Skeleton className="h-5 w-[200px]" />
+                    <Skeleton className="h-5 w-[60px]" />
+                    <Skeleton className="h-5 w-[40px]" />
+                    <Skeleton className="h-5 w-[70px]" />
+                    <Skeleton className="h-5 w-[80px]" />
+                  </div>
                 ))}
-              </TableBody>
-            </Table>
+              </div>
+            ) : recentDocuments.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <FileText className="h-8 w-8 text-muted-foreground" />
+                <p className="mt-2 text-sm text-muted-foreground">
+                  No documents yet. Upload your first document to get started.
+                </p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Title</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead>Sections</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="text-right">Created</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recentDocuments.map((doc) => (
+                    <TableRow key={doc.doc_id}>
+                      <TableCell className="font-medium">
+                        <Link
+                          href={`/dashboard/documents/${doc.doc_id}`}
+                          className="hover:text-primary transition-colors"
+                        >
+                          {doc.title}
+                        </Link>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className="font-mono text-xs uppercase">
+                          {doc.source_type}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{doc.section_count}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="outline"
+                          className={statusColors[doc.status] || ""}
+                        >
+                          {doc.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-right text-muted-foreground">
+                        {formatRelativeTime(doc.created_at)}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
           </CardContent>
         </Card>
 

@@ -1,51 +1,101 @@
 import { NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/auth";
+import { headers } from "next/headers";
 
-// TODO: When Fastify API is running, proxy to it with real auth
+const getApiConfig = () => ({
+  url: process.env.VECTORLESS_API_URL || "https://api.vectorless.store",
+  key: process.env.VECTORLESS_INTERNAL_API_KEY || "",
+});
 
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ docId: string }> }
 ) {
-  const { docId } = await params;
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  // Mock data until Fastify API is ready
-  return NextResponse.json({
-    doc_id: docId,
-    title: "Clinical Guidelines for Hypertension",
-    source_type: "pdf",
-    toc_strategy: "hybrid",
-    status: "ready",
-    section_count: 10,
-    token_count: 28616,
-    created_at: "2025-04-08T10:22:00Z",
-    updated_at: "2025-04-08T10:24:30Z",
-    metadata: {
-      pages: 86,
-      author: "National Heart, Lung, and Blood Institute",
-      language: "en",
-    },
-  });
+  const { docId } = await params;
+  const { url: apiUrl, key: apiKey } = getApiConfig();
+
+  if (!apiKey) {
+    return NextResponse.json(
+      { error: "API key not configured" },
+      { status: 500 }
+    );
+  }
+
+  try {
+    const res = await fetch(`${apiUrl}/v1/documents/${docId}`, {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      return NextResponse.json(
+        { error: errBody?.error || `Document not found: ${res.status}` },
+        { status: res.status }
+      );
+    }
+
+    const data = await res.json();
+    return NextResponse.json(data);
+  } catch (err) {
+    console.error("Failed to fetch document from Vectorless API:", err);
+    return NextResponse.json(
+      { error: "Failed to fetch document" },
+      { status: 500 }
+    );
+  }
 }
 
 export async function DELETE(
   _request: NextRequest,
   { params }: { params: Promise<{ docId: string }> }
 ) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { docId } = await params;
+  const { url: apiUrl, key: apiKey } = getApiConfig();
 
-  // TODO: Proxy DELETE to Fastify API
-  // const session = await auth.api.getSession({ headers: await headers() });
-  // if (!session) {
-  //   return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  // }
-  // await fetch(`${process.env.VECTORLESS_API_URL}/documents/${docId}`, {
-  //   method: "DELETE",
-  //   headers: { Authorization: `Bearer ${apiKey}` },
-  // });
+  if (!apiKey) {
+    return NextResponse.json(
+      { error: "API key not configured" },
+      { status: 500 }
+    );
+  }
 
-  return NextResponse.json({
-    success: true,
-    doc_id: docId,
-    message: `Document ${docId} deleted successfully.`,
-  });
+  try {
+    const res = await fetch(`${apiUrl}/v1/documents/${docId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!res.ok) {
+      const errBody = await res.json().catch(() => ({}));
+      return NextResponse.json(
+        { error: errBody?.error || `Delete failed: ${res.status}` },
+        { status: res.status }
+      );
+    }
+
+    const data = await res.json().catch(() => ({ success: true }));
+    return NextResponse.json(data);
+  } catch (err) {
+    console.error("Failed to delete document from Vectorless API:", err);
+    return NextResponse.json(
+      { error: "Failed to delete document" },
+      { status: 500 }
+    );
+  }
 }

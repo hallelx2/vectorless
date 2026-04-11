@@ -1,16 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   ArrowLeft,
   ChevronDown,
@@ -19,110 +17,24 @@ import {
   FileText,
   Layers,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { use } from "react";
 
 interface Section {
-  id: string;
+  section_id: string;
   order: number;
   title: string;
   summary: string;
-  pageRange: string;
-  tokenCount: number;
+  page_range: string;
+  token_count: number;
 }
 
-const mockSections: Section[] = [
-  {
-    id: "sec_01",
-    order: 1,
-    title: "Introduction and Scope",
-    summary:
-      "This section defines the scope and objectives of the clinical guidelines for the management of hypertension in adult patients. It outlines the target population, the clinical settings in which the guidelines apply, and the methodology used for evidence grading. The guidelines are intended for primary care physicians, cardiologists, and allied health professionals involved in cardiovascular care.",
-    pageRange: "1-4",
-    tokenCount: 1842,
-  },
-  {
-    id: "sec_02",
-    order: 2,
-    title: "Definition and Classification of Hypertension",
-    summary:
-      "Covers the diagnostic criteria and classification stages of hypertension based on systolic and diastolic blood pressure readings. Includes tables for normal, elevated, Stage 1, Stage 2, and hypertensive crisis thresholds according to the latest ACC/AHA guidelines. Discusses white-coat hypertension and masked hypertension as special categories.",
-    pageRange: "5-11",
-    tokenCount: 2356,
-  },
-  {
-    id: "sec_03",
-    order: 3,
-    title: "Risk Assessment and Cardiovascular Risk Factors",
-    summary:
-      "Details the comprehensive risk assessment framework including modifiable and non-modifiable risk factors. Covers the ASCVD risk calculator, the role of comorbidities such as diabetes, chronic kidney disease, and obesity. Provides a structured approach to patient risk stratification for guiding treatment intensity.",
-    pageRange: "12-19",
-    tokenCount: 3104,
-  },
-  {
-    id: "sec_04",
-    order: 4,
-    title: "Non-Pharmacological Interventions",
-    summary:
-      "Reviews lifestyle modifications as first-line interventions for blood pressure management. Includes evidence-based recommendations for dietary changes (DASH diet, sodium reduction), physical activity guidelines, weight management, alcohol moderation, and stress reduction techniques. Discusses the expected blood pressure reductions achievable through each intervention.",
-    pageRange: "20-28",
-    tokenCount: 2890,
-  },
-  {
-    id: "sec_05",
-    order: 5,
-    title: "Pharmacological Treatment: First-Line Agents",
-    summary:
-      "Comprehensive review of first-line antihypertensive drug classes including ACE inhibitors, ARBs, calcium channel blockers, and thiazide diuretics. Provides dosing recommendations, contraindications, common side effects, and evidence from major clinical trials supporting their use. Includes decision algorithms for initial drug selection based on patient characteristics.",
-    pageRange: "29-42",
-    tokenCount: 4512,
-  },
-  {
-    id: "sec_06",
-    order: 6,
-    title: "Combination Therapy and Resistant Hypertension",
-    summary:
-      "Addresses the rationale and evidence for combination antihypertensive therapy, preferred drug combinations, and the management of resistant hypertension. Defines true resistant hypertension versus pseudo-resistance and outlines a stepwise approach including mineralocorticoid receptor antagonists and device-based therapies.",
-    pageRange: "43-52",
-    tokenCount: 3248,
-  },
-  {
-    id: "sec_07",
-    order: 7,
-    title: "Special Populations",
-    summary:
-      "Provides tailored treatment recommendations for special populations including elderly patients, pregnant women, patients with diabetes, chronic kidney disease, heart failure, and post-stroke patients. Discusses racial and ethnic considerations in drug selection and response. Includes pediatric hypertension screening recommendations.",
-    pageRange: "53-64",
-    tokenCount: 3876,
-  },
-  {
-    id: "sec_08",
-    order: 8,
-    title: "Blood Pressure Monitoring and Follow-Up",
-    summary:
-      "Covers recommended monitoring strategies including office-based measurement, ambulatory blood pressure monitoring (ABPM), and home blood pressure monitoring (HBPM). Discusses appropriate follow-up intervals, target BP thresholds, and criteria for treatment adjustment. Includes patient education recommendations for self-monitoring.",
-    pageRange: "65-72",
-    tokenCount: 2634,
-  },
-  {
-    id: "sec_09",
-    order: 9,
-    title: "Hypertensive Emergencies and Urgencies",
-    summary:
-      "Differentiates between hypertensive emergencies and urgencies, providing acute management protocols for each. Covers target organ damage assessment, IV antihypertensive agents and dosing, recommended rate of blood pressure reduction, and disposition criteria. Includes specific management for common presentations such as acute aortic dissection and eclampsia.",
-    pageRange: "73-80",
-    tokenCount: 2198,
-  },
-  {
-    id: "sec_10",
-    order: 10,
-    title: "Quality Metrics and Implementation",
-    summary:
-      "Outlines quality performance measures for hypertension management, including recommended documentation standards, reporting metrics, and clinical audit criteria. Discusses strategies for guideline implementation at the practice and health system level, addressing barriers to adherence and the role of clinical decision support tools.",
-    pageRange: "81-86",
-    tokenCount: 1956,
-  },
-];
+interface TocData {
+  doc_id: string;
+  title: string;
+  toc_strategy: string;
+  section_count: number;
+  sections: Section[];
+}
 
 export default function SectionsPage({
   params,
@@ -131,6 +43,28 @@ export default function SectionsPage({
 }) {
   const { docId } = use(params);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+  const [toc, setToc] = useState<TocData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchToc() {
+      try {
+        const res = await fetch(`/api/dashboard/documents/${docId}/toc`);
+        if (!res.ok) {
+          setError("Failed to load sections");
+          return;
+        }
+        const data = await res.json();
+        setToc(data);
+      } catch {
+        setError("Failed to load sections");
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchToc();
+  }, [docId]);
 
   function toggleExpanded(sectionId: string) {
     setExpandedIds((prev) => {
@@ -142,6 +76,45 @@ export default function SectionsPage({
       }
       return next;
     });
+  }
+
+  const sections = toc?.sections || [];
+  const docTitle = toc?.title || "Document";
+
+  if (isLoading) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-8 w-[150px]" />
+        <div className="space-y-2">
+          <Skeleton className="h-8 w-[200px]" />
+          <Skeleton className="h-5 w-[250px]" />
+        </div>
+        <div className="space-y-3">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-[80px] w-full" />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href={`/dashboard/documents/${docId}`}>
+            <ArrowLeft className="h-4 w-4" />
+            Back to Document
+          </Link>
+        </Button>
+        <div className="flex flex-col items-center justify-center py-20">
+          <h2 className="text-lg font-medium text-foreground">{error}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            The sections could not be loaded. The document may still be processing.
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -161,8 +134,7 @@ export default function SectionsPage({
             Sections
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {mockSections.length} sections in Clinical Guidelines for
-            Hypertension
+            {sections.length} sections in {docTitle}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -172,85 +144,101 @@ export default function SectionsPage({
           </Badge>
           <Badge variant="secondary" className="text-xs">
             <Layers className="mr-1 h-3 w-3" />
-            {mockSections.length} sections
+            {sections.length} sections
           </Badge>
         </div>
       </div>
 
       {/* Section list */}
-      <div className="space-y-3">
-        {mockSections.map((section) => {
-          const isExpanded = expandedIds.has(section.id);
-          const summaryPreview =
-            section.summary.length > 120
-              ? section.summary.slice(0, 120) + "..."
-              : section.summary;
+      {sections.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <Layers className="h-10 w-10 text-muted-foreground" />
+          <h3 className="mt-4 text-sm font-medium text-foreground">
+            No sections available
+          </h3>
+          <p className="mt-1 text-sm text-muted-foreground">
+            This document may still be processing.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {sections.map((section) => {
+            const isExpanded = expandedIds.has(section.section_id);
+            const summaryPreview =
+              section.summary && section.summary.length > 120
+                ? section.summary.slice(0, 120) + "..."
+                : section.summary;
 
-          return (
-            <Card key={section.id}>
-              <CardContent className="p-0">
-                <button
-                  onClick={() => toggleExpanded(section.id)}
-                  className="flex w-full items-start gap-4 p-5 text-left transition-colors hover:bg-muted/50"
-                >
-                  <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-xs font-semibold text-primary">
-                    {section.order}
-                  </span>
+            return (
+              <Card key={section.section_id}>
+                <CardContent className="p-0">
+                  <button
+                    onClick={() => toggleExpanded(section.section_id)}
+                    className="flex w-full items-start gap-4 p-5 text-left transition-colors hover:bg-muted/50"
+                  >
+                    <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-xs font-semibold text-primary">
+                      {section.order}
+                    </span>
 
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      {isExpanded ? (
-                        <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
-                      ) : (
-                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        {isExpanded ? (
+                          <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        ) : (
+                          <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                        )}
+                        <h3 className="text-sm font-medium text-foreground">
+                          {section.title}
+                        </h3>
+                      </div>
+
+                      {!isExpanded && summaryPreview && (
+                        <p className="mt-1 pl-6 text-sm text-muted-foreground">
+                          {summaryPreview}
+                        </p>
                       )}
-                      <h3 className="text-sm font-medium text-foreground">
-                        {section.title}
-                      </h3>
                     </div>
 
-                    {!isExpanded && (
-                      <p className="mt-1 pl-6 text-sm text-muted-foreground">
-                        {summaryPreview}
-                      </p>
-                    )}
-                  </div>
-
-                  <div className="flex shrink-0 items-center gap-2">
-                    <Badge
-                      variant="secondary"
-                      className="font-mono text-xs"
-                    >
-                      pp. {section.pageRange}
-                    </Badge>
-                    <Badge variant="outline" className="text-xs">
-                      {section.tokenCount.toLocaleString()} tokens
-                    </Badge>
-                  </div>
-                </button>
-
-                {isExpanded && (
-                  <div className="border-t px-5 pb-5 pt-4">
-                    <div className="pl-9 space-y-4">
-                      <p className="text-sm leading-relaxed text-muted-foreground">
-                        {section.summary}
-                      </p>
-                      <Button size="sm" asChild>
-                        <Link
-                          href={`/dashboard/documents/${docId}/sections/${section.id}`}
+                    <div className="flex shrink-0 items-center gap-2">
+                      {section.page_range && (
+                        <Badge
+                          variant="secondary"
+                          className="font-mono text-xs"
                         >
-                          <FileText className="h-3.5 w-3.5" />
-                          View Full Content
-                        </Link>
-                      </Button>
+                          pp. {section.page_range}
+                        </Badge>
+                      )}
+                      {section.token_count != null && (
+                        <Badge variant="outline" className="text-xs">
+                          {section.token_count.toLocaleString()} tokens
+                        </Badge>
+                      )}
                     </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+                  </button>
+
+                  {isExpanded && (
+                    <div className="border-t px-5 pb-5 pt-4">
+                      <div className="pl-9 space-y-4">
+                        <p className="text-sm leading-relaxed text-muted-foreground">
+                          {section.summary}
+                        </p>
+                        <Button size="sm" asChild>
+                          <Link
+                            href={`/dashboard/documents/${docId}/sections/${section.section_id}`}
+                          >
+                            <FileText className="h-3.5 w-3.5" />
+                            View Full Content
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
