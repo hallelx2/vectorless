@@ -31,21 +31,28 @@ export default async function handler(req: any, res: any) {
         );
     }
 
-    const body =
-      req.method !== "GET" && req.method !== "HEAD"
-        ? await new Promise<Buffer>((resolve) => {
-            const chunks: Buffer[] = [];
-            req.on("data", (chunk: Buffer) => chunks.push(chunk));
-            req.on("end", () => resolve(Buffer.concat(chunks)));
-          })
-        : undefined;
+    let body: any = undefined;
+    if (req.method !== "GET" && req.method !== "HEAD") {
+      body = await new Promise<Buffer>((resolve) => {
+        const chunks: Buffer[] = [];
+        req.on("data", (chunk: Buffer) => chunks.push(chunk));
+        req.on("end", () => resolve(Buffer.concat(chunks)));
+      });
+    }
 
-    const request = new Request(url.toString(), {
+    const init: RequestInit = {
       method: req.method,
       headers,
-      body,
-    });
+    };
 
+    // Only set body for methods that support it
+    if (body && body.length > 0) {
+      init.body = body;
+      // Required for Request with body in Node.js
+      (init as any).duplex = "half";
+    }
+
+    const request = new Request(url.toString(), init);
     const response = await app.fetch(request);
 
     res.statusCode = response.status;
@@ -60,11 +67,17 @@ export default async function handler(req: any, res: any) {
       res.end();
     }
   } catch (err: any) {
+    console.error("Handler error:", err);
     res.statusCode = 500;
     res.setHeader("Content-Type", "application/json");
     res.end(
       JSON.stringify({
-        error: { code: "server_error", message: err.message, status: 500 },
+        error: {
+          code: "server_error",
+          message: err.message,
+          status: 500,
+          stack: process.env.NODE_ENV !== "production" ? err.stack : undefined,
+        },
       })
     );
   }
