@@ -158,17 +158,30 @@ Respond with valid JSON only:
       : { sections: [] };
     const fetchTime = Date.now() - fetchStart;
 
+    // Map sections to the format the playground page expects
+    const fetchedSections = sectionsData.sections || [];
+    const selectedSections = fetchedSections.map((s: any) => ({
+      section_id: s.section_id || s.id,
+      title: s.title,
+      relevance_score: 1.0,
+      page_range: s.page_range
+        ? `${s.page_range.start}-${s.page_range.end}`
+        : "",
+      summary: s.summary || "",
+      content_preview: (s.content || "").slice(0, 300),
+    }));
+
     return {
       success: true,
       data: {
         toc,
         selected_section_ids: sectionIds,
-        sections: sectionsData.sections || [],
+        selected_sections: selectedSections,
         reasoning,
         timing: {
-          toc_ms: tocTime,
-          select_ms: selectTime,
-          fetch_ms: fetchTime,
+          toc_retrieval_ms: tocTime,
+          section_selection_ms: selectTime,
+          content_fetch_ms: fetchTime,
           total_ms: Date.now() - startTime,
         },
       },
