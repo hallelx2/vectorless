@@ -60,12 +60,16 @@ interface QueryTiming {
 }
 
 interface QueryResult {
-  query: string;
-  doc_id: string | null;
-  strategy: string;
+  toc?: any;
+  selected_section_ids?: string[];
+  sections?: any[];
   timing: QueryTiming;
   reasoning: string;
-  selected_sections: SelectedSection[];
+  // Legacy fields
+  query?: string;
+  doc_id?: string | null;
+  strategy?: string;
+  selected_sections?: SelectedSection[];
 }
 
 type RetrievalMode = "vectorless" | "hybrid" | "vector";
@@ -371,7 +375,7 @@ export default function PlaygroundPage() {
       return;
     }
 
-    setResult(response.data as QueryResult);
+    setResult(response.data as unknown as QueryResult);
     setActiveStep(4); // All done
     setIsRunning(false);
   }, [query, selectedDoc, mode, isRunning]);
