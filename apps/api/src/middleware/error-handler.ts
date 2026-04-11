@@ -61,7 +61,7 @@ export function errorHandler(err: Error, c: Context) {
     {
       error: {
         code: "server_error",
-        message: "An unexpected error occurred",
+        message: err.message || "An unexpected error occurred",
         status: 500,
         request_id: requestId,
       },
