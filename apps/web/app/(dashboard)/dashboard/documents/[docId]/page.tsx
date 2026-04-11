@@ -23,7 +23,9 @@ import {
   FileType,
   GitBranch,
   Loader2,
+  ExternalLink,
 } from "lucide-react";
+import { MarkdownSummary } from "@/components/ui/markdown";
 
 interface DocumentDetail {
   doc_id: string;
@@ -244,19 +246,28 @@ export default function DocumentDetailPage({
                         </h3>
                       </div>
                       {section.summary && (
-                        <p className="text-sm text-muted-foreground pl-8">
-                          {section.summary}
-                        </p>
+                        <div className="pl-8">
+                          <MarkdownSummary content={section.summary} />
+                        </div>
                       )}
                     </div>
-                    {section.page_range && (
+                    <div className="flex shrink-0 flex-col items-end gap-1">
+                      {section.page_range && (
+                        <Badge
+                          variant="secondary"
+                          className="text-xs font-mono"
+                        >
+                          pp. {section.page_range}
+                        </Badge>
+                      )}
                       <Badge
-                        variant="secondary"
-                        className="shrink-0 text-xs font-mono"
+                        variant="outline"
+                        className="text-[10px] font-mono text-muted-foreground"
                       >
-                        pp. {section.page_range}
+                        <ExternalLink className="mr-1 h-2.5 w-2.5" />
+                        {section.section_id}
                       </Badge>
-                    )}
+                    </div>
                   </div>
                 </Link>
               ))}

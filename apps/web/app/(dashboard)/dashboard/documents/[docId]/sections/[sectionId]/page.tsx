@@ -14,6 +14,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowLeft, Copy, Check, Hash, Layers, FileText } from "lucide-react";
+import { Markdown, MarkdownSummary } from "@/components/ui/markdown";
 import { use } from "react";
 
 interface SectionDetail {
@@ -147,9 +148,7 @@ export default function SectionDetailPage({
             <CardTitle className="text-base">Summary</CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm leading-relaxed text-foreground">
-              {section.summary}
-            </p>
+            <MarkdownSummary content={section.summary} />
           </CardContent>
         </Card>
       )}
@@ -176,9 +175,7 @@ export default function SectionDetailPage({
         <CardContent className="p-0">
           <ScrollArea className="h-[600px]">
             <div className="p-6">
-              <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-foreground">
-                {section.content}
-              </pre>
+              <Markdown content={section.content} />
             </div>
           </ScrollArea>
         </CardContent>
