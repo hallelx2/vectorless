@@ -5,10 +5,12 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { playgroundSessions } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
+import { GoogleGenAI } from "@google/genai";
 
 const VECTORLESS_API_URL =
   process.env.VECTORLESS_API_URL || "https://api.vectorless.store";
 const VECTORLESS_API_KEY = process.env.VECTORLESS_INTERNAL_API_KEY || "";
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
 
 function generateId(): string {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -44,10 +46,11 @@ export async function runPlaygroundQuery(data: {
   try {
     const startTime = Date.now();
 
-    // Step 1: Get the ToC manifest
-    const tocRes = await fetch(`${VECTORLESS_API_URL}/v1/documents/${docId}/toc`, {
-      headers: apiHeaders,
-    });
+    // ── Step 1: Get the ToC manifest ──
+    const tocRes = await fetch(
+      `${VECTORLESS_API_URL}/v1/documents/${docId}/toc`,
+      { headers: apiHeaders }
+    );
 
     if (!tocRes.ok) {
       return { error: `Failed to get ToC: ${tocRes.status}` };
@@ -56,25 +59,91 @@ export async function runPlaygroundQuery(data: {
     const toc = await tocRes.json();
     const tocTime = Date.now() - startTime;
 
-    // Step 2: Select sections based on query (keyword matching)
-    const queryLower = data.query.toLowerCase();
-    const queryWords = queryLower
-      .split(/\s+/)
-      .filter((w: string) => w.length > 2);
+    // ── Step 2: LLM reasons over the ToC to select sections ──
+    const selectStart = Date.now();
+    let sectionIds: string[] = [];
+    let reasoning = "";
 
-    const selectedSections = toc.sections.filter((s: any) => {
-      const text = `${s.title} ${s.summary || ""}`.toLowerCase();
-      return queryWords.some((word: string) => text.includes(word));
-    });
+    if (GEMINI_API_KEY) {
+      // Real LLM reasoning — this is the core of Vectorless
+      const gemini = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
-    const sectionIds =
-      selectedSections.length > 0
-        ? selectedSections.map((s: any) => s.section_id)
-        : toc.sections.slice(0, 3).map((s: any) => s.section_id);
+      const tocSummary = toc.sections
+        .map(
+          (s: any) =>
+            `- section_id: "${s.section_id}"\n  title: "${s.title}"\n  summary: "${(s.summary || "").slice(0, 300)}"`
+        )
+        .join("\n\n");
 
-    const selectTime = Date.now() - startTime - tocTime;
+      const prompt = `You are a document retrieval assistant. A user has a question and you have a document's table of contents with section summaries. Your job is to select which sections are most likely to contain the answer.
 
-    // Step 3: Fetch the selected sections
+Document: "${toc.title}"
+
+Table of Contents:
+${tocSummary}
+
+User's question: "${data.query}"
+
+Instructions:
+1. Read each section's title and summary carefully
+2. Select the sections that are most relevant to answering the question
+3. Explain your reasoning — why each selected section is relevant
+
+Respond with valid JSON only:
+{
+  "selected_section_ids": ["section_id_1", "section_id_2"],
+  "reasoning": "Your explanation of why these sections were selected and how they relate to the question"
+}`;
+
+      try {
+        const res = await gemini.models.generateContent({
+          model: "gemini-2.5-flash",
+          contents: prompt,
+          config: {
+            maxOutputTokens: 1024,
+            temperature: 0.2,
+            thinkingConfig: { thinkingBudget: 0 },
+          },
+        });
+
+        const text = res.text ?? "";
+        const jsonMatch = text.match(/\{[\s\S]*\}/);
+
+        if (jsonMatch) {
+          const parsed = JSON.parse(jsonMatch[0]);
+          sectionIds = parsed.selected_section_ids || [];
+          reasoning = parsed.reasoning || "";
+        }
+      } catch (llmErr) {
+        // LLM failed — fall back to keyword matching
+        console.error("LLM reasoning failed:", llmErr);
+      }
+    }
+
+    // Fallback: keyword matching if LLM didn't return results
+    if (sectionIds.length === 0) {
+      const queryLower = data.query.toLowerCase();
+      const queryWords = queryLower
+        .split(/\s+/)
+        .filter((w: string) => w.length > 2);
+
+      const matched = toc.sections.filter((s: any) => {
+        const text = `${s.title} ${s.summary || ""}`.toLowerCase();
+        return queryWords.some((word: string) => text.includes(word));
+      });
+
+      sectionIds =
+        matched.length > 0
+          ? matched.map((s: any) => s.section_id)
+          : toc.sections.slice(0, 3).map((s: any) => s.section_id);
+
+      reasoning = `Fallback: keyword matching selected ${sectionIds.length} sections. Configure a Gemini API key for LLM-powered reasoning.`;
+    }
+
+    const selectTime = Date.now() - selectStart;
+
+    // ── Step 3: Fetch the selected sections ──
+    const fetchStart = Date.now();
     const sectionsRes = await fetch(
       `${VECTORLESS_API_URL}/v1/documents/${docId}/sections/batch`,
       {
@@ -87,7 +156,7 @@ export async function runPlaygroundQuery(data: {
     const sectionsData = sectionsRes.ok
       ? await sectionsRes.json()
       : { sections: [] };
-    const fetchTime = Date.now() - startTime - tocTime - selectTime;
+    const fetchTime = Date.now() - fetchStart;
 
     return {
       success: true,
@@ -95,7 +164,7 @@ export async function runPlaygroundQuery(data: {
         toc,
         selected_section_ids: sectionIds,
         sections: sectionsData.sections || [],
-        reasoning: `Matched ${sectionIds.length} sections for query "${data.query}" using keyword matching. In production, your LLM would reason over the ToC manifest to select relevant sections.`,
+        reasoning,
         timing: {
           toc_ms: tocTime,
           select_ms: selectTime,
