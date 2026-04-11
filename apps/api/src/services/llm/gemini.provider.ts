@@ -11,10 +11,8 @@ export class GeminiProvider implements LLMProvider {
 
   constructor(options: GeminiProviderOptions) {
     if ("apiKey" in options) {
-      // BYOK mode: user's own API key via AI Studio
       this.client = new GoogleGenAI({ apiKey: options.apiKey });
     } else {
-      // Platform mode: Vertex AI with service account credentials
       this.client = new GoogleGenAI({
         vertexai: true,
         project: options.project,
@@ -25,11 +23,13 @@ export class GeminiProvider implements LLMProvider {
 
   async generateText(prompt: string, options?: LLMOptions): Promise<string> {
     const response = await this.client.models.generateContent({
-      model: options?.model ?? "gemini-2.0-flash",
+      model: options?.model ?? "gemini-2.5-flash",
       contents: prompt,
       config: {
         maxOutputTokens: options?.maxTokens ?? 4096,
         temperature: options?.temperature ?? 0.3,
+        // Disable thinking mode to get full output in text
+        thinkingConfig: { thinkingBudget: 0 },
       },
     });
 
