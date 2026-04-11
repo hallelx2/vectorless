@@ -6,7 +6,9 @@ import { db } from "@/db";
 import { playgroundSessions } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+const VECTORLESS_API_URL =
+  process.env.VECTORLESS_API_URL || "https://api.vectorless.store";
+const VECTORLESS_API_KEY = process.env.VECTORLESS_INTERNAL_API_KEY || "";
 
 function generateId(): string {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -29,24 +31,79 @@ export async function runPlaygroundQuery(data: {
     return { error: "Unauthorized" };
   }
 
+  if (!data.query?.trim() || data.docIds.length === 0) {
+    return { error: "Query and document are required" };
+  }
+
+  const docId = data.docIds[0]!;
+  const apiHeaders = {
+    Authorization: `Bearer ${VECTORLESS_API_KEY}`,
+    "Content-Type": "application/json",
+  };
+
   try {
-    const res = await fetch(`${API_BASE_URL}/api/dashboard/playground`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        query: data.query,
-        doc_id: data.docIds.length > 0 ? data.docIds[0] : undefined,
-        strategy: data.strategy,
-      }),
+    const startTime = Date.now();
+
+    // Step 1: Get the ToC manifest
+    const tocRes = await fetch(`${VECTORLESS_API_URL}/v1/documents/${docId}/toc`, {
+      headers: apiHeaders,
     });
 
-    if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
-      return { error: body?.error?.message || `Query failed: ${res.status}` };
+    if (!tocRes.ok) {
+      return { error: `Failed to get ToC: ${tocRes.status}` };
     }
 
-    const result = await res.json();
-    return { success: true, data: result };
+    const toc = await tocRes.json();
+    const tocTime = Date.now() - startTime;
+
+    // Step 2: Select sections based on query (keyword matching)
+    const queryLower = data.query.toLowerCase();
+    const queryWords = queryLower
+      .split(/\s+/)
+      .filter((w: string) => w.length > 2);
+
+    const selectedSections = toc.sections.filter((s: any) => {
+      const text = `${s.title} ${s.summary || ""}`.toLowerCase();
+      return queryWords.some((word: string) => text.includes(word));
+    });
+
+    const sectionIds =
+      selectedSections.length > 0
+        ? selectedSections.map((s: any) => s.section_id)
+        : toc.sections.slice(0, 3).map((s: any) => s.section_id);
+
+    const selectTime = Date.now() - startTime - tocTime;
+
+    // Step 3: Fetch the selected sections
+    const sectionsRes = await fetch(
+      `${VECTORLESS_API_URL}/v1/documents/${docId}/sections/batch`,
+      {
+        method: "POST",
+        headers: apiHeaders,
+        body: JSON.stringify({ section_ids: sectionIds }),
+      }
+    );
+
+    const sectionsData = sectionsRes.ok
+      ? await sectionsRes.json()
+      : { sections: [] };
+    const fetchTime = Date.now() - startTime - tocTime - selectTime;
+
+    return {
+      success: true,
+      data: {
+        toc,
+        selected_section_ids: sectionIds,
+        sections: sectionsData.sections || [],
+        reasoning: `Matched ${sectionIds.length} sections for query "${data.query}" using keyword matching. In production, your LLM would reason over the ToC manifest to select relevant sections.`,
+        timing: {
+          toc_ms: tocTime,
+          select_ms: selectTime,
+          fetch_ms: fetchTime,
+          total_ms: Date.now() - startTime,
+        },
+      },
+    };
   } catch (err) {
     return {
       error:
