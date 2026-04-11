@@ -399,7 +399,7 @@ export default function PlaygroundPage() {
     ? {
         document: result.doc_id || "all",
         strategy: result.strategy,
-        sections: result.selected_sections.map((s) => ({
+        sections: (result.selected_sections || []).map((s) => ({
           id: s.section_id,
           title: s.title,
           page_range: s.page_range,
@@ -593,7 +593,7 @@ export default function PlaygroundPage() {
               </CardTitle>
               <CardDescription>
                 {result
-                  ? `${result.selected_sections.length} section${result.selected_sections.length !== 1 ? "s" : ""} retrieved in ${result.timing.total_ms}ms`
+                  ? `${(result.selected_sections || []).length} section${(result.selected_sections || []).length !== 1 ? "s" : ""} retrieved in ${result.timing.total_ms}ms`
                   : "Run a query to inspect the step-by-step retrieval process"}
               </CardDescription>
             </CardHeader>
@@ -676,7 +676,7 @@ export default function PlaygroundPage() {
 
                         {/* Section IDs */}
                         <div className="flex flex-wrap gap-1.5">
-                          {result.selected_sections.map((s) => (
+                          {(result.selected_sections || []).map((s) => (
                             <Badge
                               key={s.section_id}
                               variant="secondary"
@@ -707,7 +707,7 @@ export default function PlaygroundPage() {
                   >
                     {result && (
                       <div className="space-y-2">
-                        {result.selected_sections.map((section) => (
+                        {(result.selected_sections || []).map((section) => (
                           <SectionCard
                             key={section.section_id}
                             section={section}
