@@ -16,7 +16,9 @@ const envSchema = z.object({
   PORT: z.coerce.number().default(3001),
   LLM_PROVIDER: z.enum(["anthropic", "gemini"]).default("gemini"),
   ANTHROPIC_API_KEY: z.string().optional(),
-  // Vertex AI (Gemini via Google Cloud) — uses service account credentials JSON
+  // Gemini API key (AI Studio — works on Vercel/serverless)
+  GEMINI_API_KEY: z.string().optional(),
+  // Vertex AI (Gemini via Google Cloud — needs filesystem, local dev only)
   GOOGLE_APPLICATION_CREDENTIALS: z.string().optional(),
   GOOGLE_CLOUD_PROJECT: z.string().optional(),
   GOOGLE_CLOUD_LOCATION: z.string().default("us-central1"),

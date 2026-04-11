@@ -54,15 +54,19 @@ export function getPlatformProvider(): LLMProvider {
       break;
     }
     case "gemini": {
-      if (!config.GOOGLE_CLOUD_PROJECT) {
+      // Prefer API key mode (works on Vercel/serverless) over Vertex AI (needs filesystem)
+      if (config.GEMINI_API_KEY) {
+        _platformProvider = new GeminiProvider({ apiKey: config.GEMINI_API_KEY });
+      } else if (config.GOOGLE_CLOUD_PROJECT) {
+        _platformProvider = new GeminiProvider({
+          project: config.GOOGLE_CLOUD_PROJECT,
+          location: config.GOOGLE_CLOUD_LOCATION ?? "us-central1",
+        });
+      } else {
         throw new Error(
-          "GOOGLE_CLOUD_PROJECT is required when LLM_PROVIDER=gemini and no BYOK key is configured"
+          "GEMINI_API_KEY or GOOGLE_CLOUD_PROJECT is required when LLM_PROVIDER=gemini"
         );
       }
-      _platformProvider = new GeminiProvider({
-        project: config.GOOGLE_CLOUD_PROJECT,
-        location: config.GOOGLE_CLOUD_LOCATION ?? "us-central1",
-      });
       break;
     }
     default:
