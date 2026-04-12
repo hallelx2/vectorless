@@ -24,6 +24,7 @@ import {
   GitBranch,
   Loader2,
   ExternalLink,
+  Network,
 } from "lucide-react";
 import { MarkdownSummary } from "@/components/ui/markdown";
 
@@ -192,6 +193,12 @@ export default function DocumentDetailPage({
             <Link href={`/dashboard/documents/${docId}/sections`}>
               <Layers className="h-4 w-4" />
               Explore Sections
+            </Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href={`/dashboard/documents/${docId}/graph`}>
+              <Network className="h-4 w-4" />
+              View Graph
             </Link>
           </Button>
           <Button
