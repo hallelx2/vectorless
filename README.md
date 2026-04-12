@@ -5,7 +5,6 @@
 **Document retrieval for the reasoning era.**
 
 [![CI](https://github.com/hallelx2/vectorless/actions/workflows/ci.yml/badge.svg)](https://github.com/hallelx2/vectorless/actions/workflows/ci.yml)
-[![CD](https://github.com/hallelx2/vectorless/actions/workflows/deploy-web.yml/badge.svg)](https://github.com/hallelx2/vectorless/actions/workflows/deploy-web.yml)
 [![npm](https://img.shields.io/npm/v/vectorless?color=blue&label=npm)](https://www.npmjs.com/package/vectorless)
 [![PyPI](https://img.shields.io/pypi/v/vectorless-sdk?color=blue&label=pypi)](https://pypi.org/project/vectorless-sdk/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
