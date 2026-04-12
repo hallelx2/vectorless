@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 480" width="800" height="480" font-family="'Segoe UI', system-ui, -apple-system, sans-serif">
+  <defs>
+    <filter id="rough" x="-2%" y="-2%" width="104%" height="104%">
+      <feTurbulence type="turbulence" baseFrequency="0.03" numOctaves="4" result="noise" seed="3"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.2" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#1456f0"/>
+    </marker>
+    <marker id="arrow-pink" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#ea5ec1"/>
+    </marker>
+    <marker id="arrow-dark" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#181e25"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="480" fill="white" rx="8"/>
+
+  <!-- Title -->
+  <text x="400" y="38" text-anchor="middle" font-size="20" font-weight="700" fill="#181e25" filter="url(#rough)">System Architecture</text>
+
+  <!-- ===== YOUR APP layer ===== -->
+  <rect x="260" y="60" width="280" height="48" rx="12" fill="#f2f3f5" stroke="#181e25" stroke-width="1.5" stroke-dasharray="6,3" filter="url(#rough)"/>
+  <text x="400" y="88" text-anchor="middle" font-size="14" font-weight="600" fill="#181e25" filter="url(#rough)">Your Application</text>
+
+  <!-- Arrow from App down to SDKs -->
+  <line x1="400" y1="108" x2="400" y2="134" stroke="#181e25" stroke-width="1.5" marker-end="url(#arrow-dark)" filter="url(#rough)"/>
+
+  <!-- ===== SDK layer ===== -->
+  <rect x="170" y="136" width="180" height="48" rx="12" fill="#eef2ff" stroke="#1456f0" stroke-width="2" filter="url(#rough)"/>
+  <text x="260" y="157" text-anchor="middle" font-size="13" font-weight="600" fill="#1456f0" filter="url(#rough)">TypeScript SDK</text>
+  <text x="260" y="173" text-anchor="middle" font-size="10" fill="#1456f0" opacity="0.7" filter="url(#rough)">npm: vectorless</text>
+
+  <rect x="450" y="136" width="180" height="48" rx="12" fill="#eef2ff" stroke="#1456f0" stroke-width="2" filter="url(#rough)"/>
+  <text x="540" y="157" text-anchor="middle" font-size="13" font-weight="600" fill="#1456f0" filter="url(#rough)">Python SDK</text>
+  <text x="540" y="173" text-anchor="middle" font-size="10" fill="#1456f0" opacity="0.7" filter="url(#rough)">pip: vectorless-sdk</text>
+
+  <!-- Arrows from SDKs down to API -->
+  <line x1="260" y1="184" x2="350" y2="220" stroke="#1456f0" stroke-width="1.5" marker-end="url(#arrow-blue)" filter="url(#rough)"/>
+  <line x1="540" y1="184" x2="450" y2="220" stroke="#1456f0" stroke-width="1.5" marker-end="url(#arrow-blue)" filter="url(#rough)"/>
+
+  <!-- ===== API layer ===== -->
+  <rect x="250" y="222" width="300" height="60" rx="14" fill="#fce4f3" stroke="#ea5ec1" stroke-width="2.5" filter="url(#rough)"/>
+  <text x="400" y="249" text-anchor="middle" font-size="16" font-weight="700" fill="#ea5ec1" filter="url(#rough)">Vectorless API</text>
+  <text x="400" y="269" text-anchor="middle" font-size="11" fill="#ea5ec1" opacity="0.7" filter="url(#rough)">Fastify on Vercel</text>
+
+  <!-- Arrows from API down to services -->
+  <line x1="310" y1="282" x2="140" y2="340" stroke="#ea5ec1" stroke-width="1.5" marker-end="url(#arrow-pink)" filter="url(#rough)"/>
+  <line x1="365" y1="282" x2="330" y2="340" stroke="#ea5ec1" stroke-width="1.5" marker-end="url(#arrow-pink)" filter="url(#rough)"/>
+  <line x1="435" y1="282" x2="480" y2="340" stroke="#ea5ec1" stroke-width="1.5" marker-end="url(#arrow-pink)" filter="url(#rough)"/>
+  <line x1="490" y1="282" x2="640" y2="340" stroke="#ea5ec1" stroke-width="1.5" marker-end="url(#arrow-pink)" filter="url(#rough)"/>
+
+  <!-- ===== Infrastructure layer ===== -->
+  <!-- Neon Postgres -->
+  <rect x="60" y="342" width="155" height="60" rx="12" fill="#f2f3f5" stroke="#181e25" stroke-width="1.5" filter="url(#rough)"/>
+  <text x="137" y="367" text-anchor="middle" font-size="13" font-weight="600" fill="#181e25" filter="url(#rough)">Neon</text>
+  <text x="137" y="385" text-anchor="middle" font-size="10" fill="#181e25" opacity="0.6" filter="url(#rough)">PostgreSQL + Documents</text>
+
+  <!-- R2 Storage -->
+  <rect x="250" y="342" width="155" height="60" rx="12" fill="#f2f3f5" stroke="#181e25" stroke-width="1.5" filter="url(#rough)"/>
+  <text x="327" y="367" text-anchor="middle" font-size="13" font-weight="600" fill="#181e25" filter="url(#rough)">Cloudflare R2</text>
+  <text x="327" y="385" text-anchor="middle" font-size="10" fill="#181e25" opacity="0.6" filter="url(#rough)">File Storage (S3)</text>
+
+  <!-- QStash -->
+  <rect x="440" y="342" width="155" height="60" rx="12" fill="#f2f3f5" stroke="#181e25" stroke-width="1.5" filter="url(#rough)"/>
+  <text x="517" y="367" text-anchor="middle" font-size="13" font-weight="600" fill="#181e25" filter="url(#rough)">Upstash QStash</text>
+  <text x="517" y="385" text-anchor="middle" font-size="10" fill="#181e25" opacity="0.6" filter="url(#rough)">Background Jobs</text>
+
+  <!-- Gemini LLM -->
+  <rect x="630" y="342" width="120" height="60" rx="12" fill="#f2f3f5" stroke="#181e25" stroke-width="1.5" filter="url(#rough)"/>
+  <text x="690" y="367" text-anchor="middle" font-size="13" font-weight="600" fill="#181e25" filter="url(#rough)">Gemini</text>
+  <text x="690" y="385" text-anchor="middle" font-size="10" fill="#181e25" opacity="0.6" filter="url(#rough)">LLM (ToC Gen)</text>
+
+  <!-- Layer labels on the left -->
+  <text x="24" y="86" font-size="9" font-weight="600" fill="#8e8e93" letter-spacing="1" transform="rotate(-90,24,86)" filter="url(#rough)">APP</text>
+  <text x="24" y="162" font-size="9" font-weight="600" fill="#8e8e93" letter-spacing="1" transform="rotate(-90,24,162)" filter="url(#rough)">SDK</text>
+  <text x="24" y="254" font-size="9" font-weight="600" fill="#8e8e93" letter-spacing="1" transform="rotate(-90,24,254)" filter="url(#rough)">API</text>
+  <text x="24" y="374" font-size="9" font-weight="600" fill="#8e8e93" letter-spacing="1" transform="rotate(-90,24,374)" filter="url(#rough)">INFRA</text>
+
+  <!-- Web Dashboard (side box) -->
+  <rect x="620" y="100" width="150" height="48" rx="10" fill="#f2f3f5" stroke="#8e8e93" stroke-width="1.2" stroke-dasharray="4,3" filter="url(#rough)"/>
+  <text x="695" y="121" text-anchor="middle" font-size="12" font-weight="600" fill="#8e8e93" filter="url(#rough)">Web Dashboard</text>
+  <text x="695" y="137" text-anchor="middle" font-size="10" fill="#8e8e93" opacity="0.6" filter="url(#rough)">Next.js 15</text>
+  <line x1="620" y1="124" x2="552" y2="252" stroke="#8e8e93" stroke-width="1" stroke-dasharray="4,3" marker-end="url(#arrow-dark)" filter="url(#rough)" opacity="0.5"/>
+
+  <!-- Footer -->
+  <text x="400" y="440" text-anchor="middle" font-size="11" fill="#181e25" opacity="0.45" filter="url(#rough)">vectorless.store</text>
+</svg>

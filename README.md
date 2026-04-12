@@ -32,19 +32,52 @@ The result: more accurate retrieval, complete context, and every choice is trace
 
 ## How It Works
 
-```
-Document uploaded --> Structure extracted --> ToC map generated --> Sections stored
-                                                    |
-At query time:                                      v
-  Your LLM reads the map --> Picks relevant sections --> Fetches full content
-```
+<div align="center">
 
-| Traditional RAG | Vectorless |
-|----------------|------------|
-| Arbitrary chunks | Natural sections |
-| Vector similarity | LLM reasoning |
-| Structure destroyed | Structure preserved |
-| Black box ranking | Every choice traceable |
+![How Vectorless Works](docs/how-it-works.svg)
+
+</div>
+
+Traditional RAG shatters documents into arbitrary chunks and relies on vector similarity -- a black box that destroys structure and loses context. Vectorless takes a fundamentally different approach:
+
+| | Traditional RAG | Vectorless |
+|---|----------------|------------|
+| **Splitting** | Arbitrary chunks | Natural sections |
+| **Retrieval** | Vector similarity | LLM reasoning |
+| **Structure** | Destroyed | Preserved |
+| **Traceability** | Black box ranking | Every choice explainable |
+| **Context** | Fragments | Complete sections |
+
+## Architecture
+
+<div align="center">
+
+![System Architecture](docs/architecture.svg)
+
+</div>
+
+Vectorless is designed as a modular stack. Your application talks to the API through one of the official SDKs (TypeScript or Python). The API orchestrates document processing across four infrastructure services:
+
+- **Neon (PostgreSQL)** -- stores documents, sections, ToC maps, and metadata
+- **Cloudflare R2** -- holds uploaded document files (S3-compatible)
+- **Upstash QStash** -- manages background jobs for async document processing
+- **Gemini / Claude** -- LLM used to generate summaries and ToC maps
+
+## The Retrieval Flow
+
+<div align="center">
+
+![Query Retrieval Flow](docs/retrieval-flow.svg)
+
+</div>
+
+Retrieval happens in three steps:
+
+1. **Get the Document Map** -- call `getToC()` to receive a structured Table of Contents with section titles, summaries, and IDs. This is lightweight metadata, not the full content.
+
+2. **LLM Reasons Over the Map** -- pass the ToC to your LLM along with the user's query. The LLM reads the summaries and selects exactly the sections relevant to the question. Every choice is visible and explainable.
+
+3. **Fetch Complete Sections** -- call `fetchSections()` with the IDs your LLM selected. You get back full, unbroken section content -- no fragments, no missing context.
 
 ## Quick Start
 
@@ -155,6 +188,7 @@ vectorless/
     openapi/     # OpenAPI 3.1 specification
   sdks/
     python/      # Python SDK (PyPI: vectorless-sdk)
+  docs/          # SVG diagrams and documentation assets
 ```
 
 ## Self-Hosting

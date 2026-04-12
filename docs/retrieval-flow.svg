@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 580" width="800" height="580" font-family="'Segoe UI', system-ui, -apple-system, sans-serif">
+  <defs>
+    <filter id="rough" x="-2%" y="-2%" width="104%" height="104%">
+      <feTurbulence type="turbulence" baseFrequency="0.03" numOctaves="4" result="noise" seed="5"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.2" xChannelSelector="R" yChannelSelector="G"/>
+    </filter>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#1456f0"/>
+    </marker>
+    <marker id="arrow-pink" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#ea5ec1"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="580" fill="white" rx="8"/>
+
+  <!-- Title -->
+  <text x="400" y="38" text-anchor="middle" font-size="20" font-weight="700" fill="#181e25" filter="url(#rough)">Query Retrieval Flow</text>
+  <text x="400" y="58" text-anchor="middle" font-size="12" fill="#8e8e93" filter="url(#rough)">Three steps from question to answer</text>
+
+  <!-- ===== STEP 1 ===== -->
+  <!-- Step label -->
+  <rect x="30" y="80" width="88" height="28" rx="14" fill="#1456f0" filter="url(#rough)"/>
+  <text x="74" y="99" text-anchor="middle" font-size="12" font-weight="700" fill="white" filter="url(#rough)">Step 1</text>
+  <text x="132" y="99" font-size="13" font-weight="600" fill="#181e25" filter="url(#rough)">Get the Document Map (ToC)</text>
+
+  <!-- ToC box -->
+  <rect x="180" y="118" width="440" height="130" rx="12" fill="#eef2ff" stroke="#1456f0" stroke-width="2" filter="url(#rough)"/>
+
+  <!-- ToC header -->
+  <rect x="180" y="118" width="440" height="32" rx="12" fill="#1456f0" filter="url(#rough)"/>
+  <rect x="180" y="138" width="440" height="12" fill="#1456f0"/>
+  <text x="400" y="139" text-anchor="middle" font-size="12" font-weight="700" fill="white" filter="url(#rough)">Document Map -- Clinical Guidelines 2024</text>
+
+  <!-- ToC entries -->
+  <text x="210" y="172" font-size="12" fill="#181e25" filter="url(#rough)">1. Introduction</text>
+  <text x="430" y="172" font-size="10" fill="#8e8e93" filter="url(#rough)">Overview of the guideline scope</text>
+
+  <text x="210" y="194" font-size="12" fill="#1456f0" font-weight="600" filter="url(#rough)">2. Treatment Protocols</text>
+  <text x="430" y="194" font-size="10" fill="#1456f0" opacity="0.7" filter="url(#rough)">Recommended treatment pathways</text>
+  <rect x="200" y="182" width="410" height="18" rx="4" fill="#1456f0" opacity="0.06"/>
+
+  <text x="210" y="216" font-size="12" fill="#ea5ec1" font-weight="600" filter="url(#rough)">3. Dosing Guidelines</text>
+  <text x="430" y="216" font-size="10" fill="#ea5ec1" opacity="0.7" filter="url(#rough)">Dosage calculations and adjustments</text>
+  <rect x="200" y="204" width="410" height="18" rx="4" fill="#ea5ec1" opacity="0.06"/>
+
+  <text x="210" y="238" font-size="12" fill="#181e25" filter="url(#rough)">4. Monitoring</text>
+  <text x="430" y="238" font-size="10" fill="#8e8e93" filter="url(#rough)">Patient monitoring requirements</text>
+
+  <!-- Arrow down -->
+  <line x1="400" y1="248" x2="400" y2="280" stroke="#1456f0" stroke-width="2" marker-end="url(#arrow-blue)" filter="url(#rough)"/>
+
+  <!-- ===== STEP 2 ===== -->
+  <rect x="30" y="290" width="88" height="28" rx="14" fill="#ea5ec1" filter="url(#rough)"/>
+  <text x="74" y="309" text-anchor="middle" font-size="12" font-weight="700" fill="white" filter="url(#rough)">Step 2</text>
+  <text x="132" y="309" font-size="13" font-weight="600" fill="#181e25" filter="url(#rough)">LLM Reasons Over the Map</text>
+
+  <!-- LLM reasoning bubble -->
+  <rect x="180" y="325" width="440" height="80" rx="16" fill="#fce4f3" stroke="#ea5ec1" stroke-width="2" filter="url(#rough)"/>
+  <text x="220" y="352" font-size="12" fill="#181e25" filter="url(#rough)" font-style="italic">"The user asks about medication dosing for</text>
+  <text x="220" y="370" font-size="12" fill="#181e25" filter="url(#rough)" font-style="italic">elderly patients. Section 2 covers treatment</text>
+  <text x="220" y="388" font-size="12" fill="#181e25" filter="url(#rough)" font-style="italic">protocols, Section 3 has dosing. Both relevant."</text>
+
+  <!-- Small LLM icon -->
+  <rect x="590" y="338" width="20" height="20" rx="4" fill="#ea5ec1" filter="url(#rough)"/>
+  <text x="600" y="353" text-anchor="middle" font-size="10" fill="white" font-weight="700">AI</text>
+
+  <!-- Arrow down -->
+  <line x1="400" y1="405" x2="400" y2="438" stroke="#ea5ec1" stroke-width="2" marker-end="url(#arrow-pink)" filter="url(#rough)"/>
+
+  <!-- ===== STEP 3 ===== -->
+  <rect x="30" y="445" width="88" height="28" rx="14" fill="#1456f0" filter="url(#rough)"/>
+  <text x="74" y="464" text-anchor="middle" font-size="12" font-weight="700" fill="white" filter="url(#rough)">Step 3</text>
+  <text x="132" y="464" font-size="13" font-weight="600" fill="#181e25" filter="url(#rough)">Fetch Complete Sections</text>
+
+  <!-- Result boxes -->
+  <rect x="180" y="480" width="205" height="70" rx="12" fill="#eef2ff" stroke="#1456f0" stroke-width="2" filter="url(#rough)"/>
+  <text x="282" y="504" text-anchor="middle" font-size="13" font-weight="600" fill="#1456f0" filter="url(#rough)">Section 2</text>
+  <text x="282" y="522" text-anchor="middle" font-size="10" fill="#1456f0" opacity="0.7" filter="url(#rough)">Treatment Protocols</text>
+  <text x="282" y="540" text-anchor="middle" font-size="10" fill="#8e8e93" filter="url(#rough)">Full content returned</text>
+
+  <rect x="415" y="480" width="205" height="70" rx="12" fill="#fce4f3" stroke="#ea5ec1" stroke-width="2" filter="url(#rough)"/>
+  <text x="517" y="504" text-anchor="middle" font-size="13" font-weight="600" fill="#ea5ec1" filter="url(#rough)">Section 3</text>
+  <text x="517" y="522" text-anchor="middle" font-size="10" fill="#ea5ec1" opacity="0.7" filter="url(#rough)">Dosing Guidelines</text>
+  <text x="517" y="540" text-anchor="middle" font-size="10" fill="#8e8e93" filter="url(#rough)">Full content returned</text>
+
+  <!-- Check marks -->
+  <text x="358" y="515" font-size="18" fill="#1456f0" filter="url(#rough)">+</text>
+
+  <!-- Step numbers on right side -->
+  <rect x="690" y="155" width="80" height="24" rx="6" fill="#f2f3f5" filter="url(#rough)"/>
+  <text x="730" y="172" text-anchor="middle" font-size="10" fill="#8e8e93" filter="url(#rough)">getToC()</text>
+
+  <rect x="690" y="352" width="80" height="24" rx="6" fill="#f2f3f5" filter="url(#rough)"/>
+  <text x="730" y="369" text-anchor="middle" font-size="10" fill="#8e8e93" filter="url(#rough)">Your LLM</text>
+
+  <rect x="690" y="505" width="80" height="24" rx="6" fill="#f2f3f5" filter="url(#rough)"/>
+  <text x="730" y="522" text-anchor="middle" font-size="10" fill="#8e8e93" filter="url(#rough)">fetch()</text>
+
+  <!-- Footer -->
+  <text x="400" y="572" text-anchor="middle" font-size="11" fill="#181e25" opacity="0.45" filter="url(#rough)">vectorless.store</text>
+</svg>
