@@ -1,5 +1,5 @@
 {
-  "installCommand": "cd ../.. && pnpm install && cd apps/api && pnpm --filter=@vectorless/shared build",
+  "installCommand": "cd ../.. && pnpm install && pnpm --filter=@vectorless/shared build && pnpm --filter=vectorless build && pnpm --filter=@vectorless/mcp-tools build",
   "rewrites": [
     { "source": "/(.*)", "destination": "/api" }
   ],

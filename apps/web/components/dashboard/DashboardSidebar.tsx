@@ -12,6 +12,9 @@ import {
   ChevronLeft,
   ChevronRight,
   Bot,
+  Unplug,
+  Activity,
+  CreditCard,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { VectorlessDot } from "@/components/VectorlessIcon";
@@ -53,6 +56,7 @@ const navGroups: NavGroup[] = [
     title: "Insights",
     items: [
       { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+      { label: "Usage", href: "/dashboard/usage", icon: Activity },
       { label: "API Keys", href: "/dashboard/api-keys", icon: Key },
     ],
   },
@@ -61,6 +65,8 @@ const navGroups: NavGroup[] = [
     items: [
       { label: "Settings", href: "/dashboard/settings", icon: Settings },
       { label: "LLM Keys", href: "/dashboard/settings/llm-keys", icon: Bot },
+      { label: "Connected Apps", href: "/dashboard/connected-apps", icon: Unplug },
+      { label: "Billing", href: "/dashboard/billing", icon: CreditCard },
     ],
   },
 ];

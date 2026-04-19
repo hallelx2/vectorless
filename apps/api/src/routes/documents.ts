@@ -15,13 +15,15 @@ import {
 import { enqueueIngest } from "../services/queue.service.js";
 import { runIngestPipeline } from "../services/ingest.service.js";
 import { detectSourceType } from "../services/parser/index.js";
+import { rateLimitFor } from "../middleware/rate-limit.js";
+import { quotaCheck, recordUsage } from "../middleware/quota.js";
 import { notFound, badRequest } from "../middleware/error-handler.js";
 import { config } from "../config.js";
 
 const app = new Hono<{ Variables: Variables }>();
 
 // POST /v1/documents — Upload and ingest
-app.post("/documents", authMiddleware, async (c) => {
+app.post("/documents", authMiddleware, rateLimitFor("ingest"), quotaCheck("ingest"), async (c) => {
   const formData = await c.req.formData();
   const file = formData.get("file") as File | null;
 
@@ -63,6 +65,8 @@ app.post("/documents", authMiddleware, async (c) => {
     embedSections,
   };
 
+  const auth = c.get("auth");
+
   // In local dev, run ingestion inline (QStash can't reach localhost)
   // In production, enqueue via QStash for async background processing
   const isLocalDev = config.API_BASE_URL.includes("localhost");
@@ -70,6 +74,15 @@ app.post("/documents", authMiddleware, async (c) => {
   if (isLocalDev) {
     try {
       await runIngestPipeline(ingestPayload);
+
+      // Record usage after successful ingest
+      recordUsage({
+        userId: auth.userId ?? auth.projectId,
+        projectId: auth.projectId,
+        kind: "ingest_page",
+        metadata: { doc_id: doc.id },
+      });
+
       return c.json(
         {
           doc_id: doc.id,
@@ -96,6 +109,15 @@ app.post("/documents", authMiddleware, async (c) => {
       toc_strategy: tocStrategy,
       embed_sections: embedSections,
     });
+
+    // Record usage after successful enqueue
+    recordUsage({
+      userId: auth.userId ?? auth.projectId,
+      projectId: auth.projectId,
+      kind: "ingest_page",
+      metadata: { doc_id: doc.id },
+    });
+
     return c.json(
       {
         doc_id: doc.id,

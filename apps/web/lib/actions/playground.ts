@@ -5,12 +5,10 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { playgroundSessions } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { GoogleGenAI } from "@google/genai";
 
 const VECTORLESS_API_URL =
   process.env.VECTORLESS_API_URL || "https://api.vectorless.store";
 const VECTORLESS_API_KEY = process.env.VECTORLESS_INTERNAL_API_KEY || "";
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || "";
 
 function generateId(): string {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
@@ -46,121 +44,32 @@ export async function runPlaygroundQuery(data: {
   try {
     const startTime = Date.now();
 
-    // ── Step 1: Get the ToC manifest ──
-    const tocRes = await fetch(
-      `${VECTORLESS_API_URL}/v1/documents/${docId}/toc`,
-      { headers: apiHeaders }
-    );
-
-    if (!tocRes.ok) {
-      return { error: `Failed to get ToC: ${tocRes.status}` };
-    }
-
-    const toc = await tocRes.json();
-    const tocTime = Date.now() - startTime;
-
-    // ── Step 2: LLM reasons over the ToC to select sections ──
-    const selectStart = Date.now();
-    let sectionIds: string[] = [];
-    let reasoning = "";
-
-    if (GEMINI_API_KEY) {
-      // Real LLM reasoning — this is the core of Vectorless
-      const gemini = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
-
-      const tocSummary = toc.sections
-        .map(
-          (s: any) =>
-            `- section_id: "${s.section_id}"\n  title: "${s.title}"\n  summary: "${(s.summary || "").slice(0, 300)}"`
-        )
-        .join("\n\n");
-
-      const prompt = `You are a document retrieval assistant. A user has a question and you have a document's table of contents with section summaries. Your job is to select which sections are most likely to contain the answer.
-
-Document: "${toc.title}"
-
-Table of Contents:
-${tocSummary}
-
-User's question: "${data.query}"
-
-Instructions:
-1. Read each section's title and summary carefully
-2. Select the sections that are most relevant to answering the question
-3. Explain your reasoning — why each selected section is relevant
-
-Respond with valid JSON only:
-{
-  "selected_section_ids": ["section_id_1", "section_id_2"],
-  "reasoning": "Your explanation of why these sections were selected and how they relate to the question"
-}`;
-
-      try {
-        const res = await gemini.models.generateContent({
-          model: "gemini-2.5-flash",
-          contents: prompt,
-          config: {
-            maxOutputTokens: 1024,
-            temperature: 0.2,
-            thinkingConfig: { thinkingBudget: 0 },
-          },
-        });
-
-        const text = res.text ?? "";
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-
-        if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]);
-          sectionIds = parsed.selected_section_ids || [];
-          reasoning = parsed.reasoning || "";
-        }
-      } catch (llmErr) {
-        // LLM failed — fall back to keyword matching
-        console.error("LLM reasoning failed:", llmErr);
-      }
-    }
-
-    // Fallback: keyword matching if LLM didn't return results
-    if (sectionIds.length === 0) {
-      const queryLower = data.query.toLowerCase();
-      const queryWords = queryLower
-        .split(/\s+/)
-        .filter((w: string) => w.length > 2);
-
-      const matched = toc.sections.filter((s: any) => {
-        const text = `${s.title} ${s.summary || ""}`.toLowerCase();
-        return queryWords.some((word: string) => text.includes(word));
-      });
-
-      sectionIds =
-        matched.length > 0
-          ? matched.map((s: any) => s.section_id)
-          : toc.sections.slice(0, 3).map((s: any) => s.section_id);
-
-      reasoning = `Fallback: keyword matching selected ${sectionIds.length} sections. Configure a Gemini API key for LLM-powered reasoning.`;
-    }
-
-    const selectTime = Date.now() - selectStart;
-
-    // ── Step 3: Fetch the selected sections ──
-    const fetchStart = Date.now();
-    const sectionsRes = await fetch(
-      `${VECTORLESS_API_URL}/v1/documents/${docId}/sections/batch`,
+    // ── Step 1: Use the agentic query endpoint ──
+    // This delegates to the tree-agent which navigates the document's
+    // hierarchical section tree using Vercel AI SDK tools.
+    const queryRes = await fetch(
+      `${VECTORLESS_API_URL}/v1/documents/${docId}/query`,
       {
         method: "POST",
         headers: apiHeaders,
-        body: JSON.stringify({ section_ids: sectionIds }),
+        body: JSON.stringify({
+          query: data.query,
+          max_steps: 10,
+          token_budget: 50000,
+        }),
       }
     );
 
-    const sectionsData = sectionsRes.ok
-      ? await sectionsRes.json()
-      : { sections: [] };
-    const fetchTime = Date.now() - fetchStart;
+    if (!queryRes.ok) {
+      // Fall back to legacy ToC-based retrieval if query endpoint isn't available
+      return runLegacyQuery(data, docId, apiHeaders, startTime);
+    }
 
-    // Map sections to the format the playground page expects
-    const fetchedSections = sectionsData.sections || [];
-    const selectedSections = fetchedSections.map((s: any) => ({
+    const result = await queryRes.json();
+    const totalTime = Date.now() - startTime;
+
+    // Map to playground format
+    const selectedSections = (result.sections || []).map((s: any) => ({
       section_id: s.section_id || s.id,
       title: s.title,
       relevance_score: 1.0,
@@ -171,18 +80,27 @@ Respond with valid JSON only:
       content_preview: (s.content || "").slice(0, 300),
     }));
 
+    // Also fetch the ToC for display
+    const tocRes = await fetch(
+      `${VECTORLESS_API_URL}/v1/documents/${docId}/toc`,
+      { headers: apiHeaders }
+    );
+    const toc = tocRes.ok ? await tocRes.json() : null;
+
     return {
       success: true,
       data: {
         toc,
-        selected_section_ids: sectionIds,
+        selected_section_ids: (result.sections || []).map(
+          (s: any) => s.section_id
+        ),
         selected_sections: selectedSections,
-        reasoning,
+        reasoning: result.reasoning_summary || "",
+        traversal_trace: result.traversal_trace || [],
         timing: {
-          toc_retrieval_ms: tocTime,
-          section_selection_ms: selectTime,
-          content_fetch_ms: fetchTime,
-          total_ms: Date.now() - startTime,
+          total_ms: totalTime,
+          total_steps: result.total_steps || 0,
+          tokens_retrieved: result.tokens_retrieved || 0,
         },
       },
     };
@@ -192,6 +110,92 @@ Respond with valid JSON only:
         err instanceof Error ? err.message : "Failed to run playground query",
     };
   }
+}
+
+/**
+ * Legacy fallback: fetch flat ToC and do keyword-based section selection.
+ * Used when the agentic query endpoint is not available.
+ */
+async function runLegacyQuery(
+  data: { query: string; docIds: string[]; strategy: string },
+  docId: string,
+  apiHeaders: Record<string, string>,
+  startTime: number
+) {
+  // Fetch flat ToC
+  const tocRes = await fetch(
+    `${VECTORLESS_API_URL}/v1/documents/${docId}/toc`,
+    { headers: apiHeaders }
+  );
+
+  if (!tocRes.ok) {
+    return { error: `Failed to get ToC: ${tocRes.status}` };
+  }
+
+  const toc = await tocRes.json();
+  const tocTime = Date.now() - startTime;
+
+  // Keyword matching fallback
+  const queryLower = data.query.toLowerCase();
+  const queryWords = queryLower
+    .split(/\s+/)
+    .filter((w: string) => w.length > 2);
+
+  const matched = toc.sections.filter((s: any) => {
+    const text = `${s.title} ${s.summary || ""}`.toLowerCase();
+    return queryWords.some((word: string) => text.includes(word));
+  });
+
+  const sectionIds =
+    matched.length > 0
+      ? matched.map((s: any) => s.section_id)
+      : toc.sections.slice(0, 3).map((s: any) => s.section_id);
+
+  const reasoning = `Legacy fallback: keyword matching selected ${sectionIds.length} sections.`;
+
+  // Fetch selected sections
+  const fetchStart = Date.now();
+  const sectionsRes = await fetch(
+    `${VECTORLESS_API_URL}/v1/documents/${docId}/sections/batch`,
+    {
+      method: "POST",
+      headers: apiHeaders,
+      body: JSON.stringify({ section_ids: sectionIds }),
+    }
+  );
+
+  const sectionsData = sectionsRes.ok
+    ? await sectionsRes.json()
+    : { sections: [] };
+  const fetchTime = Date.now() - fetchStart;
+
+  const fetchedSections = sectionsData.sections || [];
+  const selectedSections = fetchedSections.map((s: any) => ({
+    section_id: s.section_id || s.id,
+    title: s.title,
+    relevance_score: 1.0,
+    page_range: s.page_range
+      ? `${s.page_range.start}-${s.page_range.end}`
+      : "",
+    summary: s.summary || "",
+    content_preview: (s.content || "").slice(0, 300),
+  }));
+
+  return {
+    success: true,
+    data: {
+      toc,
+      selected_section_ids: sectionIds,
+      selected_sections: selectedSections,
+      reasoning,
+      traversal_trace: [],
+      timing: {
+        toc_retrieval_ms: tocTime,
+        content_fetch_ms: fetchTime,
+        total_ms: Date.now() - startTime,
+      },
+    },
+  };
 }
 
 export async function savePlaygroundSession(data: {
@@ -269,4 +273,3 @@ export async function listPlaygroundSessions() {
     };
   }
 }
-// Sun Apr 12 03:05:44 WCAST 2026

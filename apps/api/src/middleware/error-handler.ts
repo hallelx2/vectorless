@@ -28,6 +28,18 @@ export function unauthorized(message = "Invalid or missing API key"): ApiError {
   return new ApiError(401, "authentication_error", message);
 }
 
+export function forbidden(message: string): ApiError {
+  return new ApiError(403, "forbidden", message);
+}
+
+export function tooManyRequests(message: string): ApiError {
+  return new ApiError(429, "rate_limit_exceeded", message);
+}
+
+export function quotaExceeded(message: string): ApiError {
+  return new ApiError(429, "quota_exceeded", message);
+}
+
 export function conflict(message: string): ApiError {
   return new ApiError(409, "conflict", message);
 }

@@ -10,23 +10,27 @@
             +------------------+------------------+
             |                                     |
     vectorless.store              api.vectorless.store
-    (Marketing + Dashboard)       (Fastify API Server)
-    Cloudflare Pages              Railway
+    (Marketing + Dashboard)       (Hono API — Serverless)
+    Vercel (Next.js)              Vercel (Serverless Functions)
             |                          |
-            +----------+    +---------+----------+
-                       |    |         |          |
-                    Neon DB  Neon DB  R2      QStash
-                  (dashboard) (api)  (files) (jobs)
+            +----------+    +---------+----------+----------+
+                       |    |         |          |          |
+                    Neon DB  Neon DB  R2       QStash    Upstash
+                  (dashboard) (api)  (files)  (jobs)    Redis
+                                     (CF)              (rate-limit)
 
-    npm: vectorless          PyPI: vectorless
-    (TypeScript SDK)         (Python SDK)
+    npm: vectorless          npm: vectorless-mcp
+    (TypeScript SDK)         (MCP Server)
+
+    PyPI: vectorless-sdk
+    (Python SDK)
 ```
 
 ---
 
 ## 1. DNS Setup (Spaceship → Cloudflare)
 
-Transfer DNS management to Cloudflare for free CDN, DDoS protection, and Pages integration.
+Transfer DNS management to Cloudflare for free CDN, DDoS protection, and caching.
 
 ### Steps:
 1. **Add site to Cloudflare**: Go to https://dash.cloudflare.com → Add Site → `vectorless.store` → Free plan
@@ -37,16 +41,15 @@ Transfer DNS management to Cloudflare for free CDN, DDoS protection, and Pages i
 
 | Type | Name | Content | Proxy |
 |------|------|---------|-------|
-| CNAME | `@` | `vectorless.pages.dev` | Proxied |
-| CNAME | `www` | `vectorless.pages.dev` | Proxied |
-| CNAME | `api` | `your-app.up.railway.app` | DNS only |
-| CNAME | `docs` | `vectorless.pages.dev` | Proxied |
+| CNAME | `@` | `cname.vercel-dns.com` | DNS only |
+| CNAME | `www` | `cname.vercel-dns.com` | DNS only |
+| CNAME | `api` | `cname.vercel-dns.com` | DNS only |
 
-**Note**: Railway custom domains require "DNS only" (grey cloud), not "Proxied" (orange cloud).
+**Note**: Vercel custom domains require "DNS only" (grey cloud), not "Proxied" (orange cloud).
 
 ---
 
-## 2. Dashboard + Marketing Site → Cloudflare Pages
+## 2. Dashboard + Marketing Site → Vercel
 
 **URL**: `vectorless.store` (+ `www.vectorless.store`)
 
@@ -55,343 +58,353 @@ The Next.js app at `apps/web/` — includes:
 - Marketing landing page (`/`)
 - Auth pages (`/login`, `/register`)
 - Dashboard (`/dashboard/*`)
-- API docs, settings, playground
+- OAuth consent screen (`/oauth/consent`)
+- Connected Apps, Usage, Billing pages
 
 ### Setup Steps
 
-1. **Go to** Cloudflare Dashboard → Workers & Pages → Create → Pages → Connect to Git
-
-2. **Connect GitHub**: Authorize → Select `hallelx2/vectorless`
-
-3. **Configure build settings:**
+1. **Go to** https://vercel.com → Import → Connect GitHub → Select `hallelx2/vectorless`
+2. **Configure**:
    ```
-   Project name:         vectorless
-   Production branch:    main
-   Framework preset:     Next.js (Static HTML Export)
-   Root directory:       apps/web
-   Build command:        npx @cloudflare/next-on-pages
-   Build output:         .vercel/output/static
+   Root Directory:       apps/web
+   Framework Preset:     Next.js
+   Build Command:        next build
+   Output Directory:     .next
    ```
+3. **Custom domain**: Settings → Domains → Add `vectorless.store` + `www.vectorless.store`
 
-   **If `@cloudflare/next-on-pages` has issues with server components**, switch to Vercel:
-   ```
-   Framework preset:     Next.js
-   Root directory:       apps/web
-   Build command:        next build
-   ```
+### Environment Variables (Vercel — Dashboard)
 
-4. **Environment variables** (Settings → Environment Variables):
-   ```
-   NODE_VERSION=20
+```bash
+# Database (Neon — dashboard DB, shared with API)
+DATABASE_URL=postgresql://neondb_owner:...@ep-xxx.neon.tech/neondb?sslmode=require
 
-   # Database (Neon — dashboard DB)
-   DATABASE_URL=postgresql://neondb_owner:npg_ntkCOeiyK9D5@ep-dry-flower-am6y9u6t.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require
+# Auth (Better Auth)
+BETTER_AUTH_SECRET=<64-byte hex>
+BETTER_AUTH_URL=https://vectorless.store
+NEXT_PUBLIC_APP_URL=https://vectorless.store
 
-   # Auth
-   BETTER_AUTH_SECRET=0bbdfbb40bfa6cc73b1782f3ea61f96f113e6d682d1543e6becc3f77b29deb78
-   BETTER_AUTH_URL=https://vectorless.store
-   NEXT_PUBLIC_APP_URL=https://vectorless.store
+# API Connection (points to Vercel API project)
+NEXT_PUBLIC_API_URL=https://api.vectorless.store
 
-   # API Connection (points to Railway)
-   VECTORLESS_API_URL=https://api.vectorless.store
-   VECTORLESS_INTERNAL_API_KEY=vl_live_sk_...  (generate from dashboard)
-   ```
+# GitHub / Google OAuth (social login)
+GITHUB_CLIENT_ID=...
+GITHUB_CLIENT_SECRET=...
+GOOGLE_CLIENT_ID=...
+GOOGLE_CLIENT_SECRET=...
 
-5. **Custom domain**: Pages → Custom domains → Add `vectorless.store` + `www.vectorless.store`
-
-6. **SSL**: Automatic (Cloudflare handles it)
-
-### Fallback: Vercel
-
-If Cloudflare Pages doesn't work well with the Next.js server components:
-1. Go to https://vercel.com → Import → `hallelx2/vectorless`
-2. Root directory: `apps/web`
-3. Same environment variables as above
-4. Custom domain: `vectorless.store` → add CNAME in Cloudflare pointing to `cname.vercel-dns.com`
+# Node version
+NODE_VERSION=20
+```
 
 ---
 
-## 3. API Server → Railway
+## 3. API Server → Vercel (Serverless Functions)
 
 **URL**: `api.vectorless.store`
 
 ### What gets deployed
-The Fastify server at `apps/api/` — handles:
+The Hono API at `apps/api/` running as a Vercel Serverless Function via `apps/api/api/index.ts`. Handles:
 - Document upload, parsing, ingestion
-- ToC generation (with Vertex AI Gemini)
+- ToC generation (with Gemini)
 - Section storage and retrieval
-- API key authentication
+- API key + OAuth JWT authentication
+- MCP server (Model Context Protocol) over HTTP
+- OAuth 2.1 provider (DCR, authorize, token, revoke, introspect)
+- Rate limiting and quota enforcement
 - QStash webhook callbacks
-- LLM key management (BYOK)
 
-### Option A: Deploy via Railway Dashboard (easiest)
+### Setup Steps
 
-1. **Create account** at https://railway.app
-2. **New Project** → Deploy from GitHub → Select `hallelx2/vectorless`
-3. **Settings**:
-   ```
-   Root Directory:    apps/api
-   Build Command:     pnpm install && pnpm --filter=@vectorless/shared build && pnpm --filter=@vectorless/api build
-   Start Command:     node dist/server.js
-   ```
-4. **Set environment variables** (see section below)
-5. **Generate domain**: Settings → Networking → Generate Domain → gives you `xxxx.up.railway.app`
-6. **Custom domain**: Settings → Networking → Custom Domain → `api.vectorless.store`
-7. **Update Cloudflare DNS**: Add CNAME `api` → `xxxx.up.railway.app` (DNS only, grey cloud)
+1. **Create a second Vercel project** for the API:
+   - Import same repo `hallelx2/vectorless`
+   - **Root Directory**: `apps/api`
+   - **Framework Preset**: Other
+   - **Build Command**: (leave empty — `vercel.json` handles it)
+   - Vercel detects `vercel.json` and uses the serverless function at `api/index.ts`
 
-### Option B: Deploy via Dockerfile
+2. **Custom domain**: Settings → Domains → Add `api.vectorless.store`
+3. **Update Cloudflare DNS**: Add CNAME `api` → `cname.vercel-dns.com` (DNS only)
+4. **Function settings**: The `vercel.json` already sets `maxDuration: 300` (5 min) for the API function
 
-Create this at the monorepo root:
-
-```
-apps/api/Dockerfile
-```
-
-```dockerfile
-FROM node:20-slim AS builder
-WORKDIR /app
-
-RUN npm install -g pnpm@10
-
-COPY pnpm-workspace.yaml package.json pnpm-lock.yaml turbo.json tsconfig.base.json ./
-COPY packages/shared/package.json packages/shared/tsconfig.json packages/shared/tsup.config.ts ./packages/shared/
-COPY apps/api/package.json apps/api/tsconfig.json apps/api/tsup.config.ts ./apps/api/
-
-RUN pnpm install --frozen-lockfile
-
-COPY packages/shared/src/ packages/shared/src/
-COPY apps/api/src/ apps/api/src/
-COPY apps/api/.env apps/api/.env
-
-RUN pnpm --filter=@vectorless/shared build
-RUN pnpm --filter=@vectorless/api build
-
-FROM node:20-slim
-WORKDIR /app
-
-COPY --from=builder /app/apps/api/dist ./dist
-COPY --from=builder /app/apps/api/package.json ./
-COPY --from=builder /app/apps/api/node_modules ./node_modules
-COPY --from=builder /app/apps/api/vertex-credentials.json ./vertex-credentials.json 2>/dev/null || true
-
-ENV PORT=3001
-EXPOSE 3001
-
-CMD ["node", "dist/server.js"]
-```
-
-Railway auto-detects the Dockerfile if present.
-
-### Environment Variables (Railway)
+### Environment Variables (Vercel — API)
 
 ```bash
-# Database (Neon — API DB)
-DATABASE_URL=postgresql://neondb_owner:npg_2BHZCo8iMlKq@ep-frosty-smoke-amnx2ayn.c-5.us-east-1.aws.neon.tech/neondb?sslmode=require
+# ── Database ──
+DATABASE_URL=postgresql://neondb_owner:...@ep-xxx.neon.tech/neondb?sslmode=require
 
-# Cloudflare R2
-R2_ACCOUNT_ID=c8bea05e04728d860333b91cf095340b
-R2_ACCESS_KEY_ID=49ac853162ee9e1e4e06b0481bfac97e
-R2_SECRET_ACCESS_KEY=f005043b14c95ccd08eea6b8369d581073f2df950c810fe057b8cfb3f72f787c
+# ── Cloudflare R2 (file storage) ──
+R2_ACCOUNT_ID=...
+R2_ACCESS_KEY_ID=...
+R2_SECRET_ACCESS_KEY=...
 R2_BUCKET_NAME=vectorless
-R2_PUBLIC_URL=https://c8bea05e04728d860333b91cf095340b.r2.cloudflarestorage.com/vectorless
+R2_PUBLIC_URL=https://<account-id>.r2.cloudflarestorage.com/vectorless
 
-# QStash
+# ── Upstash QStash (background jobs) ──
 QSTASH_URL=https://qstash-us-east-1.upstash.io
-QSTASH_TOKEN=eyJVc2VySUQiOiI5MDk3Y2QxOC01OTBhLTRkYmYtYjgyOS0xMGMwZjViZmMyNzkiLCJQYXNzd29yZCI6IjYxOGJlYjFiMDNmZTQ5NGFiNjc2MGUwZmZhMTdkMjIzIn0=
-QSTASH_CURRENT_SIGNING_KEY=sig_5zFWRHkMzYy546bc5GPm28CfXD38
-QSTASH_NEXT_SIGNING_KEY=sig_5XBxt9T7pfWACuwGYb7WRNFWdEnA
+QSTASH_TOKEN=...
+QSTASH_CURRENT_SIGNING_KEY=...
+QSTASH_NEXT_SIGNING_KEY=...
 
-# IMPORTANT: Update this to Railway's public URL after first deploy
+# ── API config ──
 API_BASE_URL=https://api.vectorless.store
 PORT=3001
 
-# LLM (Vertex AI Gemini)
+# ── LLM (Gemini) ──
 LLM_PROVIDER=gemini
-GOOGLE_CLOUD_PROJECT=ai-projects-481815
+GEMINI_API_KEY=...
+GOOGLE_CLOUD_PROJECT=...
 GOOGLE_CLOUD_LOCATION=us-central1
 
-# For Vertex AI auth, base64-encode the credentials JSON:
-#   base64 -w0 vertex-credentials.json
-# Then set GOOGLE_APPLICATION_CREDENTIALS_JSON and decode at startup
-# OR: Mount the file via Railway volume
+# ── Auth ──
+BETTER_AUTH_SECRET=<same-as-dashboard>
 
-# Auth
-BETTER_AUTH_SECRET=0bbdfbb40bfa6cc73b1782f3ea61f96f113e6d682d1543e6becc3f77b29deb78
+# ── OAuth 2.1 (MCP + third-party client auth) ──
+OAUTH_JWT_SECRET=<64-byte hex, generate with: openssl rand -hex 32>
+OAUTH_ISSUER=https://api.vectorless.store
+OAUTH_ACCESS_TOKEN_TTL_SECONDS=900
+OAUTH_REFRESH_TOKEN_TTL_SECONDS=2592000
+
+# ── Dashboard URL (for OAuth redirect to consent screen) ──
+DASHBOARD_URL=https://vectorless.store
+
+# ── Upstash Redis (rate limiting) ──
+UPSTASH_REDIS_REST_URL=https://...upstash.io
+UPSTASH_REDIS_REST_TOKEN=...
 ```
 
-### Handling Vertex AI Credentials on Railway
+### How the API runs on Vercel
 
-The `vertex-credentials.json` file can't be committed to git. Two options:
+The `vercel.json` in `apps/api/` configures:
+1. **Install**: Builds workspace dependencies (`@vectorless/shared`, `vectorless`, `@vectorless/mcp-tools`)
+2. **Rewrites**: All routes (`/(.*)`) → `/api` (the single serverless function)
+3. **Function**: `api/index.ts` — adapts Node.js req/res to Hono's Fetch API
 
-**Option A: Base64 env var (recommended)**
-```bash
-# Locally, encode the credentials:
-base64 -w0 apps/api/vertex-credentials.json
-# Copy the output and set as env var in Railway:
-GOOGLE_CREDENTIALS_BASE64=ewogICJ0eXBl...
-```
-Then decode at startup in `config.ts` (code change needed).
-
-**Option B: Railway volume**
-Mount a persistent volume, upload the JSON file once via Railway CLI.
+The Hono app handles routing internally — all paths like `/v1/documents`, `/mcp`, `/oauth/register`, `/.well-known/*` are served by the same function.
 
 ---
 
-## 4. SDK Publishing
+## 4. Upstash Services Setup
 
-### TypeScript SDK → npm
+### QStash (Background Jobs)
+Already configured. Used for:
+- Async document ingestion
+- Nightly cleanup cron (`POST /v1/webhooks/cleanup` at 03:00 UTC)
+
+### Redis (Rate Limiting) — NEW
+1. Go to https://console.upstash.com → Create Database → Select region closest to Neon DB
+2. Copy `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN`
+3. Add to Vercel env vars for the API project
+4. Free tier: 10k commands/day (sufficient for pre-launch)
+
+Used for:
+- Per-user sliding-window rate limits (query, ingest, tree_nav)
+- Per-IP DCR abuse protection (5 registrations/hour)
+
+**Note**: If Redis is not configured, the API falls back to in-memory rate limiting. This works for single-instance dev but is unreliable on serverless (each lambda has its own counter).
+
+---
+
+## 5. Database Migrations
+
+### Initial setup (already done)
+```bash
+cd apps/api
+pnpm db:push   # Push schema directly for first-time setup
+```
+
+### Applying new migrations
+```bash
+cd apps/api
+
+# Generate migration from schema changes (already done — 0002_happy_night_thrasher.sql)
+pnpm db:generate
+
+# Apply to local dev DB
+pnpm db:migrate
+
+# Apply to production (set DATABASE_URL to production Neon URL)
+DATABASE_URL="postgresql://...@ep-xxx.neon.tech/neondb?sslmode=require" pnpm db:migrate
+```
+
+### Current migrations
+| File | Tables |
+|------|--------|
+| `0000_warm_mattie_franklin.sql` | projects, api_keys, documents, sections, query_logs, section_relationships |
+| `0001_flawless_human_torch.sql` | llm_keys |
+| `0002_happy_night_thrasher.sql` | oauth_clients, oauth_authorization_codes, oauth_refresh_tokens, oauth_consents, oauth_revoked_jtis, user_plans, usage_records |
+
+---
+
+## 6. SDK & MCP Publishing
+
+### TypeScript SDK → npm (`vectorless`)
 
 ```bash
-# Manual publish
 cd packages/ts-sdk && pnpm build && npm publish --access public
 
-# CI publish (on git tag)
-git tag ts-sdk-v0.1.0 && git push --tags
-# → .github/workflows/publish-ts-sdk.yml runs automatically
+# Or via CI (on git tag)
+git tag ts-sdk-v0.1.1 && git push --tags
 ```
 
-**Requirements:**
-- npm account → generate Automation token
-- Add `NPM_TOKEN` to GitHub repo secrets
-
-### Python SDK → PyPI
+### MCP Server → npm (`vectorless-mcp`)
 
 ```bash
-# Manual publish
+cd apps/mcp-stdio && pnpm build && npm publish --access public
+
+# Or via CI (on git tag)
+git tag mcp-v1.0.0 && git push --tags
+```
+
+### Python SDK → PyPI (`vectorless-sdk`)
+
+```bash
 cd sdks/python && uv build && uv publish --token pypi-YOUR-TOKEN
 
-# CI publish (on git tag)
+# Or via CI (on git tag)
 git tag py-sdk-v0.2.0 && git push --tags
-# → .github/workflows/publish-py-sdk.yml runs automatically
 ```
 
 **Requirements:**
-- You already own `vectorless` on PyPI
-- Generate new API token at PyPI → Account Settings → API Tokens
-- Add `PYPI_TOKEN` to GitHub repo secrets
+- npm: Generate Automation token → add as `NPM_TOKEN` GitHub secret
+- PyPI: Generate API token → add as `PYPI_TOKEN` GitHub secret
 
 ---
 
-## 5. Deployment Order (Step by Step)
+## 7. QStash Cron Jobs
+
+Set up in the Upstash QStash console:
+
+| Endpoint | Schedule | Purpose |
+|----------|----------|---------|
+| `POST https://api.vectorless.store/v1/webhooks/cleanup` | `0 3 * * *` (daily 03:00 UTC) | Clean up expired OAuth JTIs and auth codes |
+
+---
+
+## 8. Deployment Order (Step by Step)
 
 ### Phase 1: DNS & Infrastructure
 
 - [ ] Add `vectorless.store` to Cloudflare (get nameservers)
 - [ ] Update Spaceship nameservers to Cloudflare's
 - [ ] Wait for DNS propagation (~1-24 hours)
+- [ ] Create Upstash Redis database (for rate limiting)
 
-### Phase 2: API Server (Railway)
+### Phase 2: API Server (Vercel)
 
-- [ ] Create Railway account at https://railway.app
-- [ ] Connect GitHub repo `hallelx2/vectorless`
-- [ ] Create service → Root directory: `apps/api`
+- [ ] Create Vercel project → Root directory: `apps/api`
 - [ ] Set all environment variables (see list above)
-- [ ] Deploy → get Railway public URL (e.g., `vectorless-api.up.railway.app`)
-- [ ] Test: `curl https://vectorless-api.up.railway.app/health`
+- [ ] Apply database migration: `DATABASE_URL=<prod> pnpm db:migrate`
+- [ ] Deploy → get Vercel URL
+- [ ] Test: `curl https://<vercel-url>/health`
 - [ ] Add custom domain: `api.vectorless.store`
-- [ ] Add CNAME in Cloudflare: `api` → Railway URL (DNS only)
+- [ ] Add CNAME in Cloudflare: `api` → `cname.vercel-dns.com` (DNS only)
 - [ ] Update `API_BASE_URL` env to `https://api.vectorless.store`
 - [ ] Redeploy
 - [ ] Test: `curl https://api.vectorless.store/health`
 
-### Phase 3: Dashboard (Cloudflare Pages)
+### Phase 3: Dashboard (Vercel)
 
-- [ ] Cloudflare → Pages → Create → Connect GitHub → `hallelx2/vectorless`
-- [ ] Configure: Root directory `apps/web`, framework Next.js
-- [ ] Set environment variables (DATABASE_URL, auth, API URL)
-- [ ] Deploy → get `vectorless.pages.dev`
-- [ ] Test: visit `https://vectorless.pages.dev` → marketing page loads
+- [ ] Create Vercel project → Root directory: `apps/web`
+- [ ] Set environment variables
+- [ ] Deploy → get Vercel URL
 - [ ] Test: login/register works
-- [ ] Add custom domain: `vectorless.store` + `www.vectorless.store`
+- [ ] Add custom domains: `vectorless.store` + `www.vectorless.store`
 - [ ] Update env vars: `BETTER_AUTH_URL` + `NEXT_PUBLIC_APP_URL` → `https://vectorless.store`
 - [ ] Redeploy
 - [ ] Test: `https://vectorless.store` → everything works
 
-### Phase 4: QStash Webhook
+### Phase 4: QStash & Cron
 
-- [ ] Update QStash callback URL in env: `API_BASE_URL=https://api.vectorless.store`
-- [ ] Test: upload a document via API → QStash delivers webhook → ingestion completes
-- [ ] Verify in Upstash console: webhook delivered successfully
+- [ ] Set QStash callback URL: `API_BASE_URL=https://api.vectorless.store`
+- [ ] Add cleanup cron job in QStash console
+- [ ] Test: upload a document → QStash webhook fires → ingestion completes
 
-### Phase 5: SDK Publishing
+### Phase 5: SDK & MCP Publishing
 
-- [ ] Create npm account, generate token, add as `NPM_TOKEN` GitHub secret
-- [ ] Generate PyPI token, add as `PYPI_TOKEN` GitHub secret
-- [ ] Publish TS SDK: `git tag ts-sdk-v0.1.0 && git push --tags`
-- [ ] Verify: `npm install vectorless` → test import
-- [ ] Publish Python SDK: `git tag py-sdk-v0.2.0 && git push --tags`
-- [ ] Verify: `pip install vectorless-sdk --upgrade` → test import
+- [ ] Set NPM_TOKEN and PYPI_TOKEN in GitHub secrets
+- [ ] Publish TS SDK: `npm publish` from `packages/ts-sdk`
+- [ ] Publish MCP Server: `npm publish` from `apps/mcp-stdio`
+- [ ] Publish Python SDK: `uv publish` from `sdks/python`
+- [ ] Test: `npx vectorless-mcp` starts and lists 6 tools
 
-### Phase 6: End-to-End Verification
+### Phase 6: OAuth & MCP Verification
+
+- [ ] Test well-known metadata: `curl https://api.vectorless.store/.well-known/oauth-authorization-server`
+- [ ] Test DCR: `curl -X POST https://api.vectorless.store/oauth/register -d '{"client_name":"test","redirect_uris":["http://localhost:8080/cb"]}'`
+- [ ] Test MCP over HTTP: `curl -X POST https://api.vectorless.store/mcp -H "Authorization: Bearer vl_..." -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'`
+- [ ] Test consent screen: visit `https://vectorless.store/oauth/consent?...`
+- [ ] Test rate-limit headers: check `X-RateLimit-*` headers on API responses
+- [ ] Test Claude Desktop: install `npx vectorless-mcp`, ask a question
+
+### Phase 7: End-to-End Verification
 
 - [ ] `curl https://api.vectorless.store/health` → OK
 - [ ] Sign up on `https://vectorless.store` → create account
 - [ ] Generate API key in dashboard
-- [ ] Upload document via dashboard UI → verify processing
-- [ ] Test TypeScript SDK against production:
-      ```typescript
-      const client = new VectorlessClient({ apiKey: "vl_...", baseUrl: "https://api.vectorless.store" });
-      const result = await client.addDocument(file);
-      ```
-- [ ] Test Python SDK against production:
-      ```python
-      client = VectorlessClient(api_key="vl_...", base_url="https://api.vectorless.store")
-      result = client.add_document("doc.pdf")
-      ```
-- [ ] Check analytics in dashboard
-- [ ] Configure BYOK key in Settings → LLM Keys
-- [ ] Upload another document → verify it uses BYOK key
+- [ ] Upload document via dashboard → verify processing
+- [ ] Query document via API with SDK
+- [ ] Check usage page in dashboard
+- [ ] Check connected apps page
+- [ ] Configure Claude Desktop with MCP server
+- [ ] Ask Claude a question about your document → see traversal trace
 
 ---
 
-## 6. Domain Structure
+## 9. Domain Structure
 
 | URL | What | Platform |
 |-----|------|----------|
-| `vectorless.store` | Marketing site + Dashboard | Cloudflare Pages |
-| `www.vectorless.store` | Redirects to above | Cloudflare Pages |
-| `api.vectorless.store` | REST API for SDKs | Railway |
-| `docs.vectorless.store` | API documentation (future) | Cloudflare Pages |
+| `vectorless.store` | Marketing site + Dashboard | Vercel (Next.js) |
+| `www.vectorless.store` | Redirects to above | Vercel |
+| `api.vectorless.store` | REST API + MCP + OAuth | Vercel (Serverless Functions) |
 
 ---
 
-## 7. Cost Estimate (Monthly)
+## 10. Cost Estimate (Monthly)
 
 | Service | Plan | Cost |
 |---------|------|------|
-| **Railway** (API server) | Hobby | $5/mo |
-| **Cloudflare Pages** (Dashboard) | Free | $0 |
+| **Vercel** (Dashboard) | Hobby | $0 |
+| **Vercel** (API) | Hobby / Pro | $0-20/mo |
 | **Cloudflare R2** (File storage) | Free tier (10GB) | $0 |
 | **Cloudflare DNS** | Free | $0 |
-| **Neon** (2x Postgres) | Free tier (0.5GB each) | $0 |
+| **Neon** (Postgres) | Free tier (0.5GB) | $0 |
 | **Upstash QStash** | Free tier (500 msgs/day) | $0 |
-| **Vertex AI / Gemini** | Pay per use | ~$0.001/page |
+| **Upstash Redis** | Free tier (10k cmds/day) | $0 |
+| **Gemini API** | Pay per use | ~$0.001/page |
 | **Spaceship** (domain) | Annual | ~$10/yr |
-| **npm** (TS SDK) | Free (public) | $0 |
+| **npm** (TS SDK + MCP) | Free (public) | $0 |
 | **PyPI** (Python SDK) | Free | $0 |
-| **GitHub** (repo + actions) | Free (public) | $0 |
-| **Total** | | **~$6/mo** |
+| **Total** | | **~$1/mo** |
 
 ---
 
-## 8. Auto-Deploy Configuration
+## 11. Auto-Deploy Configuration
 
-### Railway (API)
-Railway auto-deploys on push to `main` by default. Configure:
-- **Auto-deploy**: ON (pushes to main → instant deploy)
-- **Branch deploys**: OFF (only main)
-- **Health check**: `GET /health` → 200
-
-### Cloudflare Pages (Dashboard)
-Pages auto-deploys on push to `main` by default. Configure:
+### Vercel (API + Dashboard)
+Vercel auto-deploys on push to `main` by default. Configure per project:
 - **Production branch**: `main`
 - **Preview deployments**: ON (every PR gets a preview URL)
-- **Build cache**: ON
+- **Root directory**: `apps/api` or `apps/web` (per project)
 
 ### SDK Publishing
-Manual via git tags — NOT auto-deploy. You control when to publish:
+Manual via git tags — NOT auto-deploy:
 ```bash
-# Only when you're ready to release:
-git tag ts-sdk-v0.1.0 && git push --tags    # → npm
+# Only when ready to release:
+git tag ts-sdk-v0.1.1 && git push --tags    # → npm (vectorless)
+git tag mcp-v1.0.0 && git push --tags       # → npm (vectorless-mcp)
 git tag py-sdk-v0.2.0 && git push --tags    # → PyPI
 ```
+
+---
+
+## 12. Serverless Considerations
+
+Since the API runs as Vercel Serverless Functions:
+
+1. **Cold starts**: First request after idle may take 1-3s. Vercel Pro plan reduces this.
+2. **Max duration**: Set to 300s (5 min) for document ingestion. Free tier max is 60s — upgrade to Pro if needed.
+3. **Rate limiting**: Uses Upstash Redis (distributed). In-memory fallback won't work reliably on serverless — each invocation gets its own counter.
+4. **MCP sessions**: Stateless per-request (no in-process session store). Safe for serverless.
+5. **File uploads**: Vercel has a 4.5MB body limit on Hobby plan. For large documents, consider using presigned R2 URLs for direct upload.

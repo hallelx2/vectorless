@@ -1,5 +1,5 @@
 import type { ParsedDocument } from "../parser/types.js";
-import type { ToCManifest } from "@vectorless/shared";
+import type { ToCManifest, ToCTreeManifest } from "@vectorless/shared";
 import type { LLMProvider } from "../llm/types.js";
 import { extractToC } from "./extract.strategy.js";
 import { hybridToC } from "./hybrid.strategy.js";
@@ -7,17 +7,23 @@ import { generateToC } from "./generate.strategy.js";
 
 export type ToCStrategy = "extract" | "generate" | "hybrid";
 
+export interface ToCResultSection {
+  id: string;
+  title: string;
+  summary: string;
+  content: string;
+  level: number;
+  orderIndex: number;
+  pageRange: { start: number; end: number } | null;
+  parentId: string | null;
+  childIds: string[];
+  isLeaf: boolean;
+}
+
 export interface ToCResult {
   toc: ToCManifest;
-  sections: {
-    id: string;
-    title: string;
-    summary: string;
-    content: string;
-    level: number;
-    orderIndex: number;
-    pageRange: { start: number; end: number } | null;
-  }[];
+  treeToc: ToCTreeManifest;
+  sections: ToCResultSection[];
 }
 
 export async function generateDocumentToC(

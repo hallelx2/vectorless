@@ -9,6 +9,10 @@ export interface Section {
   page_range: PageRange | null;
   order_index: number;
   token_count: number;
+  level: number;
+  parent_section_id: string | null;
+  child_section_ids: string[];
+  is_leaf: boolean;
 }
 
 export interface SectionSummary {
@@ -17,6 +21,10 @@ export interface SectionSummary {
   summary: string | null;
   page_range: PageRange | null;
   order_index: number;
+  level: number;
+  child_count: number;
+  is_leaf: boolean;
+  token_count: number;
 }
 
 export interface BatchFetchRequest {

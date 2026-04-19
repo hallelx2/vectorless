@@ -85,3 +85,63 @@ export interface WaitForReadyOptions {
   timeout?: number;
   pollInterval?: number;
 }
+
+// ── Hierarchical Tree ToC (PageIndex-style) ──
+
+export interface ToCTreeNode {
+  section_id: string;
+  title: string;
+  summary: string;
+  level: number;
+  page_range: PageRange | null;
+  token_count: number;
+  child_count: number;
+  is_leaf: boolean;
+  link: string;
+  children: ToCTreeNode[];
+}
+
+export interface ToCTreeManifest {
+  doc_id: string;
+  title: string;
+  source_type: string;
+  section_count: number;
+  depth: number;
+  created_at: string;
+  tree: ToCTreeNode[];
+}
+
+export interface SectionSummary {
+  section_id: string;
+  title: string;
+  summary: string | null;
+  page_range: PageRange | null;
+  order_index: number;
+  token_count: number;
+  level: number;
+  is_leaf: boolean;
+}
+
+// ── Agentic Retrieval ──
+
+export interface TreeQueryOptions {
+  max_steps?: number;
+  token_budget?: number;
+}
+
+export interface TraversalStep {
+  step: number;
+  tool_called: string;
+  arguments: Record<string, unknown>;
+  result_summary: string;
+  reasoning: string;
+  tokens_used: number;
+}
+
+export interface TreeQueryResult {
+  sections: Section[];
+  traversal_trace: TraversalStep[];
+  total_steps: number;
+  tokens_retrieved: number;
+  reasoning_summary: string;
+}

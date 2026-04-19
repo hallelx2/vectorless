@@ -1,5 +1,6 @@
 import {
   pgTable,
+  pgEnum,
   text,
   timestamp,
   boolean,
@@ -7,6 +8,8 @@ import {
   jsonb,
   date,
   unique,
+  uniqueIndex,
+  index,
 } from "drizzle-orm/pg-core";
 
 // ─── Better Auth Tables ───
@@ -148,3 +151,61 @@ export const llmKeys = pgTable("llm_keys", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+// ─── OAuth 2.1 Tables ───
+
+export const oauthClientSourceEnum = pgEnum("oauth_client_source", [
+  "first_party",
+  "dcr",
+]);
+
+export const oauthClients = pgTable(
+  "oauth_clients",
+  {
+    id: text("id").primaryKey(),
+    clientName: text("client_name").notNull(),
+    clientSecretHash: text("client_secret_hash"),
+    redirectUris: text("redirect_uris").array().notNull(),
+    grantTypes: text("grant_types").array().notNull(),
+    tokenEndpointAuthMethod: text("token_endpoint_auth_method").notNull(),
+    source: text("source").notNull().default("dcr"),
+    logoUri: text("logo_uri"),
+    policyUri: text("policy_uri"),
+    tosUri: text("tos_uri"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index("oauth_clients_name_idx").on(t.clientName)]
+);
+
+export const oauthConsents = pgTable(
+  "oauth_consents",
+  {
+    id: text("id").primaryKey(),
+    userId: text("user_id").notNull(),
+    clientId: text("client_id").notNull(),
+    scopes: text("scopes").array().notNull(),
+    grantedAt: timestamp("granted_at", { withTimezone: true }).notNull().defaultNow(),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+  },
+  (t) => [uniqueIndex("oauth_consents_user_client_idx").on(t.userId, t.clientId)]
+);
+
+export const oauthRefreshTokens = pgTable(
+  "oauth_refresh_tokens",
+  {
+    id: text("id").primaryKey(),
+    tokenHash: text("token_hash").notNull(),
+    clientId: text("client_id").notNull(),
+    userId: text("user_id").notNull(),
+    projectId: text("project_id").notNull(),
+    scopes: text("scopes").array().notNull(),
+    parentId: text("parent_id"),
+    revokedAt: timestamp("revoked_at", { withTimezone: true }),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("oauth_refresh_tokens_hash_idx").on(t.tokenHash),
+    index("oauth_refresh_tokens_user_idx").on(t.userId),
+  ]
+);

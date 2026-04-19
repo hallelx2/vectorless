@@ -1,10 +1,12 @@
 export type ErrorCode =
   | "validation_error"
   | "authentication_error"
+  | "forbidden"
   | "not_found"
   | "conflict"
   | "payload_too_large"
   | "rate_limit_exceeded"
+  | "quota_exceeded"
   | "server_error";
 
 export interface ErrorResponse {

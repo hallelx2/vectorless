@@ -12,10 +12,14 @@ from vectorless.types import (
     AddDocumentOptions,
     AddDocumentResponse,
     ToCManifest,
+    ToCTreeManifest,
     Section,
+    SectionSummary,
     DocumentDetail,
     ListDocumentsOptions,
     ListDocumentsResponse,
+    TreeQueryOptions,
+    TreeQueryResult,
 )
 from vectorless.errors import ServerError, VectorlessError
 
@@ -103,6 +107,51 @@ class AsyncVectorlessClient:
 
     async def delete_document(self, doc_id: str) -> None:
         await self._http.delete(f"/v1/documents/{doc_id}")
+
+    # ── Tree-Aware Methods ──
+
+    async def get_tree_toc(self, doc_id: str) -> ToCTreeManifest:
+        """Get the hierarchical tree ToC for a document."""
+        return await self._http.get(
+            f"/v1/documents/{doc_id}/toc/tree",
+            response_model=ToCTreeManifest,
+        )
+
+    async def get_root_sections(
+        self, doc_id: str
+    ) -> List[SectionSummary]:
+        """Get root-level sections (top of the document tree)."""
+        result = await self._http.get(
+            f"/v1/documents/{doc_id}/sections/roots"
+        )
+        return [SectionSummary.model_validate(s) for s in result["sections"]]
+
+    async def get_child_sections(
+        self, doc_id: str, section_id: str
+    ) -> List[SectionSummary]:
+        """Get children of a specific section."""
+        result = await self._http.get(
+            f"/v1/documents/{doc_id}/sections/{section_id}/children"
+        )
+        return [SectionSummary.model_validate(s) for s in result["sections"]]
+
+    async def query(
+        self,
+        doc_id: str,
+        query: str,
+        options: Optional[TreeQueryOptions] = None,
+    ) -> TreeQueryResult:
+        """Agentic query: LLM navigates the document tree to find relevant sections."""
+        payload: dict = {"query": query}
+        if options:
+            if options.max_steps is not None:
+                payload["max_steps"] = options.max_steps
+            if options.token_budget is not None:
+                payload["token_budget"] = options.token_budget
+        result = await self._http.post(
+            f"/v1/documents/{doc_id}/query", json=payload
+        )
+        return TreeQueryResult.model_validate(result)
 
     async def wait_for_ready(
         self,

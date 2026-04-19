@@ -7,11 +7,15 @@ import type {
   AddDocumentOptions,
   AddDocumentResponse,
   ToCManifest,
+  ToCTreeManifest,
   Section,
+  SectionSummary,
   DocumentDetail,
   ListDocumentsOptions,
   ListDocumentsResponse,
   WaitForReadyOptions,
+  TreeQueryOptions,
+  TreeQueryResult,
 } from "./types.js";
 
 function sleep(ms: number): Promise<void> {
@@ -112,6 +116,60 @@ export class VectorlessClient {
    */
   async deleteDocument(docId: string): Promise<void> {
     await this.http.delete(`/v1/documents/${docId}`);
+  }
+
+  // ── Tree-Aware Methods ──
+
+  /**
+   * Get the hierarchical tree ToC for a document.
+   * Returns nested ToCTreeNode[] reflecting the document's heading structure.
+   */
+  async getTreeToC(docId: string): Promise<ToCTreeManifest> {
+    return this.http.get<ToCTreeManifest>(
+      `/v1/documents/${docId}/toc/tree`
+    );
+  }
+
+  /**
+   * Get root-level sections (top of the document tree).
+   * Returns summaries only, not content.
+   */
+  async getRootSections(
+    docId: string
+  ): Promise<SectionSummary[]> {
+    const res = await this.http.get<{ sections: SectionSummary[] }>(
+      `/v1/documents/${docId}/sections/roots`
+    );
+    return res.sections;
+  }
+
+  /**
+   * Get children of a specific section.
+   * Returns summaries only, not content.
+   */
+  async getChildSections(
+    docId: string,
+    sectionId: string
+  ): Promise<SectionSummary[]> {
+    const res = await this.http.get<{ sections: SectionSummary[] }>(
+      `/v1/documents/${docId}/sections/${sectionId}/children`
+    );
+    return res.sections;
+  }
+
+  /**
+   * Agentic query: LLM navigates the document tree to find relevant sections.
+   * Returns retrieved sections, full traversal trace, and reasoning summary.
+   */
+  async query(
+    docId: string,
+    query: string,
+    options?: TreeQueryOptions
+  ): Promise<TreeQueryResult> {
+    return this.http.post<TreeQueryResult>(
+      `/v1/documents/${docId}/query`,
+      { query, ...options }
+    );
   }
 
   /**

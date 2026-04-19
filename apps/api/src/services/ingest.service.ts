@@ -1,5 +1,6 @@
 import { parseDocument, detectSourceType } from "./parser/index.js";
 import { generateDocumentToC, type ToCStrategy } from "./toc/index.js";
+import { recursiveSummarize } from "./toc/summarize.js";
 import { processSections } from "./splitter/index.js";
 import { getLLMProviderForProject } from "./llm/index.js";
 import { createSections, type CreateSectionInput } from "./section.service.js";
@@ -41,7 +42,7 @@ export async function runIngestPipeline(
       sourceType as "pdf" | "docx" | "txt" | "url"
     );
 
-    // Step 4: Generate ToC (uses project-specific LLM provider)
+    // Step 4: Generate ToC (tree-aware — preserves hierarchy)
     const tocResult = await generateDocumentToC(
       parsed,
       docId,
@@ -49,10 +50,17 @@ export async function runIngestPipeline(
       llmProvider
     );
 
-    // Step 4: Process sections (split oversized, merge undersized)
+    // Step 5: Recursive summarization for generate strategy
+    // (hybrid strategy already runs summarization internally;
+    //  extract strategy uses excerpt summaries by design)
+    if (tocStrategy === "generate" && llmProvider) {
+      await recursiveSummarize(tocResult.sections, llmProvider);
+    }
+
+    // Step 6: Process sections (tree-aware split/merge)
     const processed = processSections(tocResult);
 
-    // Step 5: Store sections in database
+    // Step 7: Store sections in database
     const sectionInputs: CreateSectionInput[] = processed.sections.map(
       (s) => ({
         id: s.id,
@@ -63,17 +71,24 @@ export async function runIngestPipeline(
         pageRange: s.pageRange,
         orderIndex: s.orderIndex,
         level: s.level,
+        isLeaf: s.isLeaf,
         tokenCount: estimateTokens(s.content),
+        parentSectionId: s.parentId,
       })
     );
 
     await createSections(sectionInputs);
 
-    // Step 6: Update document status to ready
-    await updateDocumentReady(docId, processed.toc, processed.sections.length);
+    // Step 8: Update document status to ready (with both flat and tree ToC)
+    await updateDocumentReady(
+      docId,
+      processed.toc,
+      processed.sections.length,
+      processed.treeToc
+    );
 
     console.log(
-      `✅ Ingest complete: ${docId} (${processed.sections.length} sections)`
+      `✅ Ingest complete: ${docId} (${processed.sections.length} sections, tree depth: ${processed.treeToc.depth})`
     );
   } catch (error) {
     const message =

@@ -1,0 +1,54 @@
+{
+  "name": "vectorless-mcp",
+  "version": "1.0.0",
+  "description": "Model Context Protocol server for Vectorless \u2014 document retrieval for the reasoning era.",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "vectorless-mcp": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "files": ["dist", "README.md"],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsx src/index.ts",
+    "prepublishOnly": "pnpm build",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "@vectorless/mcp-tools": "workspace:*",
+    "vectorless": "workspace:*",
+    "zod-to-json-schema": "^3.24.5"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hallelx2/vectorless",
+    "directory": "apps/mcp-stdio"
+  },
+  "homepage": "https://vectorless.store",
+  "bugs": "https://github.com/hallelx2/vectorless/issues",
+  "keywords": [
+    "vectorless",
+    "mcp",
+    "model-context-protocol",
+    "document-retrieval",
+    "rag",
+    "llm",
+    "ai",
+    "claude",
+    "cursor",
+    "windsurf"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

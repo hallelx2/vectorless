@@ -1,7 +1,7 @@
 import { db } from "../db/client.js";
 import { documents } from "../db/schema.js";
 import { eq, and, desc } from "drizzle-orm";
-import type { ToCManifest } from "@vectorless/shared";
+import type { ToCManifest, ToCTreeManifest } from "@vectorless/shared";
 
 export async function createDocument(data: {
   projectId: string;
@@ -58,13 +58,15 @@ export async function listDocuments(
 export async function updateDocumentReady(
   docId: string,
   toc: ToCManifest,
-  sectionCount: number
+  sectionCount: number,
+  treeToc?: ToCTreeManifest
 ) {
   await db
     .update(documents)
     .set({
       status: "ready",
       toc: toc as unknown as Record<string, unknown>,
+      treeToc: (treeToc ?? null) as unknown as Record<string, unknown>,
       sectionCount,
       updatedAt: new Date(),
     })

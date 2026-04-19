@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional, List, Literal
+from typing import Optional, List, Literal, Any, Dict
 
 from pydantic import BaseModel
 
@@ -37,6 +37,75 @@ class Section(BaseModel):
     page_range: Optional[PageRange] = None
     order_index: int
     token_count: int
+    level: int = 1
+    parent_section_id: Optional[str] = None
+    child_section_ids: List[str] = []
+    is_leaf: bool = True
+
+
+class SectionSummary(BaseModel):
+    section_id: str
+    title: str
+    summary: Optional[str] = None
+    page_range: Optional[PageRange] = None
+    order_index: int
+    token_count: int
+    level: int
+    is_leaf: bool
+
+
+# ── Hierarchical Tree ToC (PageIndex-style) ──
+
+
+class ToCTreeNode(BaseModel):
+    section_id: str
+    title: str
+    summary: str
+    level: int
+    page_range: Optional[PageRange] = None
+    token_count: int
+    child_count: int
+    is_leaf: bool
+    link: str
+    children: List["ToCTreeNode"] = []
+
+
+class ToCTreeManifest(BaseModel):
+    doc_id: str
+    title: str
+    source_type: str
+    section_count: int
+    depth: int
+    created_at: str
+    tree: List[ToCTreeNode]
+
+
+# ── Agentic Retrieval ──
+
+
+class TraversalStep(BaseModel):
+    step: int
+    tool_called: str
+    arguments: Dict[str, Any]
+    result_summary: str
+    reasoning: str
+    tokens_used: int
+
+
+class TreeQueryOptions(BaseModel):
+    max_steps: Optional[int] = None
+    token_budget: Optional[int] = None
+
+
+class TreeQueryResult(BaseModel):
+    sections: List[Section]
+    traversal_trace: List[TraversalStep]
+    total_steps: int
+    tokens_retrieved: int
+    reasoning_summary: str
+
+
+# ── Document Management ──
 
 
 class AddDocumentOptions(BaseModel):

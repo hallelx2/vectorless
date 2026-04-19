@@ -1,51 +1,32 @@
 import type { ParsedDocument } from "../parser/types.js";
-import type { ToCEntry, ToCManifest } from "@vectorless/shared";
 import type { LLMProvider } from "../llm/types.js";
+import type { ToCResult } from "./index.js";
 import { extractToC } from "./extract.strategy.js";
+import { recursiveSummarize } from "./summarize.js";
+import { buildTreeToCFromSections } from "./tree-builder.js";
 
+/**
+ * Hybrid strategy: Extract native structure + LLM-powered recursive summarization.
+ *
+ * 1. Uses extract strategy to preserve the document's heading tree
+ * 2. Runs recursive summarization bottom-up:
+ *    - Leaf summaries: precision retrieval summaries naming entities and concepts
+ *    - Branch summaries: scope summaries synthesized from children's summaries
+ * 3. Rebuilds both flat and tree ToC with the new summaries
+ */
 export async function hybridToC(
   doc: ParsedDocument,
   docId: string,
   llm: LLMProvider
-): Promise<{
-  toc: ToCManifest;
-  sections: ReturnType<typeof extractToC>["sections"];
-}> {
+): Promise<ToCResult> {
   // Start with extract strategy for structure
   const extracted = extractToC(doc, docId);
 
-  // Generate LLM-powered summaries for each section
-  const CONCURRENCY = 5;
+  // Run recursive summarization (mutates section summaries in place)
+  await recursiveSummarize(extracted.sections, llm);
 
-  const sectionsWithSummaries = [...extracted.sections];
-
-  // Process in batches
-  for (let i = 0; i < sectionsWithSummaries.length; i += CONCURRENCY) {
-    const batch = sectionsWithSummaries.slice(i, i + CONCURRENCY);
-    const summaryPromises = batch.map(async (section) => {
-      try {
-        const summary = await generatePrecisionSummary(
-          llm,
-          section.title,
-          section.content
-        );
-        return { ...section, summary };
-      } catch {
-        // Fall back to excerpt summary on LLM failure
-        return section;
-      }
-    });
-
-    const results = await Promise.allSettled(summaryPromises);
-    results.forEach((result, j) => {
-      if (result.status === "fulfilled") {
-        sectionsWithSummaries[i + j] = result.value;
-      }
-    });
-  }
-
-  // Rebuild ToC with new summaries
-  const tocEntries: ToCEntry[] = sectionsWithSummaries.map((s) => ({
+  // Rebuild ToC manifests with new summaries
+  const flatEntries = extracted.sections.map((s) => ({
     section_id: s.id,
     title: s.title,
     summary: s.summary,
@@ -53,44 +34,14 @@ export async function hybridToC(
     link: `/v1/documents/${docId}/sections/${s.id}`,
   }));
 
+  const treeToc = buildTreeToCFromSections(extracted.sections, docId, doc);
+
   return {
     toc: {
       ...extracted.toc,
-      sections: tocEntries,
+      sections: flatEntries,
     },
-    sections: sectionsWithSummaries,
+    treeToc,
+    sections: extracted.sections,
   };
-}
-
-async function generatePrecisionSummary(
-  llm: LLMProvider,
-  title: string,
-  content: string
-): Promise<string> {
-  const truncatedContent =
-    content.length > 8000 ? content.slice(0, 8000) + "..." : content;
-
-  const prompt = `You are generating a retrieval summary for a section of a document. This summary will be read by another LLM at query time to decide whether this section is relevant to a user's question.
-
-Write a summary that:
-- Names every specific entity, concept, method, finding, or claim in the section
-- Uses precise terminology, not vague descriptions
-- Mentions the scope boundaries (what this section covers AND what it does not)
-- Is 1-3 sentences long
-- Anticipates the types of questions this section would answer
-
-Do NOT use phrases like "this section discusses" or "various aspects of". Be specific.
-
-Section title: ${title}
-Section content:
-${truncatedContent}
-
-Write the retrieval summary (1-3 sentences, no prefix):`;
-
-  const summary = await llm.generateText(prompt, {
-    maxTokens: 300,
-    temperature: 0.2,
-  });
-
-  return summary.trim();
 }
