@@ -9,49 +9,36 @@
  * Why: the control plane is the single source of truth for user state.
  * Apps/web ships without a database; everything goes through the wire.
  */
-import type { Adapter, BetterAuthOptions } from "better-auth";
+import type {
+  BetterAuthOptions,
+  DBAdapter,
+  DBAdapterInstance,
+  Where,
+} from "better-auth";
 
 import { controlPlane } from "./control-plane";
 
-interface WhereClause {
-  field: string;
-  value: unknown;
-  operator?: string;
-  connector?: "AND" | "OR";
-}
-
-interface SortBy {
-  field: string;
-  direction: "asc" | "desc";
+// Translate Better Auth's Where[] (which may include OR connectors and
+// various operators we don't support yet) into the control plane's
+// simpler `[{field, value, operator}]` shape.
+function toCpWhere(where: Where[] | undefined) {
+  if (!where) return [];
+  return where.map((w) => ({
+    field: w.field,
+    value: w.value,
+    operator: w.operator,
+  }));
 }
 
 /**
- * Returns a Better Auth Adapter that calls the control plane over HTTP.
- *
- * Pass into `betterAuth({ database: controlPlaneAdapter() })`.
+ * Returns a Better Auth `DBAdapterInstance` (factory) that calls the
+ * control plane over HTTP. Pass into `betterAuth({ database: ... })`.
  */
-export function controlPlaneAdapter(
-  _options?: BetterAuthOptions,
-): Adapter {
-  // Translate Better Auth's WhereClause[] (which may include OR
-  // connectors and various operators we don't support yet) into the
-  // control plane's simpler `[{field, value, operator}]` shape.
-  const toCpWhere = (where: WhereClause[] | undefined) => {
-    if (!where) return [];
-    return where.map((w) => ({
-      field: w.field,
-      value: w.value,
-      operator: w.operator,
-    }));
-  };
-
-  return {
+export function controlPlaneAdapter(): DBAdapterInstance<BetterAuthOptions> {
+  return (_options: BetterAuthOptions): DBAdapter<BetterAuthOptions> => ({
     id: "control-plane",
 
     async create({ model, data }) {
-      // Better Auth occasionally passes `id` even when the schema
-      // would auto-generate one — pass through; the control plane's
-      // SQL builder accepts it.
       const row = await controlPlane.identity.create<Record<string, unknown>>(
         model,
         data as Record<string, unknown>,
@@ -62,29 +49,37 @@ export function controlPlaneAdapter(
     async findOne({ model, where }) {
       const row = await controlPlane.identity.findOne<Record<string, unknown>>(
         model,
-        toCpWhere(where as WhereClause[]),
+        toCpWhere(where),
       );
-      // The control plane returns `null` for misses; Better Auth
-      // expects undefined or null — both work.
       return (row ?? null) as never;
     },
 
     async findMany({ model, where, limit, offset, sortBy }) {
       const rows = await controlPlane.identity.findMany<
         Record<string, unknown>
-      >(model, toCpWhere(where as WhereClause[]), {
+      >(model, toCpWhere(where), {
         limit,
         offset,
-        sortBy: sortBy as SortBy[] | undefined,
+        // Better Auth passes a single sort spec; the control plane
+        // accepts an array.
+        sortBy: sortBy ? [sortBy] : undefined,
       });
       return (rows ?? []) as never;
+    },
+
+    async count({ model, where }) {
+      const result = await controlPlane.identity.count(
+        model,
+        toCpWhere(where),
+      );
+      return result.count;
     },
 
     async update({ model, where, update }) {
       const row = await controlPlane.identity.update<Record<string, unknown>>(
         model,
-        toCpWhere(where as WhereClause[]),
-        update as Record<string, unknown>,
+        toCpWhere(where),
+        update,
       );
       return (row ?? null) as never;
     },
@@ -92,30 +87,36 @@ export function controlPlaneAdapter(
     async updateMany({ model, where, update }) {
       const result = await controlPlane.identity.updateMany(
         model,
-        toCpWhere(where as WhereClause[]),
-        update as Record<string, unknown>,
+        toCpWhere(where),
+        update,
       );
       return result.count;
     },
 
     async delete({ model, where }) {
-      await controlPlane.identity.delete(model, toCpWhere(where as WhereClause[]));
+      await controlPlane.identity.delete(model, toCpWhere(where));
     },
 
     async deleteMany({ model, where }) {
       const result = await controlPlane.identity.deleteMany(
         model,
-        toCpWhere(where as WhereClause[]),
+        toCpWhere(where),
       );
       return result.count;
     },
 
-    async count({ model, where }) {
-      const result = await controlPlane.identity.count(
-        model,
-        toCpWhere(where as WhereClause[]),
-      );
-      return result.count;
+    /**
+     * Transactions are not supported over HTTP. Run the callback with
+     * the same adapter — operations execute sequentially without
+     * isolation. This matches Better Auth's documented fallback
+     * (the docs note: "if the adapter doesn't support transactions,
+     * operations will be executed sequentially").
+     */
+    async transaction(callback) {
+      const adapter = controlPlaneAdapter()(_options);
+      // The adapter we pass into the callback omits `transaction` itself
+      // (DBTransactionAdapter type). Cast accordingly.
+      return callback(adapter as never);
     },
-  };
+  });
 }

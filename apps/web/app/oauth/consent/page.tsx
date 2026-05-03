@@ -134,7 +134,6 @@ export default function OAuthConsentPage() {
         state: state ?? "",
         code_challenge: codeChallenge!,
         code_challenge_method: codeChallengeMethod ?? "S256",
-        project_id: session.user.id, // Default project
         approved: true,
       });
 
@@ -163,7 +162,6 @@ export default function OAuthConsentPage() {
       state: state ?? "",
       code_challenge: codeChallenge!,
       code_challenge_method: codeChallengeMethod ?? "S256",
-      project_id: session?.user.id ?? "",
       approved: false,
     });
 
