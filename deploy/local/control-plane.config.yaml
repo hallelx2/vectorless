@@ -1,0 +1,65 @@
+# Vectorless control-plane config for local docker-compose validation.
+#
+# Secrets come from env vars (set in docker-compose.yml):
+#   VLC_UPSTREAM_AUTH_TOKEN       — must match server's VLS_AUTH_API_KEY
+#   VLC_OAUTH_JWT_SECRET          — random 64+ bytes
+#   VLC_DASHBOARD_SERVICE_TOKEN   — shared with the dashboard
+
+server:
+  addr: ":9090"
+  read_timeout: 30s
+  write_timeout: 120s
+  drain_timeout: 15s
+
+database:
+  url: "postgres://vectorless:vectorless@postgres-cp:5432/vectorless_control?sslmode=disable"
+  max_conns: 10
+
+session:
+  cookie_name: "vls_session"
+  cookie_domain: ""           # blank for localhost — set to ".vectorless.store" in prod
+  duration: 720h
+  secure: false
+
+cors:
+  enabled: true
+  allowed_origins:
+    - "http://localhost:3000"
+  max_age: 86400
+
+upstream:
+  url: "http://server:8080"
+  # auth_token comes from VLC_UPSTREAM_AUTH_TOKEN env var.
+  auth_token: ""
+  timeout: 120s
+
+# Email + billing are disabled for local. Fill in prod values.
+polar:
+  access_token: ""
+plunk:
+  base_url: ""
+ses:
+  region: "us-east-1"
+  from_address: ""
+
+app_url: "http://localhost:3000"
+
+oauth:
+  # jwt_secret comes from VLC_OAUTH_JWT_SECRET env var.
+  jwt_secret: ""
+  issuer: "http://localhost:9090"
+  access_token_ttl: 900
+  refresh_token_ttl: 2592000
+  mcp_resource_url: "http://localhost:3000/api/mcp"
+
+dashboard:
+  url: "http://localhost:3000"
+  # service_token comes from VLC_DASHBOARD_SERVICE_TOKEN env var.
+  service_token: ""
+
+metrics:
+  enabled: true
+
+log:
+  level: "debug"
+  format: "console"

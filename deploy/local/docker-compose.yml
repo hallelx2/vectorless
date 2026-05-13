@@ -1,0 +1,142 @@
+# Local stack for end-to-end validation. Run from the project root:
+#
+#   cd deploy/local
+#   export ANTHROPIC_API_KEY=sk-ant-...    # required by the engine
+#   docker compose up -d
+#   docker compose logs -f server control-plane
+#
+# Layout:
+#   postgres-server  (port 5433 → 5432)  — server's data: docs, sections, TOCs
+#   postgres-cp      (port 5434 → 5432)  — control-plane's data: users, OAuth
+#   minio            (port 9000 / 9001)  — S3-compatible storage (R2 stand-in)
+#   server           (port 8080)         — vectorless-server (embeds engine)
+#   control-plane    (port 9090)         — calls server with shared secret
+
+services:
+  # ── Server's Postgres ──────────────────────────────────────────
+  postgres-server:
+    image: postgres:17-alpine
+    container_name: vl-postgres-server
+    environment:
+      POSTGRES_USER: vectorless
+      POSTGRES_PASSWORD: vectorless
+      POSTGRES_DB: vectorless_server
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata-server:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vectorless -d vectorless_server"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── Control-plane's Postgres ───────────────────────────────────
+  postgres-cp:
+    image: postgres:17-alpine
+    container_name: vl-postgres-cp
+    environment:
+      POSTGRES_USER: vectorless
+      POSTGRES_PASSWORD: vectorless
+      POSTGRES_DB: vectorless_control
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata-cp:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vectorless -d vectorless_control"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # ── MinIO (S3-compatible, stands in for R2 locally) ────────────
+  minio:
+    image: minio/minio:latest
+    container_name: vl-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - miniodata:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # Create the bucket on first start.
+  minio-setup:
+    image: minio/mc:latest
+    container_name: vl-minio-setup
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+        mc alias set local http://minio:9000 minioadmin minioadmin &&
+        mc mb --ignore-existing local/vectorless-docs &&
+        echo 'bucket ready'
+      "
+
+  # ── Vectorless server (embeds the engine) ──────────────────────
+  # Build context = vectorless-project root (sibling of vectorless-dashboard).
+  server:
+    build:
+      context: ../../..
+      dockerfile: vectorless-server/Dockerfile
+      args:
+        VERSION: "local-compose"
+    container_name: vl-server
+    depends_on:
+      postgres-server:
+        condition: service_healthy
+      minio-setup:
+        condition: service_completed_successfully
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./server.config.yaml:/etc/vectorless/config.yaml:ro
+    environment:
+      # Secrets live in env (don't bake into the config file).
+      VLE_ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+    command:
+      - "--role"
+      - "server"
+      - "--config"
+      - "/etc/vectorless/config.yaml"
+
+  # ── Vectorless control-plane ───────────────────────────────────
+  # Build context = sibling vectorless-control-plane repo.
+  control-plane:
+    build:
+      context: ../../../vectorless-control-plane
+      dockerfile: Dockerfile
+      args:
+        VERSION: "local-compose"
+    container_name: vl-control-plane
+    depends_on:
+      postgres-cp:
+        condition: service_healthy
+      server:
+        condition: service_started
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./control-plane.config.yaml:/etc/vectorless/config.yaml:ro
+    environment:
+      # Secrets via env — shared with the server.
+      VLC_UPSTREAM_AUTH_TOKEN: "local-dev-shared-secret-change-me"
+      VLC_OAUTH_JWT_SECRET: "local-dev-jwt-secret-64-bytes-zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+      VLC_DASHBOARD_SERVICE_TOKEN: "local-dev-dashboard-token-change-me"
+    command:
+      - "--config"
+      - "/etc/vectorless/config.yaml"
+
+volumes:
+  pgdata-server:
+  pgdata-cp:
+  miniodata:

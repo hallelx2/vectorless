@@ -1,0 +1,7 @@
+# Local secrets — never commit.
+cloudrun/.env
+cloudrun/.*.generated.yaml
+local/.env
+
+# Generated artifacts.
+*.log
