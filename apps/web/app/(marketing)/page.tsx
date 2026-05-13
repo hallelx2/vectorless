@@ -3,6 +3,7 @@ import Hero from "@/components/Hero";
 import Problem from "@/components/Problem";
 import Platform from "@/components/Platform";
 import HowItWorks from "@/components/HowItWorks";
+import Anatomy from "@/components/Anatomy";
 import Features from "@/components/Features";
 import UseCases from "@/components/UseCases";
 import SDK from "@/components/SDK";
@@ -18,6 +19,7 @@ export default function Home() {
         <Problem />
         <Platform />
         <HowItWorks />
+        <Anatomy />
         <Features />
         <UseCases />
         <SDK />
