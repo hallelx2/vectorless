@@ -28,7 +28,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Key, Plus, Copy, Ban, Check, Loader2, AlertTriangle } from "lucide-react";
+import { Key, Plus, Copy, Ban, Check, Loader2, AlertTriangle, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 import {
   createApiKey,
   revokeApiKey,
@@ -157,29 +159,23 @@ export default function ApiKeysPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="font-display text-2xl font-semibold text-foreground">
-            API Keys
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Manage your API keys for accessing the Vectorless API.
-          </p>
-        </div>
-        <Button onClick={() => setGenerateOpen(true)}>
-          <Plus className="h-4 w-4" />
-          Generate New Key
-        </Button>
-      </div>
+      <PageHeader
+        eyebrow="Developer"
+        title="API keys"
+        description="Programmatic access to your Vectorless workspace. Keep these secret — they grant full read/write to your documents."
+        actions={
+          <Button size="sm" className="h-9" onClick={() => setGenerateOpen(true)}>
+            <Plus className="size-3.5" />
+            New API key
+          </Button>
+        }
+      />
 
-      {/* Error banner */}
       {error && (
-        <Card className="border-destructive">
-          <CardContent className="p-4">
-            <p className="text-sm text-destructive">{error}</p>
-          </CardContent>
-        </Card>
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
       {/* Generate Key Dialog */}

@@ -23,6 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  AlertCircle,
   Play,
   FileText,
   Search,
@@ -30,7 +31,10 @@ import {
   ChevronRight,
   Copy,
   Loader2,
+  Sparkles,
 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 import { runPlaygroundQuery } from "@/lib/actions/playground";
 
 // ---------- Types ----------
@@ -410,16 +414,21 @@ export default function PlaygroundPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="font-display text-2xl font-semibold text-foreground">
-          Playground
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Test retrieval queries against your documents and inspect the full
-          retrieval trace.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow="Playground"
+        title={
+          <>
+            Query, <span className="font-serif italic font-normal text-muted-foreground">live.</span>
+          </>
+        }
+        description="Run real retrieval queries against your documents and inspect every step of the trace."
+        actions={
+          <Button variant="outline" size="sm" className="h-9 gap-2" disabled>
+            <Sparkles className="size-3.5 text-brand-blue" />
+            Save as snippet
+          </Button>
+        }
+      />
 
       <div className="grid gap-6 lg:grid-cols-5">
         {/* Left panel - Query configuration (2 cols) */}
@@ -616,20 +625,16 @@ export default function PlaygroundPage() {
 
               {/* Error state */}
               {error && (
-                <div className="rounded-lg border border-destructive/50 bg-destructive/5 p-4">
-                  <h4 className="text-sm font-medium text-destructive">
-                    Query Failed
-                  </h4>
-                  <p className="mt-1 text-sm text-destructive/80">{error}</p>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="mt-3"
-                    onClick={handleRunQuery}
-                  >
-                    Retry
-                  </Button>
-                </div>
+                <Alert variant="destructive">
+                  <AlertCircle className="size-4" />
+                  <AlertTitle>Query failed</AlertTitle>
+                  <AlertDescription className="flex items-center gap-3">
+                    <span>{error}</span>
+                    <Button variant="outline" size="sm" className="h-7" onClick={handleRunQuery}>
+                      Retry
+                    </Button>
+                  </AlertDescription>
+                </Alert>
               )}
 
               {/* Step-by-step trace */}
