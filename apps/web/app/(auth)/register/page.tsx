@@ -1,32 +1,47 @@
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import Link from "next/link";
 import { RegisterForm } from "@/components/auth/RegisterForm";
 import { SocialLoginButtons } from "@/components/auth/SocialLoginButtons";
 
 export const metadata = {
-  title: "Create Account | Vectorless",
+  title: "Start free · Vectorless",
 };
 
 export default function RegisterPage() {
   return (
-    <Card>
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-display">
-          Create your account
-        </CardTitle>
-        <CardDescription>
-          Get started with Vectorless in seconds
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <RegisterForm />
-        <SocialLoginButtons />
-      </CardContent>
-    </Card>
+    <div className="space-y-7">
+      <header className="space-y-2">
+        <h1 className="font-display text-[28px] md:text-[32px] font-medium leading-tight tracking-[-0.02em]">
+          Start free.
+        </h1>
+        <p className="text-[14px] text-muted-foreground">
+          100 documents · no credit card · MIT licensed SDK.
+        </p>
+      </header>
+
+      <SocialLoginButtons />
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-border" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="bg-background px-3 font-data text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+            Or with email
+          </span>
+        </div>
+      </div>
+
+      <RegisterForm />
+
+      <p className="text-center text-[13px] text-muted-foreground">
+        Already have an account?{" "}
+        <Link
+          href="/login"
+          className="font-medium text-foreground underline underline-offset-4 hover:text-primary transition-colors"
+        >
+          Sign in
+        </Link>
+      </p>
+    </div>
   );
 }

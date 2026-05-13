@@ -5,17 +5,11 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { ArrowLeft, Loader2, Mail } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ArrowLeft, Loader2, Mail } from "lucide-react";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -39,84 +33,90 @@ export default function ForgotPasswordPage() {
       await fetch("/api/auth/forget-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: data.email,
-          redirectTo: "/reset-password",
-        }),
+        body: JSON.stringify({ email: data.email, redirectTo: "/reset-password" }),
       });
     } catch {
-      // Still show success to prevent email enumeration
+      // intentionally ignore — never confirm whether the address is on file
     }
     setSubmitted(true);
   }
 
-  return (
-    <Card>
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-display">Reset password</CardTitle>
-        <CardDescription>
-          {submitted
-            ? "Check your inbox for a reset link"
-            : "Enter your email and we'll send you a reset link"}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {submitted ? (
-          <div className="space-y-6">
-            <div className="flex flex-col items-center gap-3 py-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                <Mail className="h-6 w-6 text-primary" />
-              </div>
-              <p className="text-center text-sm text-muted-foreground">
-                If an account exists with that email, you&apos;ll receive a
-                password reset link shortly.
-              </p>
-            </div>
-            <Button variant="outline" className="w-full" asChild>
-              <Link href="/login">
-                <ArrowLeft className="h-4 w-4" />
-                Back to sign in
-              </Link>
-            </Button>
+  if (submitted) {
+    return (
+      <div className="space-y-7">
+        <div className="space-y-4">
+          <div className="inline-flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Mail className="size-4" />
           </div>
-        ) : (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                autoComplete="email"
-                {...register("email")}
-              />
-              {errors.email && (
-                <p className="text-xs text-destructive">
-                  {errors.email.message}
-                </p>
-              )}
-            </div>
+          <header className="space-y-2">
+            <h1 className="font-display text-[28px] md:text-[32px] font-medium leading-tight tracking-[-0.02em]">
+              Check your inbox.
+            </h1>
+            <p className="text-[14px] text-muted-foreground leading-relaxed">
+              If an account exists for that email, we&apos;ve sent a reset link.
+              It expires in 1 hour.
+            </p>
+          </header>
+        </div>
 
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Sending...
-                </>
-              ) : (
-                "Send reset link"
-              )}
-            </Button>
+        <Button variant="outline" className="w-full h-10" asChild>
+          <Link href="/login">
+            <ArrowLeft className="size-3.5" />
+            Back to sign in
+          </Link>
+        </Button>
+      </div>
+    );
+  }
 
-            <Button variant="ghost" className="w-full" asChild>
-              <Link href="/login">
-                <ArrowLeft className="h-4 w-4" />
-                Back to sign in
-              </Link>
-            </Button>
-          </form>
-        )}
-      </CardContent>
-    </Card>
+  return (
+    <div className="space-y-7">
+      <header className="space-y-2">
+        <h1 className="font-display text-[28px] md:text-[32px] font-medium leading-tight tracking-[-0.02em]">
+          Reset your password.
+        </h1>
+        <p className="text-[14px] text-muted-foreground">
+          We&apos;ll email you a link that lasts an hour.
+        </p>
+      </header>
+
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <div className="space-y-1.5">
+          <Label htmlFor="email" className="text-[13px]">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            placeholder="you@vectorless.dev"
+            autoComplete="email"
+            {...register("email")}
+            aria-invalid={!!errors.email}
+          />
+          {errors.email && (
+            <p className="text-[12px] text-destructive">{errors.email.message}</p>
+          )}
+        </div>
+
+        <Button type="submit" className="w-full h-10" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Sending…
+            </>
+          ) : (
+            "Send reset link"
+          )}
+        </Button>
+      </form>
+
+      <p className="text-center text-[13px] text-muted-foreground">
+        Remembered it?{" "}
+        <Link
+          href="/login"
+          className="font-medium text-foreground underline underline-offset-4 hover:text-primary transition-colors"
+        >
+          Sign in
+        </Link>
+      </p>
+    </div>
   );
 }

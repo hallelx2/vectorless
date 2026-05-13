@@ -6,11 +6,13 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
+
 import { signIn } from "@/lib/auth-client";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2 } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -22,6 +24,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 export function LoginForm() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -53,67 +56,74 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       {error && (
-        <div className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {error}
-        </div>
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
 
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
+      <div className="space-y-1.5">
+        <Label htmlFor="email" className="text-[13px]">Email</Label>
         <Input
           id="email"
           type="email"
-          placeholder="you@example.com"
+          placeholder="you@vectorless.dev"
           autoComplete="email"
           {...register("email")}
+          aria-invalid={!!errors.email}
         />
         {errors.email && (
-          <p className="text-xs text-destructive">{errors.email.message}</p>
+          <p className="text-[12px] text-destructive">{errors.email.message}</p>
         )}
       </div>
 
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <div className="flex items-center justify-between">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password" className="text-[13px]">Password</Label>
           <Link
             href="/forgot-password"
-            className="text-xs text-muted-foreground hover:text-primary transition-colors"
+            className="text-[12px] text-muted-foreground hover:text-foreground underline-offset-4 hover:underline transition-colors"
           >
-            Forgot password?
+            Forgot?
           </Link>
         </div>
-        <Input
-          id="password"
-          type="password"
-          placeholder="Enter your password"
-          autoComplete="current-password"
-          {...register("password")}
-        />
+        <div className="relative">
+          <Input
+            id="password"
+            type={showPassword ? "text" : "password"}
+            placeholder="Enter your password"
+            autoComplete="current-password"
+            {...register("password")}
+            aria-invalid={!!errors.password}
+            className="pr-10"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((s) => !s)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+            aria-label={showPassword ? "Hide password" : "Show password"}
+          >
+            {showPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+          </button>
+        </div>
         {errors.password && (
-          <p className="text-xs text-destructive">{errors.password.message}</p>
+          <p className="text-[12px] text-destructive">{errors.password.message}</p>
         )}
       </div>
 
-      <Button type="submit" className="w-full" disabled={isSubmitting}>
+      <Button type="submit" className="w-full h-10" disabled={isSubmitting}>
         {isSubmitting ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Signing in...
+            <Loader2 className="size-4 animate-spin" />
+            Signing in…
           </>
         ) : (
-          "Sign in"
+          <>
+            Sign in
+            <span aria-hidden>→</span>
+          </>
         )}
       </Button>
-
-      <p className="text-center text-sm text-muted-foreground">
-        Don&apos;t have an account?{" "}
-        <Link
-          href="/register"
-          className="font-medium text-primary hover:text-primary/80 transition-colors"
-        >
-          Create one
-        </Link>
-      </p>
     </form>
   );
 }

@@ -6,27 +6,22 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { AlertCircle, ArrowLeft, CheckCircle, Eye, EyeOff, Loader2 } from "lucide-react";
+
 import { authClient } from "@/lib/auth-client";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowLeft, CheckCircle, Loader2 } from "lucide-react";
 
 const resetPasswordSchema = z
   .object({
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")
-      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
-      .regex(/[0-9]/, "Password must contain at least one number"),
+      .regex(/[A-Z]/, "Must contain an uppercase letter")
+      .regex(/[0-9]/, "Must contain a number"),
     confirmPassword: z.string(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -42,6 +37,7 @@ function ResetPasswordForm() {
   const token = searchParams.get("token");
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -56,13 +52,9 @@ function ResetPasswordForm() {
       setError("Invalid or missing reset token");
       return;
     }
-
     setError(null);
     try {
-      await authClient.resetPassword({
-        newPassword: data.password,
-        token,
-      });
+      await authClient.resetPassword({ newPassword: data.password, token });
       setSuccess(true);
     } catch {
       setError("Failed to reset password. The link may have expired.");
@@ -71,126 +63,142 @@ function ResetPasswordForm() {
 
   if (!token) {
     return (
-      <Card>
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-display">Invalid link</CardTitle>
-          <CardDescription>
-            This password reset link is invalid or has expired.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Button variant="outline" className="w-full" asChild>
-            <Link href="/forgot-password">Request a new link</Link>
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="space-y-7">
+        <header className="space-y-2">
+          <h1 className="font-display text-[28px] md:text-[32px] font-medium leading-tight tracking-[-0.02em]">
+            Invalid link.
+          </h1>
+          <p className="text-[14px] text-muted-foreground">
+            This reset link is missing a token or has already been used.
+          </p>
+        </header>
+        <Button variant="outline" className="w-full h-10" asChild>
+          <Link href="/forgot-password">
+            <ArrowLeft className="size-3.5" />
+            Request a new link
+          </Link>
+        </Button>
+      </div>
+    );
+  }
+
+  if (success) {
+    return (
+      <div className="space-y-7">
+        <div className="space-y-4">
+          <div className="inline-flex size-10 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
+            <CheckCircle className="size-4" />
+          </div>
+          <header className="space-y-2">
+            <h1 className="font-display text-[28px] md:text-[32px] font-medium leading-tight tracking-[-0.02em]">
+              Password updated.
+            </h1>
+            <p className="text-[14px] text-muted-foreground">
+              Sign in with your new password to continue.
+            </p>
+          </header>
+        </div>
+        <Button className="w-full h-10" onClick={() => router.push("/login")}>
+          Sign in
+          <span aria-hidden>→</span>
+        </Button>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl font-display">
-          {success ? "Password reset" : "Set new password"}
-        </CardTitle>
-        <CardDescription>
-          {success
-            ? "Your password has been updated successfully"
-            : "Enter your new password below"}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        {success ? (
-          <div className="space-y-6">
-            <div className="flex flex-col items-center gap-3 py-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
-                <CheckCircle className="h-6 w-6 text-green-600" />
-              </div>
-              <p className="text-center text-sm text-muted-foreground">
-                You can now sign in with your new password.
-              </p>
-            </div>
-            <Button className="w-full" onClick={() => router.push("/login")}>
-              Sign in
-            </Button>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {error && (
-              <div className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                {error}
-              </div>
-            )}
+    <div className="space-y-7">
+      <header className="space-y-2">
+        <h1 className="font-display text-[28px] md:text-[32px] font-medium leading-tight tracking-[-0.02em]">
+          Set a new password.
+        </h1>
+        <p className="text-[14px] text-muted-foreground">
+          Make it 8+ characters with at least one uppercase letter and one number.
+        </p>
+      </header>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">New password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Min 8 characters"
-                autoComplete="new-password"
-                {...register("password")}
-              />
-              {errors.password && (
-                <p className="text-xs text-destructive">
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm new password</Label>
-              <Input
-                id="confirmPassword"
-                type="password"
-                placeholder="Re-enter your password"
-                autoComplete="new-password"
-                {...register("confirmPassword")}
-              />
-              {errors.confirmPassword && (
-                <p className="text-xs text-destructive">
-                  {errors.confirmPassword.message}
-                </p>
-              )}
-            </div>
-
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  Resetting...
-                </>
-              ) : (
-                "Reset password"
-              )}
-            </Button>
-
-            <Button variant="ghost" className="w-full" asChild>
-              <Link href="/login">
-                <ArrowLeft className="h-4 w-4" />
-                Back to sign in
-              </Link>
-            </Button>
-          </form>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        {error && (
+          <Alert variant="destructive">
+            <AlertCircle className="size-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
         )}
-      </CardContent>
-    </Card>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="password" className="text-[13px]">New password</Label>
+          <div className="relative">
+            <Input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="Min 8 characters"
+              autoComplete="new-password"
+              {...register("password")}
+              aria-invalid={!!errors.password}
+              className="pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((s) => !s)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-muted-foreground hover:text-foreground transition-colors"
+              aria-label={showPassword ? "Hide password" : "Show password"}
+            >
+              {showPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
+            </button>
+          </div>
+          {errors.password && (
+            <p className="text-[12px] text-destructive">{errors.password.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="confirmPassword" className="text-[13px]">Confirm new password</Label>
+          <Input
+            id="confirmPassword"
+            type={showPassword ? "text" : "password"}
+            placeholder="Re-enter your password"
+            autoComplete="new-password"
+            {...register("confirmPassword")}
+            aria-invalid={!!errors.confirmPassword}
+          />
+          {errors.confirmPassword && (
+            <p className="text-[12px] text-destructive">{errors.confirmPassword.message}</p>
+          )}
+        </div>
+
+        <Button type="submit" className="w-full h-10" disabled={isSubmitting}>
+          {isSubmitting ? (
+            <>
+              <Loader2 className="size-4 animate-spin" />
+              Resetting…
+            </>
+          ) : (
+            "Reset password"
+          )}
+        </Button>
+
+        <Button variant="ghost" className="w-full h-10" asChild>
+          <Link href="/login">
+            <ArrowLeft className="size-3.5" />
+            Back to sign in
+          </Link>
+        </Button>
+      </form>
+    </div>
   );
 }
 
 function ResetPasswordSkeleton() {
   return (
-    <Card>
-      <CardHeader className="text-center">
-        <Skeleton className="mx-auto h-8 w-48" />
-        <Skeleton className="mx-auto mt-2 h-4 w-64" />
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
-      </CardContent>
-    </Card>
+    <div className="space-y-7">
+      <div className="space-y-2">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-4 w-72" />
+      </div>
+      <Skeleton className="h-10 w-full" />
+      <Skeleton className="h-10 w-full" />
+      <Skeleton className="h-10 w-full" />
+    </div>
   );
 }
 
