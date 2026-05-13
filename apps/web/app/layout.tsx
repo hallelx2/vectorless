@@ -1,26 +1,21 @@
 import type { Metadata } from "next";
-import { Outfit, DM_Sans, Poppins, Roboto } from "next/font/google";
+import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import { SessionProvider } from "@/providers/session-provider";
 import { ToastProvider } from "@/providers/toast-provider";
 import "./globals.css";
 
-const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
-const dmSans = DM_Sans({ subsets: ["latin"], variable: "--font-dm-sans" });
-const poppins = Poppins({
-  weight: ["400", "500", "600"],
+const geist = Geist({ subsets: ["latin"], variable: "--font-geist" });
+const geistMono = Geist_Mono({ subsets: ["latin"], variable: "--font-geist-mono" });
+const instrumentSerif = Instrument_Serif({
+  weight: "400",
   subsets: ["latin"],
-  variable: "--font-poppins",
-});
-const roboto = Roboto({
-  weight: ["400", "500", "700"],
-  subsets: ["latin"],
-  variable: "--font-roboto",
+  variable: "--font-instrument-serif",
 });
 
 export const metadata: Metadata = {
-  title: "Vectorless | The retrieval platform for the reasoning era",
+  title: "Vectorless | Retrieval for the reasoning era",
   description:
-    "Turn anything into something queryable. No chunking. No embeddings. Just reasoning.",
+    "The retrieval primitive for AI agents. No chunks. No embeddings. Just structured documents any LLM can reason over.",
 };
 
 export default function RootLayout({
@@ -31,10 +26,10 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${outfit.variable} ${dmSans.variable} ${poppins.variable} ${roboto.variable}`}
+      className={`${geist.variable} ${geistMono.variable} ${instrumentSerif.variable}`}
     >
       <body
-        className="bg-white text-[#222222] font-sans antialiased selection:bg-[#bfdbfe] selection:text-[#1d4ed8]"
+        className="bg-white text-[#0a0a0a] font-sans antialiased selection:bg-[#bfdbfe] selection:text-[#1d4ed8]"
         suppressHydrationWarning
       >
         <SessionProvider>
