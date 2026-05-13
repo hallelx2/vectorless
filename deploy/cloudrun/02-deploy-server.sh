@@ -35,21 +35,38 @@ if [[ -z "${UPSTREAM_AUTH_TOKEN:-}" ]]; then
 fi
 
 SERVICE="vectorless-server"
-IMAGE="$REGION-docker.pkg.dev/$PROJECT_ID/vectorless/server"
+GHCR_IMAGE="${GHCR_SERVER_IMAGE:-ghcr.io/hallelx2/vectorless-server:main}"
+AR_IMAGE="$REGION-docker.pkg.dev/$PROJECT_ID/vectorless/server"
 TAG="$(date -u +%Y%m%d-%H%M%S)"
 
-# ── 1. Build & push image ─────────────────────────────────────────
-echo "→ Building image $IMAGE:$TAG (build context = project root)…"
-docker build \
-  -f "$PROJECT_ROOT/vectorless-server/Dockerfile" \
-  --build-arg "VERSION=$TAG" \
-  -t "$IMAGE:$TAG" \
-  -t "$IMAGE:latest" \
-  "$PROJECT_ROOT"
-
-echo "→ Pushing image to Artifact Registry…"
-docker push "$IMAGE:$TAG"
-docker push "$IMAGE:latest"
+# ── 1. Get the image ──────────────────────────────────────────────
+# Two modes:
+#   BUILD_LOCALLY=true   build from local source and push to Artifact Registry
+#   (default)            pull the public image from ghcr.io and mirror it to AR
+#
+# We always end up with the image in GCP Artifact Registry because Cloud
+# Run pulls from there with no extra auth.
+if [[ "${BUILD_LOCALLY:-false}" == "true" ]]; then
+  echo "→ BUILD_LOCALLY=true — building from $PROJECT_ROOT/vectorless-server/Dockerfile…"
+  docker build \
+    -f "$PROJECT_ROOT/vectorless-server/Dockerfile" \
+    --build-arg "VERSION=$TAG" \
+    -t "$AR_IMAGE:$TAG" \
+    -t "$AR_IMAGE:latest" \
+    "$PROJECT_ROOT"
+  docker push "$AR_IMAGE:$TAG"
+  docker push "$AR_IMAGE:latest"
+  DEPLOY_IMAGE="$AR_IMAGE:$TAG"
+else
+  echo "→ Pulling $GHCR_IMAGE and mirroring to Artifact Registry…"
+  docker pull "$GHCR_IMAGE"
+  docker tag "$GHCR_IMAGE" "$AR_IMAGE:$TAG"
+  docker tag "$GHCR_IMAGE" "$AR_IMAGE:latest"
+  docker push "$AR_IMAGE:$TAG"
+  docker push "$AR_IMAGE:latest"
+  DEPLOY_IMAGE="$AR_IMAGE:$TAG"
+  echo "   (override with BUILD_LOCALLY=true ./02-deploy-server.sh to build from your local source)"
+fi
 
 # ── 2. Generate config file from template ─────────────────────────
 echo "→ Generating server.config.yaml from template…"
@@ -86,7 +103,7 @@ rm -f "$CONFIG_FILE"
 # ── 4. Deploy to Cloud Run ────────────────────────────────────────
 echo "→ Deploying $SERVICE…"
 gcloud run deploy "$SERVICE" \
-  --image="$IMAGE:$TAG" \
+  --image="$DEPLOY_IMAGE" \
   --region="$REGION" \
   --port=8080 \
   --memory=512Mi \

@@ -2,25 +2,56 @@
 
 End-to-end deploy of the private + open-source Vectorless stack to Cloud Run + Neon + R2, with the Vercel dashboard already shipping.
 
-## Layout assumption
+## Where things live
 
-This `deploy/` tree lives inside the **vectorless-dashboard** repo,
-and the deploy scripts expect the other Vectorless repos to be
-siblings of the dashboard repo on your local filesystem:
+The Vectorless stack is split across multiple repos. Each open-source
+repo ships its own self-contained `docker-compose.yml` so anyone can
+`docker compose up` and have *that* piece working without cloning the
+others:
+
+| Repo | Status | Standalone compose | Image |
+|---|---|---|---|
+| `vectorless-engine` | OSS public | `vectorless-engine/docker-compose.yml` | `ghcr.io/hallelx2/vectorless-engine` |
+| `vectorless-server` | OSS public | `vectorless-server/docker-compose.yml` | `ghcr.io/hallelx2/vectorless-server` |
+| `vectorless-control-plane` | private | `vectorless-control-plane/docker-compose.yml` | private (build locally) |
+| `vectorless-dashboard` | public, this repo | `apps/web/` lives here; deploy/ tooling lives here | runs on Vercel |
+
+This `deploy/` tree is the **all-up** wiring: a single
+`local/docker-compose.yml` that brings the whole stack up by pulling
+the pre-built images, and Cloud Run scripts that do the same for prod.
+
+### Two ways to bring up the local stack
+
+```bash
+# Default — pulls pre-built images from ghcr.io (fast, no Docker build):
+docker compose -f deploy/local/docker-compose.yml up -d
+
+# Build everything from your local source instead:
+docker compose -f deploy/local/docker-compose.yml --profile build up -d --build
+```
+
+The `build` profile expects the other repos to be siblings of
+`vectorless-dashboard/` on your filesystem:
 
 ```
 ~/your-workspace/
-├── vectorless-dashboard/      ← you are here (deploy/ lives inside)
-├── vectorless-server/         ← open-source Go server (embeds engine)
-├── vectorless-engine/         ← open-source Go engine library
-├── vectorless-control-plane/  ← private Go backend
-└── llmgate/                   ← LLM provider abstraction (used by server)
+├── vectorless-dashboard/      ← this repo (deploy/ is inside)
+├── vectorless-server/         ← github.com/hallelx2/vectorless-server
+├── vectorless-engine/         ← github.com/hallelx2/vectorless-engine
+├── vectorless-control-plane/  ← private
+└── llmgate/                   ← LLM provider abstraction
 ```
 
-If your checkout looks different, edit `PROJECT_ROOT` in the deploy
-scripts (`02-deploy-server.sh`, `03-deploy-control-plane.sh`) and the
-build `context:` keys in `local/docker-compose.yml` to point at the
-directory that holds those repos as immediate children.
+If your checkout is different, edit the `context:` keys in
+`local/docker-compose.yml` and the `PROJECT_ROOT` resolution in the
+cloudrun scripts.
+
+### Image publishing
+
+Each OSS repo has a `.github/workflows/docker-publish.yml` that builds
+on every push to `main` and every `vX.Y.Z` tag, pushing to
+`ghcr.io/hallelx2/<repo>`. Anyone with `docker pull` can grab the
+images — no auth needed for public repos.
 
 ## What we're actually deploying
 

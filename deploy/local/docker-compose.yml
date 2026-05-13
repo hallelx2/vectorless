@@ -1,16 +1,24 @@
-# Local stack for end-to-end validation. Run from the project root:
+# Full Vectorless stack — local validation.
 #
-#   cd deploy/local
-#   export ANTHROPIC_API_KEY=sk-ant-...    # required by the engine
+# By default this pulls pre-built images from ghcr.io. Anyone with a
+# GitHub account who can read public images can run:
+#
+#   export ANTHROPIC_API_KEY=sk-ant-...
 #   docker compose up -d
-#   docker compose logs -f server control-plane
+#   docker compose logs -f
 #
-# Layout:
-#   postgres-server  (port 5433 → 5432)  — server's data: docs, sections, TOCs
-#   postgres-cp      (port 5434 → 5432)  — control-plane's data: users, OAuth
-#   minio            (port 9000 / 9001)  — S3-compatible storage (R2 stand-in)
-#   server           (port 8080)         — vectorless-server (embeds engine)
-#   control-plane    (port 9090)         — calls server with shared secret
+# To build the images yourself instead (forks, fresh source, debugging):
+#
+#   docker compose --profile build up -d --build
+#
+# Images / tags:
+#   ghcr.io/hallelx2/vectorless-server:main           (latest main)
+#   ghcr.io/hallelx2/vectorless-control-plane:main    (latest main, PRIVATE — see below)
+#
+# Note: the control-plane image is private. If you don't have access,
+# either build locally via the `build` profile OR get an access token
+# at https://github.com/settings/tokens and:
+#   echo $TOKEN | docker login ghcr.io -u <user> --password-stdin
 
 services:
   # ── Server's Postgres ──────────────────────────────────────────
@@ -68,7 +76,6 @@ services:
       timeout: 3s
       retries: 10
 
-  # Create the bucket on first start.
   minio-setup:
     image: minio/mc:latest
     container_name: vl-minio-setup
@@ -83,13 +90,11 @@ services:
       "
 
   # ── Vectorless server (embeds the engine) ──────────────────────
-  # Build context = vectorless-project root (sibling of vectorless-dashboard).
+  # Default: pull the published image. Add --profile build to rebuild
+  # locally from sibling vectorless-server/ source.
   server:
-    build:
-      context: ../../..
-      dockerfile: vectorless-server/Dockerfile
-      args:
-        VERSION: "local-compose"
+    image: ghcr.io/hallelx2/vectorless-server:main
+    pull_policy: always
     container_name: vl-server
     depends_on:
       postgres-server:
@@ -101,22 +106,35 @@ services:
     volumes:
       - ./server.config.yaml:/etc/vectorless/config.yaml:ro
     environment:
-      # Secrets live in env (don't bake into the config file).
       VLE_ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
-    command:
-      - "--role"
-      - "server"
-      - "--config"
-      - "/etc/vectorless/config.yaml"
+    command: ["--role", "server", "--config", "/etc/vectorless/config.yaml"]
 
-  # ── Vectorless control-plane ───────────────────────────────────
-  # Build context = sibling vectorless-control-plane repo.
-  control-plane:
+  # Build override: replaces `server` when --profile build is on.
+  server-build:
+    profiles: ["build"]
     build:
-      context: ../../../vectorless-control-plane
-      dockerfile: Dockerfile
+      context: ../../..
+      dockerfile: vectorless-server/Dockerfile
       args:
         VERSION: "local-compose"
+    container_name: vl-server-build
+    depends_on:
+      postgres-server:
+        condition: service_healthy
+      minio-setup:
+        condition: service_completed_successfully
+    ports:
+      - "8081:8080"   # different port so it can run alongside the pulled image
+    volumes:
+      - ./server.config.yaml:/etc/vectorless/config.yaml:ro
+    environment:
+      VLE_ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+    command: ["--role", "server", "--config", "/etc/vectorless/config.yaml"]
+
+  # ── Vectorless control-plane ───────────────────────────────────
+  control-plane:
+    image: ghcr.io/hallelx2/vectorless-control-plane:main
+    pull_policy: always
     container_name: vl-control-plane
     depends_on:
       postgres-cp:
@@ -128,13 +146,31 @@ services:
     volumes:
       - ./control-plane.config.yaml:/etc/vectorless/config.yaml:ro
     environment:
-      # Secrets via env — shared with the server.
       VLC_UPSTREAM_AUTH_TOKEN: "local-dev-shared-secret-change-me"
       VLC_OAUTH_JWT_SECRET: "local-dev-jwt-secret-64-bytes-zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
       VLC_DASHBOARD_SERVICE_TOKEN: "local-dev-dashboard-token-change-me"
-    command:
-      - "--config"
-      - "/etc/vectorless/config.yaml"
+    command: ["--config", "/etc/vectorless/config.yaml"]
+
+  control-plane-build:
+    profiles: ["build"]
+    build:
+      context: ../../../vectorless-control-plane
+      dockerfile: Dockerfile
+      args:
+        VERSION: "local-compose"
+    container_name: vl-control-plane-build
+    depends_on:
+      postgres-cp:
+        condition: service_healthy
+    ports:
+      - "9091:9090"
+    volumes:
+      - ./control-plane.config.yaml:/etc/vectorless/config.yaml:ro
+    environment:
+      VLC_UPSTREAM_AUTH_TOKEN: "local-dev-shared-secret-change-me"
+      VLC_OAUTH_JWT_SECRET: "local-dev-jwt-secret-64-bytes-zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz"
+      VLC_DASHBOARD_SERVICE_TOKEN: "local-dev-dashboard-token-change-me"
+    command: ["--config", "/etc/vectorless/config.yaml"]
 
 volumes:
   pgdata-server:
