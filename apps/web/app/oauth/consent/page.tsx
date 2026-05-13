@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -62,7 +62,7 @@ interface OAuthClient {
   tos_uri: string | null;
 }
 
-export default function OAuthConsentPage() {
+function OAuthConsentInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { data: session, isPending: sessionLoading } = useSession();
@@ -388,5 +388,19 @@ export default function OAuthConsentPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function OAuthConsentPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <OAuthConsentInner />
+    </Suspense>
   );
 }

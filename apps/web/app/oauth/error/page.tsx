@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -10,7 +11,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Loader2 } from "lucide-react";
 
 const ERROR_MESSAGES: Record<string, string> = {
   invalid_client: "The application that sent you here is not recognized.",
@@ -20,7 +21,7 @@ const ERROR_MESSAGES: Record<string, string> = {
   server_error: "Something went wrong on our end. Please try again later.",
 };
 
-export default function OAuthErrorPage() {
+function OAuthErrorInner() {
   const searchParams = useSearchParams();
   const errorCode = searchParams.get("error") ?? "server_error";
   const errorDescription =
@@ -64,5 +65,19 @@ export default function OAuthErrorPage() {
         </CardFooter>
       </Card>
     </div>
+  );
+}
+
+export default function OAuthErrorPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      }
+    >
+      <OAuthErrorInner />
+    </Suspense>
   );
 }
