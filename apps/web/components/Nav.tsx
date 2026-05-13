@@ -9,7 +9,7 @@ export default function Nav() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-md z-50 border-b border-border-light">
+    <nav className="sticky top-0 left-0 right-0 bg-white/90 backdrop-blur-md z-50 border-b border-border-light">
       <div className="flex items-center justify-between px-6 md:px-12 h-20 max-w-[1200px] mx-auto">
         <Link href="/" className="font-display text-2xl font-medium tracking-tight text-text-dark flex items-center gap-2">
           <VectorlessDot size={20} />
