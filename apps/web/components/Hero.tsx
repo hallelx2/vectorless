@@ -1,11 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
-import { Check, Copy } from 'lucide-react';
+import InstallTabs from './InstallTabs';
 import { useGsapEffect, useScopedRef, gsap } from '@/hooks/useGsap';
-
-const INSTALL = 'npm i @vectorless/sdk';
 
 export default function Hero() {
   const ref = useScopedRef<HTMLElement>();
@@ -110,24 +107,28 @@ export default function Hero() {
             Vectorless is the retrieval primitive for AI agents. We turn your PDFs, docs, and knowledge bases into structured maps any LLM can navigate &mdash; <span className="text-text-base font-medium">no chunking, no embeddings, no vector DB to operate.</span>
           </p>
 
-          <div className="hero-cta flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-6">
+          <div className="hero-cta flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-3">
             <Link
               href="/register"
               className="group relative inline-flex items-center gap-2 bg-bg-dark text-white px-6 py-3.5 rounded-full text-[15px] font-medium hover:bg-black transition-colors"
             >
-              Start building
+              Start building free
               <span className="inline-block transition-transform group-hover:translate-x-1">→</span>
             </Link>
             <Link
               href="https://github.com/hallelx2/vectorless"
               className="inline-flex items-center gap-2 text-[15px] font-medium text-text-dark px-5 py-3 rounded-full border border-border-gray hover:bg-black/[0.03] transition-colors"
             >
-              <GithubIcon /> View on GitHub
+              <GithubIcon /> Star on GitHub
             </Link>
           </div>
 
+          <p className="font-data text-[11px] text-text-muted tracking-[0.04em] mb-7">
+            No credit card · MIT licensed · 100 documents free
+          </p>
+
           <div className="hero-install">
-            <InstallSnippet />
+            <InstallTabs />
           </div>
         </div>
 
@@ -141,28 +142,6 @@ export default function Hero() {
         <span className="h-8 w-[1px] bg-gradient-to-b from-text-muted to-transparent" />
       </div>
     </section>
-  );
-}
-
-function InstallSnippet() {
-  const [copied, setCopied] = useState(false);
-  const handleCopy = () => {
-    navigator.clipboard.writeText(INSTALL);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1800);
-  };
-
-  return (
-    <button
-      onClick={handleCopy}
-      className="group inline-flex items-center gap-3 rounded-xl border border-border-gray bg-bg-dark text-white px-4 py-3 font-data text-[13px] hover:border-text-muted transition-colors"
-    >
-      <span className="text-text-muted select-none">$</span>
-      <span className="text-white">{INSTALL}</span>
-      <span className="ml-2 text-text-muted group-hover:text-white transition-colors">
-        {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-      </span>
-    </button>
   );
 }
 
