@@ -2,6 +2,21 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import {
+  ArrowRight,
+  Check,
+  CheckCircle2,
+  CircleDashed,
+  ExternalLink,
+  FileText,
+  FlaskConical,
+  Key,
+  Layers,
+  Plus,
+  Upload,
+  Zap,
+} from "lucide-react";
+
 import { useSession } from "@/lib/auth-client";
 import {
   Card,
@@ -21,16 +36,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  FileText,
-  Layers,
-  Activity,
-  Key,
-  Upload,
-  FlaskConical,
-  Plus,
-  ArrowRight,
-} from "lucide-react";
+import { PageHeader } from "@/components/dashboard/PageHeader";
 
 interface Document {
   doc_id: string;
@@ -41,29 +47,22 @@ interface Document {
   created_at: string;
 }
 
-const statusColors: Record<string, string> = {
-  ready: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  processing: "bg-amber-100 text-amber-700 border-amber-200",
-  failed: "bg-red-100 text-red-700 border-red-200",
+const STATUS_TONE: Record<string, string> = {
+  ready: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+  processing: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+  failed: "bg-red-500/10 text-red-600 border-red-500/20",
 };
 
-function formatRelativeTime(dateStr: string): string {
-  const now = new Date();
-  const date = new Date(dateStr);
-  const diffMs = now.getTime() - date.getTime();
-  const diffMinutes = Math.floor(diffMs / (1000 * 60));
-  const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-
-  if (diffMinutes < 1) return "just now";
-  if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes !== 1 ? "s" : ""} ago`;
-  if (diffHours < 24) return `${diffHours} hour${diffHours !== 1 ? "s" : ""} ago`;
-  if (diffDays < 7) return `${diffDays} day${diffDays !== 1 ? "s" : ""} ago`;
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+function formatRelative(dateStr: string): string {
+  const diffMs = Date.now() - new Date(dateStr).getTime();
+  const m = Math.floor(diffMs / 60_000);
+  const h = Math.floor(m / 60);
+  const d = Math.floor(h / 24);
+  if (m < 1) return "just now";
+  if (m < 60) return `${m}m ago`;
+  if (h < 24) return `${h}h ago`;
+  if (d < 7) return `${d}d ago`;
+  return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
 export default function DashboardOverviewPage() {
@@ -74,7 +73,7 @@ export default function DashboardOverviewPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    async function fetchDocuments() {
+    (async () => {
       try {
         const res = await fetch("/api/dashboard/documents");
         if (!res.ok) throw new Error("Failed to fetch");
@@ -85,137 +84,182 @@ export default function DashboardOverviewPage() {
       } finally {
         setIsLoading(false);
       }
-    }
-    fetchDocuments();
+    })();
   }, []);
 
-  // Derive stats from real data
   const totalDocuments = documents.length;
-  const totalSections = documents.reduce((sum, d) => sum + (d.section_count || 0), 0);
+  const totalSections = documents.reduce((s, d) => s + (d.section_count || 0), 0);
   const readyCount = documents.filter((d) => d.status === "ready").length;
   const processingCount = documents.filter((d) => d.status === "processing").length;
-
   const recentDocuments = documents.slice(0, 5);
 
-  const stats = [
+  const STATS = [
     {
-      label: "Total Documents",
-      value: isLoading ? "--" : totalDocuments.toLocaleString(),
+      label: "Documents",
+      value: totalDocuments,
       icon: FileText,
-      description: `${readyCount} ready, ${processingCount} processing`,
+      tone: "from-brand-blue/15 to-brand-blue/0",
+      hint: `${readyCount} ready · ${processingCount} processing`,
     },
     {
-      label: "Total Sections",
-      value: isLoading ? "--" : totalSections.toLocaleString(),
+      label: "Sections indexed",
+      value: totalSections,
       icon: Layers,
-      description: "across all documents",
+      tone: "from-brand-pink/15 to-brand-pink/0",
+      hint: "addressable & queryable",
     },
     {
-      label: "Ready Documents",
-      value: isLoading ? "--" : readyCount.toLocaleString(),
-      icon: Activity,
-      description: "available for querying",
+      label: "API requests",
+      value: 0,
+      icon: Zap,
+      tone: "from-amber-400/15 to-amber-400/0",
+      hint: "this month",
+      suffix: "/ 10k",
     },
     {
-      label: "Processing",
-      value: isLoading ? "--" : processingCount.toLocaleString(),
+      label: "API keys",
+      value: 0,
       icon: Key,
-      description: "currently being processed",
+      tone: "from-emerald-400/15 to-emerald-400/0",
+      hint: "active",
     },
   ];
 
+  const ONBOARDING = [
+    {
+      label: "Upload your first document",
+      done: totalDocuments > 0,
+      href: "/dashboard/documents/upload",
+    },
+    {
+      label: "Generate an API key",
+      done: false,
+      href: "/dashboard/api-keys",
+    },
+    {
+      label: "Try the playground",
+      done: false,
+      href: "/dashboard/playground",
+    },
+    {
+      label: "Connect an LLM provider",
+      done: false,
+      href: "/dashboard/settings/llm-keys",
+    },
+  ];
+  const completed = ONBOARDING.filter((o) => o.done).length;
+
   return (
     <div className="space-y-8">
-      {/* Welcome header */}
-      <div>
-        <h1 className="font-display text-2xl font-semibold text-foreground">
-          Welcome back, {firstName}
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Here&apos;s an overview of your Vectorless workspace.
-        </p>
-      </div>
+      <PageHeader
+        eyebrow={`Welcome back, ${firstName}`}
+        title={
+          <>
+            Your workspace, <span className="font-serif italic font-normal text-muted-foreground">at a glance.</span>
+          </>
+        }
+        description="Documents you've structured, the agents querying them, and what's left to set up."
+        actions={
+          <>
+            <Button variant="outline" size="sm" className="h-9" asChild>
+              <Link href="/dashboard/playground">
+                <FlaskConical className="size-3.5" />
+                Playground
+              </Link>
+            </Button>
+            <Button size="sm" className="h-9" asChild>
+              <Link href="/dashboard/documents/upload">
+                <Upload className="size-3.5" />
+                Upload document
+              </Link>
+            </Button>
+          </>
+        }
+      />
 
-      {/* Stats grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.label}>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-muted-foreground">
-                  {stat.label}
-                </span>
-                <stat.icon className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <div className="mt-3 flex items-baseline gap-2">
-                {isLoading ? (
-                  <Skeleton className="h-8 w-[60px]" />
-                ) : (
-                  <span className="text-3xl font-semibold tracking-tight text-foreground">
-                    {stat.value}
-                  </span>
-                )}
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {stat.description}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
+      {/* Stat cards */}
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        {STATS.map((s) => {
+          const Icon = s.icon;
+          return (
+            <Card
+              key={s.label}
+              className="relative overflow-hidden border-border/60 hover:border-border transition-colors gap-0 py-5"
+            >
+              <div
+                aria-hidden
+                className={`absolute -top-12 -right-12 w-32 h-32 rounded-full bg-gradient-to-br ${s.tone} pointer-events-none`}
+              />
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 px-5 pb-2">
+                <CardTitle className="font-data text-[10px] uppercase tracking-[0.18em] text-muted-foreground font-medium">
+                  {s.label}
+                </CardTitle>
+                <Icon className="size-3.5 text-muted-foreground" />
+              </CardHeader>
+              <CardContent className="px-5">
+                <div className="flex items-baseline gap-1.5">
+                  {isLoading ? (
+                    <Skeleton className="h-9 w-16" />
+                  ) : (
+                    <span className="font-display text-[32px] font-medium leading-none tracking-[-0.02em] text-foreground">
+                      {s.value.toLocaleString()}
+                    </span>
+                  )}
+                  {s.suffix && (
+                    <span className="font-data text-[11px] text-muted-foreground">{s.suffix}</span>
+                  )}
+                </div>
+                <p className="text-[12px] text-muted-foreground mt-2">{s.hint}</p>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Recent Documents */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div>
-              <CardTitle className="text-base">Recent Documents</CardTitle>
-              <CardDescription>
-                Your latest uploaded and processed documents
+        {/* Recent documents */}
+        <Card className="lg:col-span-2 border-border/60">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0">
+            <div className="space-y-1">
+              <CardTitle className="text-[15px]">Recent documents</CardTitle>
+              <CardDescription className="text-[12.5px]">
+                Latest uploads and their processing status.
               </CardDescription>
             </div>
-            <Button variant="ghost" size="sm" asChild>
+            <Button variant="ghost" size="sm" className="h-8 -mr-2" asChild>
               <Link href="/dashboard/documents">
                 View all
-                <ArrowRight className="h-3.5 w-3.5" />
+                <ArrowRight className="size-3" />
               </Link>
             </Button>
           </CardHeader>
-          <CardContent>
+          <CardContent className="px-0">
             {isLoading ? (
-              <div className="space-y-3">
+              <div className="space-y-2 px-6">
                 {Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="flex items-center gap-4">
-                    <Skeleton className="h-5 w-[200px]" />
-                    <Skeleton className="h-5 w-[60px]" />
-                    <Skeleton className="h-5 w-[40px]" />
-                    <Skeleton className="h-5 w-[70px]" />
-                    <Skeleton className="h-5 w-[80px]" />
-                  </div>
+                  <Skeleton key={i} className="h-9 w-full" />
                 ))}
               </div>
             ) : recentDocuments.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12">
-                <FileText className="h-8 w-8 text-muted-foreground" />
-                <p className="mt-2 text-sm text-muted-foreground">
-                  No documents yet. Upload your first document to get started.
-                </p>
-              </div>
+              <EmptyDocuments />
             ) : (
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Title</TableHead>
-                    <TableHead>Type</TableHead>
-                    <TableHead>Sections</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Created</TableHead>
+                  <TableRow className="hover:bg-transparent border-border/60">
+                    <TableHead className="font-data text-[10px] uppercase tracking-[0.14em] pl-6">Title</TableHead>
+                    <TableHead className="font-data text-[10px] uppercase tracking-[0.14em]">Type</TableHead>
+                    <TableHead className="font-data text-[10px] uppercase tracking-[0.14em]">Sections</TableHead>
+                    <TableHead className="font-data text-[10px] uppercase tracking-[0.14em]">Status</TableHead>
+                    <TableHead className="font-data text-[10px] uppercase tracking-[0.14em] text-right pr-6">Created</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {recentDocuments.map((doc) => (
-                    <TableRow key={doc.doc_id}>
-                      <TableCell className="font-medium">
+                    <TableRow
+                      key={doc.doc_id}
+                      className="border-border/60 group cursor-pointer"
+                    >
+                      <TableCell className="font-medium pl-6">
                         <Link
                           href={`/dashboard/documents/${doc.doc_id}`}
                           className="hover:text-primary transition-colors"
@@ -224,21 +268,26 @@ export default function DashboardOverviewPage() {
                         </Link>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary" className="font-mono text-xs uppercase">
+                        <Badge
+                          variant="secondary"
+                          className="font-data text-[10px] uppercase tracking-[0.14em] h-5 px-1.5"
+                        >
                           {doc.source_type}
                         </Badge>
                       </TableCell>
-                      <TableCell>{doc.section_count}</TableCell>
+                      <TableCell className="font-data text-[12px] text-muted-foreground">
+                        {doc.section_count}
+                      </TableCell>
                       <TableCell>
                         <Badge
                           variant="outline"
-                          className={statusColors[doc.status] || ""}
+                          className={`font-data text-[10px] uppercase tracking-[0.14em] h-5 px-1.5 ${STATUS_TONE[doc.status] || ""}`}
                         >
                           {doc.status}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-right text-muted-foreground">
-                        {formatRelativeTime(doc.created_at)}
+                      <TableCell className="text-right text-muted-foreground font-data text-[12px] pr-6">
+                        {formatRelative(doc.created_at)}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -248,33 +297,106 @@ export default function DashboardOverviewPage() {
           </CardContent>
         </Card>
 
-        {/* Quick Actions */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Quick Actions</CardTitle>
-            <CardDescription>Common tasks at your fingertips</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <Button className="w-full justify-start" asChild>
-              <Link href="/dashboard/documents/upload">
-                <Upload className="h-4 w-4" />
-                Upload Document
-              </Link>
-            </Button>
-            <Button variant="outline" className="w-full justify-start" asChild>
-              <Link href="/dashboard/playground">
-                <FlaskConical className="h-4 w-4" />
-                Open Playground
-              </Link>
-            </Button>
-            <Button variant="outline" className="w-full justify-start" asChild>
-              <Link href="/dashboard/api-keys">
-                <Plus className="h-4 w-4" />
-                Generate API Key
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="space-y-6">
+          {/* Onboarding checklist */}
+          <Card className="border-border/60">
+            <CardHeader className="space-y-1">
+              <CardTitle className="text-[15px] flex items-center justify-between">
+                Get started
+                <span className="font-data text-[10px] uppercase tracking-[0.16em] text-muted-foreground font-medium">
+                  {completed} / {ONBOARDING.length}
+                </span>
+              </CardTitle>
+              <CardDescription className="text-[12.5px]">
+                Four steps from zero to your first answer.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-1">
+              {ONBOARDING.map((step) => (
+                <Link
+                  key={step.label}
+                  href={step.href}
+                  className="group flex items-center gap-3 rounded-md -mx-1 px-2 py-1.5 hover:bg-accent transition-colors"
+                >
+                  {step.done ? (
+                    <CheckCircle2 className="size-4 text-emerald-500 shrink-0" />
+                  ) : (
+                    <CircleDashed className="size-4 text-muted-foreground shrink-0" />
+                  )}
+                  <span
+                    className={`text-[13px] flex-1 ${
+                      step.done ? "line-through text-muted-foreground" : "text-foreground"
+                    }`}
+                  >
+                    {step.label}
+                  </span>
+                  <ArrowRight className="size-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
+
+          {/* Quick actions */}
+          <Card className="border-border/60 bg-gradient-to-br from-brand-blue/[0.03] via-transparent to-brand-pink/[0.03]">
+            <CardHeader>
+              <CardTitle className="text-[15px]">Resources</CardTitle>
+              <CardDescription className="text-[12.5px]">
+                Hands-on examples and references.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-1.5 pt-0">
+              {[
+                { label: "Quickstart guide", href: "/dashboard", external: false },
+                { label: "API reference", href: "/dashboard", external: true },
+                { label: "MCP integration", href: "/dashboard", external: true },
+                { label: "Discord community", href: "/dashboard", external: true },
+              ].map((r) => (
+                <Link
+                  key={r.label}
+                  href={r.href}
+                  className="group flex items-center justify-between rounded-md px-2 py-1.5 -mx-1 hover:bg-accent transition-colors"
+                >
+                  <span className="text-[13px] text-foreground">{r.label}</span>
+                  {r.external ? (
+                    <ExternalLink className="size-3 text-muted-foreground" />
+                  ) : (
+                    <ArrowRight className="size-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                  )}
+                </Link>
+              ))}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EmptyDocuments() {
+  return (
+    <div className="px-6 pb-2 pt-2">
+      <div className="rounded-lg border border-dashed border-border bg-muted/30 px-6 py-10 text-center">
+        <div className="inline-flex size-10 items-center justify-center rounded-full bg-background border border-border mb-4">
+          <FileText className="size-4 text-muted-foreground" />
+        </div>
+        <h3 className="font-display text-[16px] font-medium mb-1">No documents yet</h3>
+        <p className="text-[13px] text-muted-foreground mb-5 max-w-[280px] mx-auto">
+          Upload a PDF, DOCX, or paste a URL. We&apos;ll structure it in seconds.
+        </p>
+        <div className="flex items-center justify-center gap-2">
+          <Button size="sm" className="h-8" asChild>
+            <Link href="/dashboard/documents/upload">
+              <Upload className="size-3.5" />
+              Upload document
+            </Link>
+          </Button>
+          <Button size="sm" variant="outline" className="h-8" asChild>
+            <Link href="/dashboard/playground">
+              <Plus className="size-3.5" />
+              Try sample
+            </Link>
+          </Button>
+        </div>
       </div>
     </div>
   );
