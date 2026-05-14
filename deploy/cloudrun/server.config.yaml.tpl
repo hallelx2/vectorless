@@ -28,11 +28,11 @@ engine:
   storage:
     driver: "s3"
     s3:
-      endpoint: "${R2_ENDPOINT}"
-      region: "auto"
-      bucket: "${R2_BUCKET}"
-      access_key: "${R2_ACCESS_KEY}"
-      secret_key: "${R2_SECRET_KEY}"
+      endpoint: "${STORAGE_ENDPOINT}"
+      region: "${STORAGE_REGION}"
+      bucket: "${STORAGE_BUCKET}"
+      access_key: "${STORAGE_ACCESS_KEY}"
+      secret_key: "${STORAGE_SECRET_KEY}"
       use_path_style: false
 
   queue:
@@ -41,10 +41,10 @@ engine:
       num_workers: 4
 
   llm:
-    driver: "anthropic"
-    anthropic:
-      api_key: "${ANTHROPIC_API_KEY}"
-      model: "claude-sonnet-4-20250514"
+    driver: "gemini"
+    gemini:
+      api_key: "${GEMINI_API_KEY}"
+      model: "gemini-2.5-flash"
 
   retrieval:
     strategy: "chunked-tree"

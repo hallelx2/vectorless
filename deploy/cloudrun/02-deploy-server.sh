@@ -24,8 +24,9 @@ fi
 source "$ENV_FILE"
 
 : "${PROJECT_ID:?}"; : "${REGION:?}"
-: "${NEON_SERVER_URL:?}"; : "${ANTHROPIC_API_KEY:?}"
-: "${R2_ENDPOINT:?}"; : "${R2_BUCKET:?}"; : "${R2_ACCESS_KEY:?}"; : "${R2_SECRET_KEY:?}"
+: "${NEON_SERVER_URL:?}"; : "${GEMINI_API_KEY:?}"
+: "${STORAGE_ENDPOINT:?}"; : "${STORAGE_REGION:?}"; : "${STORAGE_BUCKET:?}"
+: "${STORAGE_ACCESS_KEY:?}"; : "${STORAGE_SECRET_KEY:?}"
 
 # Generate the shared secret if not already in .env.
 if [[ -z "${UPSTREAM_AUTH_TOKEN:-}" ]]; then
@@ -73,8 +74,9 @@ echo "→ Generating server.config.yaml from template…"
 CONFIG_FILE="$SCRIPT_DIR/.server.config.generated.yaml"
 
 # Export every required var so envsubst can pick them up.
-export UPSTREAM_AUTH_TOKEN NEON_SERVER_URL ANTHROPIC_API_KEY
-export R2_ENDPOINT R2_BUCKET R2_ACCESS_KEY R2_SECRET_KEY
+export UPSTREAM_AUTH_TOKEN NEON_SERVER_URL GEMINI_API_KEY
+export STORAGE_ENDPOINT STORAGE_REGION STORAGE_BUCKET
+export STORAGE_ACCESS_KEY STORAGE_SECRET_KEY
 
 envsubst < "$SCRIPT_DIR/server.config.yaml.tpl" > "$CONFIG_FILE"
 
@@ -102,6 +104,10 @@ rm -f "$CONFIG_FILE"
 
 # ── 4. Deploy to Cloud Run ────────────────────────────────────────
 echo "→ Deploying $SERVICE…"
+# Git Bash / MSYS converts leading "/" arguments into Windows paths
+# unless they start with "//" (which strips the leading slash on the
+# way through). MSYS_NO_PATHCONV=1 breaks gcloud's own wrapper, so we
+# escape per-arg instead.
 gcloud run deploy "$SERVICE" \
   --image="$DEPLOY_IMAGE" \
   --region="$REGION" \
@@ -113,9 +119,9 @@ gcloud run deploy "$SERVICE" \
   --timeout=120s \
   --concurrency=20 \
   --no-allow-unauthenticated \
-  --command="/vectorless-server" \
-  --args="--role,server,--config,/etc/vectorless/config.yaml" \
-  --set-secrets="/etc/vectorless/config.yaml=server-config:latest" \
+  --command="//vectorless-server" \
+  --args="--role,server,--config,//etc/vectorless/config.yaml" \
+  --set-secrets="//etc/vectorless/config.yaml=server-config:latest" \
   --quiet
 
 # ── 5. Allow public access (the control-plane will fronts auth) ───
