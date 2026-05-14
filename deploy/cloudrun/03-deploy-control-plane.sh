@@ -93,9 +93,12 @@ gcloud run deploy "$SERVICE" \
   --concurrency=80 \
   --allow-unauthenticated \
   --command="controlplane" \
-  --args="--config,/etc/vectorless/config.yaml" \
-  --set-secrets="/etc/vectorless/config.yaml=control-plane-config:latest" \
+  --args="--config,//etc/vectorless/config.yaml" \
+  --set-secrets="//etc/vectorless/config.yaml=control-plane-config:latest" \
   --quiet
+  # MSYS path-conversion fix: double-leading-slash escape — Git Bash on
+  # Windows would otherwise rewrite /etc/vectorless/... into a Windows
+  # path before gcloud serialises the args.
 
 CP_URL=$(gcloud run services describe "$SERVICE" --region="$REGION" --format='value(status.url)')
 
