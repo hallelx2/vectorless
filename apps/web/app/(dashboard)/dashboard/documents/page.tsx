@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import useSWR from "swr";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -70,40 +71,71 @@ function formatDate(dateStr: string) {
   });
 }
 
+// Engine status enum: pending | parsing | summarizing | ready | failed.
+const TERMINAL_STATUSES = new Set(["ready", "failed"]);
+
+interface DocumentsResponse {
+  documents?: Document[];
+}
+
 export default function DocumentsPage() {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [documents, setDocuments] = useState<Document[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch("/api/dashboard/documents");
-        if (!res.ok) throw new Error("Failed to fetch");
-        const data = await res.json();
-        setDocuments(data.documents || []);
-      } catch {
-        setDocuments([]);
-      } finally {
-        setIsLoading(false);
-      }
-    })();
-  }, []);
+  // Poll while at least one document is still being parsed; back off
+  // to no polling once everything has settled. This keeps the badge
+  // in sync without making us hammer the API for ready libraries.
+  const { data, isLoading, mutate } = useSWR<DocumentsResponse>(
+    "/api/dashboard/documents",
+    async (url: string) => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to fetch documents");
+      return res.json();
+    },
+    {
+      refreshInterval: (latest) => {
+        const docs = latest?.documents ?? [];
+        const anyInFlight = docs.some(
+          (d) => !TERMINAL_STATUSES.has(d.status),
+        );
+        return anyInFlight ? 3000 : 0;
+      },
+      revalidateOnFocus: false,
+    },
+  );
+  const documents = data?.documents ?? [];
 
-  const handleDelete = useCallback(async (docId: string) => {
-    if (!confirm("Delete this document? This can't be undone.")) return;
-    setDeletingId(docId);
-    try {
-      const res = await fetch(`/api/dashboard/documents/${docId}`, { method: "DELETE" });
-      if (res.ok) setDocuments((prev) => prev.filter((d) => d.doc_id !== docId));
-    } catch {
-      // retry silently
-    } finally {
-      setDeletingId(null);
-    }
-  }, []);
+  const handleDelete = useCallback(
+    async (docId: string) => {
+      if (!confirm("Delete this document? This can't be undone.")) return;
+      setDeletingId(docId);
+      try {
+        const res = await fetch(`/api/dashboard/documents/${docId}`, {
+          method: "DELETE",
+        });
+        if (res.ok) {
+          await mutate(
+            (prev) =>
+              prev
+                ? {
+                    ...prev,
+                    documents: (prev.documents ?? []).filter(
+                      (d) => d.doc_id !== docId,
+                    ),
+                  }
+                : prev,
+            { revalidate: false },
+          );
+        }
+      } catch {
+        // retry silently
+      } finally {
+        setDeletingId(null);
+      }
+    },
+    [mutate],
+  );
 
   const filtered = useMemo(() => {
     return documents.filter((d) => {
@@ -117,7 +149,9 @@ export default function DocumentsPage() {
     return {
       all: documents.length,
       ready: documents.filter((d) => d.status === "ready").length,
-      processing: documents.filter((d) => d.status === "processing").length,
+      processing: documents.filter(
+        (d) => !TERMINAL_STATUSES.has(d.status),
+      ).length,
       failed: documents.filter((d) => d.status === "failed").length,
     };
   }, [documents]);

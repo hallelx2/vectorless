@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback, use } from "react";
+import { useState, useCallback, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import useSWR from "swr";
 import {
   Card,
   CardContent,
@@ -58,11 +59,27 @@ interface TocData {
   sections: TocSection[];
 }
 
+// Engine status enum: pending | parsing | summarizing | ready | failed.
+// Anything that's not ready or failed counts as "in flight" — keep
+// polling until it settles.
+const TERMINAL_STATUSES = new Set(["ready", "failed"]);
+
 const statusColors: Record<string, string> = {
   ready: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  processing: "bg-amber-100 text-amber-700 border-amber-200",
+  pending: "bg-amber-100 text-amber-700 border-amber-200",
+  parsing: "bg-amber-100 text-amber-700 border-amber-200",
+  summarizing: "bg-amber-100 text-amber-700 border-amber-200",
   failed: "bg-red-100 text-red-700 border-red-200",
 };
+
+async function fetchJSON<T>(url: string): Promise<T | null> {
+  const res = await fetch(url);
+  if (!res.ok) {
+    if (res.status === 404) return null;
+    throw new Error(`Request failed: ${res.status}`);
+  }
+  return (await res.json()) as T;
+}
 
 export default function DocumentDetailPage({
   params,
@@ -72,40 +89,40 @@ export default function DocumentDetailPage({
   const { docId } = use(params);
   const router = useRouter();
 
-  const [doc, setDoc] = useState<DocumentDetail | null>(null);
-  const [toc, setToc] = useState<TocData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchData() {
-      try {
-        const [docRes, tocRes] = await Promise.all([
-          fetch(`/api/dashboard/documents/${docId}`),
-          fetch(`/api/dashboard/documents/${docId}/toc`),
-        ]);
+  // Doc metadata: poll every 3s while parsing is in flight, stop
+  // once the engine reports ready/failed. SWR handles dedup +
+  // revalidation, so multiple tabs don't hammer the API.
+  const {
+    data: doc,
+    error: docError,
+    isLoading: isLoadingDoc,
+  } = useSWR<DocumentDetail | null>(
+    `/api/dashboard/documents/${docId}`,
+    fetchJSON,
+    {
+      refreshInterval: (latest) =>
+        latest && TERMINAL_STATUSES.has(latest.status) ? 0 : 3000,
+      revalidateOnFocus: false,
+    },
+  );
 
-        if (!docRes.ok) {
-          setError("Document not found");
-          return;
-        }
+  // ToC: only useful once parsing has finished. Poll lightly until
+  // sections appear, then stop.
+  const isReady = doc?.status === "ready";
+  const { data: toc } = useSWR<TocData | null>(
+    isReady ? `/api/dashboard/documents/${docId}/toc` : null,
+    fetchJSON,
+    {
+      refreshInterval: (latest) =>
+        latest && (latest.sections?.length ?? 0) > 0 ? 0 : 3000,
+      revalidateOnFocus: false,
+    },
+  );
 
-        const docData = await docRes.json();
-        setDoc(docData);
-
-        if (tocRes.ok) {
-          const tocData = await tocRes.json();
-          setToc(tocData);
-        }
-      } catch {
-        setError("Failed to load document");
-      } finally {
-        setIsLoading(false);
-      }
-    }
-    fetchData();
-  }, [docId]);
+  const isLoading = isLoadingDoc;
+  const error = docError ? "Failed to load document" : null;
 
   const handleDelete = useCallback(async () => {
     if (!confirm("Are you sure you want to delete this document? This action cannot be undone.")) return;
@@ -230,10 +247,16 @@ export default function DocumentDetailPage({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              {sections.length === 0 && doc.status === "processing" && (
+              {sections.length === 0 && !TERMINAL_STATUSES.has(doc.status) && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Document is still being processed...
+                  Engine is {doc.status}… this auto-refreshes.
+                </div>
+              )}
+              {doc.status === "failed" && (
+                <div className="text-sm text-destructive py-8 text-center">
+                  Parsing failed. Try uploading again — if it keeps
+                  failing, the file format may not be supported.
                 </div>
               )}
               {sections.map((section, index) => (
