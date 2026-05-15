@@ -78,6 +78,15 @@ const statusColors: Record<string, string> = {
 // Falls back to the raw message so we never hide what the engine said.
 function humanizeIngestError(raw: string): string {
   const lower = raw.toLowerCase();
+  if (lower.includes("could not be unlocked")) {
+    return "This PDF is password-protected (not just permission-locked). Open it in Acrobat with the password, then re-save without one and re-upload.";
+  }
+  if (lower.includes("overlay watermark")) {
+    return "The document has a copy-protection overlay (watermark drawn over the text). The parser can't separate it from the real content yet. Print to PDF or run a watermark-removal tool, then re-upload.";
+  }
+  if (lower.includes("scanned image") || lower.includes("ocr not yet supported")) {
+    return "This looks like a scanned PDF (images, no embedded text). OCR isn't supported yet — run it through an OCR tool first.";
+  }
   if (lower.includes("encryption key") || lower.includes("encrypted")) {
     return "This PDF is password- or DRM-protected. Print it to PDF (or use a tool to remove encryption) and try again.";
   }
