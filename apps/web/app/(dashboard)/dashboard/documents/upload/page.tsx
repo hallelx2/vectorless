@@ -76,6 +76,36 @@ export default function UploadDocumentPage() {
     setIsUploading(true);
     setUploadError(null);
     try {
+      // Upload goes straight to the control plane with the user's
+      // session cookie — Vercel's serverless functions cap request
+      // bodies at 4.5 MB, but Cloud Run handles up to 32 MB. The CP
+      // needs to know which org to attribute the doc to, so we look
+      // up the user's first org first.
+      const cpBase =
+        process.env.NEXT_PUBLIC_API_URL || "https://api.vectorless.store";
+
+      const orgsRes = await fetch(`${cpBase}/admin/v1/orgs`, {
+        credentials: "include",
+      });
+      if (!orgsRes.ok) {
+        setUploadError(
+          orgsRes.status === 401
+            ? "Your session expired. Please sign in again."
+            : `Couldn't load your orgs (${orgsRes.status}).`,
+        );
+        setIsUploading(false);
+        return;
+      }
+      const orgs = (await orgsRes.json()) as Array<{ id: string }> | null;
+      const orgId = orgs?.[0]?.id;
+      if (!orgId) {
+        setUploadError(
+          "No org found on your account. Create one before uploading documents.",
+        );
+        setIsUploading(false);
+        return;
+      }
+
       let res: Response;
       if (selectedFile) {
         const formData = new FormData();
@@ -83,11 +113,20 @@ export default function UploadDocumentPage() {
         if (title.trim()) formData.append("title", title.trim());
         formData.append("toc_strategy", tocStrategy);
         if (embedSections) formData.append("embed_sections", "true");
-        res = await fetch("/api/dashboard/documents", { method: "POST", body: formData });
-      } else if (url.trim()) {
-        res = await fetch("/api/dashboard/documents", {
+        res = await fetch(`${cpBase}/v1/documents`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          headers: { "X-Vectorless-Org": orgId },
+          body: formData,
+        });
+      } else if (url.trim()) {
+        res = await fetch(`${cpBase}/v1/documents`, {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            "X-Vectorless-Org": orgId,
+          },
           body: JSON.stringify({
             url: url.trim(),
             title: title.trim() || undefined,
@@ -101,17 +140,33 @@ export default function UploadDocumentPage() {
       }
 
       if (!res.ok) {
-        const errBody = await res.json().catch(() => ({}));
-        setUploadError(errBody?.error || `Upload failed: ${res.status}`);
+        const errBody = (await res.json().catch(() => ({}))) as {
+          error?: string | { message?: string };
+        };
+        const msg =
+          typeof errBody.error === "string"
+            ? errBody.error
+            : errBody.error?.message;
+        setUploadError(msg || `Upload failed: ${res.status}`);
         setIsUploading(false);
         return;
       }
 
-      const data = await res.json();
-      const newDocId = data.doc_id || data.id;
-      router.push(newDocId ? `/dashboard/documents/${newDocId}` : "/dashboard/documents");
+      const data = (await res.json()) as {
+        doc_id?: string;
+        id?: string;
+        document_id?: string;
+      };
+      const newDocId = data.doc_id || data.id || data.document_id;
+      router.push(
+        newDocId
+          ? `/dashboard/documents/${newDocId}`
+          : "/dashboard/documents",
+      );
     } catch (err) {
-      setUploadError(err instanceof Error ? err.message : "Upload failed. Please try again.");
+      setUploadError(
+        err instanceof Error ? err.message : "Upload failed. Please try again.",
+      );
       setIsUploading(false);
     }
   };

@@ -1,88 +1,63 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "@/lib/server-auth";
-
-const getApiConfig = () => ({
-  url: process.env.VECTORLESS_API_URL || "https://api.vectorless.store",
-  key: process.env.VECTORLESS_INTERNAL_API_KEY || "",
-});
+import { forwardToCP } from "@/lib/cp-proxy";
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const body = await request.json();
   const { doc_id, query } = body;
 
   if (!doc_id || !query?.trim()) {
     return NextResponse.json(
       { error: { message: "doc_id and query are required" } },
-      { status: 400 }
+      { status: 400 },
     );
   }
-
-  const { url: apiUrl, key: apiKey } = getApiConfig();
-
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: { message: "API key not configured" } },
-      { status: 500 }
-    );
-  }
-
-  const authHeaders = {
-    Authorization: `Bearer ${apiKey}`,
-    "Content-Type": "application/json",
-  };
 
   try {
     const startTime = Date.now();
 
     // Step 1: Get the ToC manifest
-    const tocRes = await fetch(`${apiUrl}/v1/documents/${doc_id}/toc`, {
-      headers: authHeaders,
-    });
-
-    if (!tocRes.ok) {
+    const tocResp = await forwardToCP(`/v1/documents/${doc_id}/toc`);
+    if (!tocResp.ok) {
       return NextResponse.json(
-        { error: { message: `Failed to get ToC: ${tocRes.status}` } },
-        { status: tocRes.status }
+        {
+          error: {
+            message: `Failed to get ToC: ${tocResp.status}`,
+            detail: tocResp.data,
+          },
+        },
+        { status: tocResp.status },
       );
     }
-
-    const toc = await tocRes.json();
+    const toc = tocResp.data as {
+      sections: Array<{ section_id: string; title: string; summary?: string }>;
+    };
     const tocTime = Date.now() - startTime;
 
-    // Step 2: Select sections based on query (simple keyword matching for now)
-    // In production, this would be done by the user's LLM
+    // Step 2: Select sections based on query (simple keyword match)
     const queryLower = query.toLowerCase();
-    const selectedSections = toc.sections.filter((s: any) => {
+    const selectedSections = toc.sections.filter((s) => {
       const text = `${s.title} ${s.summary || ""}`.toLowerCase();
-      const queryWords = queryLower.split(/\s+/).filter((w: string) => w.length > 2);
+      const queryWords = queryLower
+        .split(/\s+/)
+        .filter((w: string) => w.length > 2);
       return queryWords.some((word: string) => text.includes(word));
     });
 
-    // If no keyword matches, return all sections
     const sectionIds =
       selectedSections.length > 0
-        ? selectedSections.map((s: any) => s.section_id)
-        : toc.sections.slice(0, 3).map((s: any) => s.section_id);
+        ? selectedSections.map((s) => s.section_id)
+        : toc.sections.slice(0, 3).map((s) => s.section_id);
 
     const selectTime = Date.now() - startTime - tocTime;
 
     // Step 3: Fetch the selected sections
-    const sectionsRes = await fetch(
-      `${apiUrl}/v1/documents/${doc_id}/sections/batch`,
-      {
-        method: "POST",
-        headers: authHeaders,
-        body: JSON.stringify({ section_ids: sectionIds }),
-      }
+    const sectionsResp = await forwardToCP(
+      `/v1/documents/${doc_id}/sections/batch`,
+      { method: "POST", body: { section_ids: sectionIds } },
     );
 
-    const sectionsData = sectionsRes.ok
-      ? await sectionsRes.json()
+    const sectionsData = sectionsResp.ok
+      ? (sectionsResp.data as { sections?: unknown[] })
       : { sections: [] };
     const fetchTime = Date.now() - startTime - tocTime - selectTime;
 
@@ -102,7 +77,7 @@ export async function POST(request: NextRequest) {
     console.error("Playground query failed:", err);
     return NextResponse.json(
       { error: { message: "Failed to run query" } },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

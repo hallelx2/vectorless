@@ -1,56 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "@/lib/server-auth";
-
-const getApiConfig = () => ({
-  url: process.env.VECTORLESS_API_URL || "https://api.vectorless.store",
-  key: process.env.VECTORLESS_INTERNAL_API_KEY || "",
-});
+import { forwardToCP } from "@/lib/cp-proxy";
 
 export async function GET(
   _request: NextRequest,
-  { params }: { params: Promise<{ docId: string; sectionId: string }> }
+  { params }: { params: Promise<{ docId: string; sectionId: string }> },
 ) {
-  const session = await getServerSession();
-  if (!session) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const { docId, sectionId } = await params;
-  const { url: apiUrl, key: apiKey } = getApiConfig();
-
-  if (!apiKey) {
-    return NextResponse.json(
-      { error: "API key not configured" },
-      { status: 500 }
-    );
+  const { ok, status, data } = await forwardToCP(
+    `/v1/documents/${docId}/sections/${sectionId}`,
+  );
+  if (!ok) {
+    return NextResponse.json(data ?? { error: "Upstream error" }, { status });
   }
-
-  try {
-    const res = await fetch(
-      `${apiUrl}/v1/documents/${docId}/sections/${sectionId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    if (!res.ok) {
-      const errBody = await res.json().catch(() => ({}));
-      return NextResponse.json(
-        { error: errBody?.error || `Section not found: ${res.status}` },
-        { status: res.status }
-      );
-    }
-
-    const data = await res.json();
-    return NextResponse.json(data);
-  } catch (err) {
-    console.error("Failed to fetch section from Vectorless API:", err);
-    return NextResponse.json(
-      { error: "Failed to fetch section" },
-      { status: 500 }
-    );
-  }
+  return NextResponse.json(data);
 }
