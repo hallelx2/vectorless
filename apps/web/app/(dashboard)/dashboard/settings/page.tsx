@@ -48,7 +48,7 @@ const SETTINGS_LINKS = [
 export default function SettingsPage() {
   const { data: session } = useSession();
   const [name, setName] = useState(session?.user?.name || "");
-  const [avatarUrl, setAvatarUrl] = useState(session?.user?.image || "");
+  const [avatarUrl, setAvatarUrl] = useState(session?.user?.avatar_url || "");
   const [isSaving, setIsSaving] = useState(false);
 
   const initials = (name?.[0] ?? "V").toUpperCase();

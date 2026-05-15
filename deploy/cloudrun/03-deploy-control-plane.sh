@@ -20,6 +20,10 @@ source "$ENV_FILE"
 : "${NEON_CP_URL:?}"; : "${SERVER_URL:?Run 02-deploy-server.sh first}"
 : "${UPSTREAM_AUTH_TOKEN:?Run 02-deploy-server.sh first}"
 : "${DOMAIN:?}"; : "${API_HOSTNAME:?}"
+: "${GOOGLE_CLIENT_ID:?Set GOOGLE_CLIENT_ID in .env}"
+: "${GOOGLE_CLIENT_SECRET:?Set GOOGLE_CLIENT_SECRET in .env}"
+: "${GITHUB_CLIENT_ID:?Set GITHUB_CLIENT_ID in .env}"
+: "${GITHUB_CLIENT_SECRET:?Set GITHUB_CLIENT_SECRET in .env}"
 
 # Mint the OAuth + dashboard secrets if not already set.
 if [[ -z "${OAUTH_JWT_SECRET:-}" ]]; then
@@ -56,6 +60,8 @@ CONFIG_FILE="$SCRIPT_DIR/.cp.config.generated.yaml"
 export NEON_CP_URL SERVER_URL UPSTREAM_AUTH_TOKEN
 export DOMAIN API_HOSTNAME
 export OAUTH_JWT_SECRET DASHBOARD_SERVICE_TOKEN
+export GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET
+export GITHUB_CLIENT_ID GITHUB_CLIENT_SECRET
 
 envsubst < "$SCRIPT_DIR/control-plane.config.yaml.tpl" > "$CONFIG_FILE"
 

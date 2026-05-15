@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { getServerSession } from "@/lib/server-auth";
 
 const getApiConfig = () => ({
   url: process.env.VECTORLESS_API_URL || "https://api.vectorless.store",
@@ -11,7 +10,7 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ docId: string }> }
 ) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getServerSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

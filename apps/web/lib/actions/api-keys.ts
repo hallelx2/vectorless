@@ -1,7 +1,6 @@
 "use server";
 
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { getServerSession } from "@/lib/server-auth";
 import { db } from "@/db";
 import { apiKeys } from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
@@ -42,7 +41,7 @@ export async function createApiKey(data: {
   permissions?: string;
   expiresAt?: string;
 }) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getServerSession();
   if (!session) {
     return { error: "Unauthorized" };
   }
@@ -80,7 +79,7 @@ export async function createApiKey(data: {
 }
 
 export async function revokeApiKey(keyId: string) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getServerSession();
   if (!session) {
     return { error: "Unauthorized" };
   }
@@ -101,7 +100,7 @@ export async function revokeApiKey(keyId: string) {
 }
 
 export async function listApiKeys() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getServerSession();
   if (!session) {
     return { error: "Unauthorized", keys: [] };
   }

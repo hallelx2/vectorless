@@ -1,7 +1,6 @@
 "use server";
 
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { getServerSession } from "@/lib/server-auth";
 import { db } from "@/db";
 import { playgroundSessions } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
@@ -26,7 +25,7 @@ export async function runPlaygroundQuery(data: {
   docIds: string[];
   strategy: string;
 }) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getServerSession();
   if (!session) {
     return { error: "Unauthorized" };
   }
@@ -207,7 +206,7 @@ export async function savePlaygroundSession(data: {
   reasoning?: string;
   timing?: unknown;
 }) {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getServerSession();
   if (!session) {
     return { error: "Unauthorized" };
   }
@@ -239,7 +238,7 @@ export async function savePlaygroundSession(data: {
 }
 
 export async function listPlaygroundSessions() {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getServerSession();
   if (!session) {
     return { error: "Unauthorized", sessions: [] };
   }

@@ -1,7 +1,6 @@
 "use server";
 
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { getServerSession } from "@/lib/server-auth";
 import { db } from "@/db";
 import { llmKeys } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
@@ -36,7 +35,7 @@ export async function createLLMKey(data: {
   label: string;
   apiKey: string;
 }): Promise<{ success?: boolean; key?: LLMKeyPublic; error?: string }> {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getServerSession();
   if (!session) return { error: "Unauthorized" };
 
   try {
@@ -70,7 +69,7 @@ export async function listLLMKeys(): Promise<{
   keys: LLMKeyPublic[];
   error?: string;
 }> {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getServerSession();
   if (!session) return { keys: [], error: "Unauthorized" };
 
   try {
@@ -90,7 +89,7 @@ export async function updateLLMKey(
   keyId: string,
   updates: { label?: string; apiKey?: string; isActive?: boolean }
 ): Promise<{ success?: boolean; key?: LLMKeyPublic; error?: string }> {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getServerSession();
   if (!session) return { error: "Unauthorized" };
 
   try {
@@ -119,7 +118,7 @@ export async function updateLLMKey(
 export async function deleteLLMKey(
   keyId: string
 ): Promise<{ success?: boolean; error?: string }> {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getServerSession();
   if (!session) return { error: "Unauthorized" };
 
   try {

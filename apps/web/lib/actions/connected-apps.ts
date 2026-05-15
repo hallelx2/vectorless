@@ -1,7 +1,6 @@
 "use server";
 
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
+import { getServerSession } from "@/lib/server-auth";
 import { db } from "@/db";
 import { oauthConsents, oauthClients, oauthRefreshTokens } from "@/db/schema";
 import { eq, and, isNull } from "drizzle-orm";
@@ -23,7 +22,7 @@ export async function listConnectedApps(): Promise<{
   apps: ConnectedApp[];
   error?: string;
 }> {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getServerSession();
   if (!session) return { apps: [], error: "Unauthorized" };
 
   const rows = await db
@@ -64,7 +63,7 @@ export async function listConnectedApps(): Promise<{
 export async function revokeConnectedApp(
   consentId: string
 ): Promise<{ success: boolean; error?: string }> {
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getServerSession();
   if (!session) return { success: false, error: "Unauthorized" };
 
   // Find the consent record

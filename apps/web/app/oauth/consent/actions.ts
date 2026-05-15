@@ -2,7 +2,7 @@
 
 import { headers } from "next/headers";
 
-import { auth } from "@/lib/auth";
+import { getServerSession } from "@/lib/server-auth";
 import { ControlPlaneError, controlPlane } from "@/lib/control-plane";
 
 interface ValidateParams {
@@ -80,7 +80,7 @@ export async function submitOAuthConsent(
   params: ConsentParams,
 ): Promise<{ redirectUrl?: string; error?: string }> {
   // Verify the user is authenticated
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getServerSession();
   if (!session) {
     return { error: "Not authenticated" };
   }

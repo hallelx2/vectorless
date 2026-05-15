@@ -37,7 +37,7 @@ export default function UserMenu() {
       <DropdownMenuTrigger asChild>
         <button className="flex items-center gap-2 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2">
           <Avatar className="h-8 w-8 cursor-pointer">
-            <AvatarImage src={user?.image ?? undefined} alt={user?.name ?? "User"} />
+            <AvatarImage src={user?.avatar_url ?? undefined} alt={user?.name ?? "User"} />
             <AvatarFallback className="bg-brand-blue text-white text-xs font-medium">
               {getInitials(user?.name)}
             </AvatarFallback>

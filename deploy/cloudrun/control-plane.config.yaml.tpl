@@ -49,6 +49,18 @@ oauth:
   refresh_token_ttl: 2592000
   mcp_resource_url: "https://mcp.${DOMAIN}/api/mcp"
 
+# OAuth CLIENT — used by /admin/v1/auth/oauth/{provider}/{start,exchange}
+# for Sign in with Google / GitHub on the dashboard. Distinct from
+# `oauth:` above (which is the OAuth 2.1 server we run for inbound
+# MCP clients).
+oauth_providers:
+  google:
+    client_id: "${GOOGLE_CLIENT_ID}"
+    client_secret: "${GOOGLE_CLIENT_SECRET}"
+  github:
+    client_id: "${GITHUB_CLIENT_ID}"
+    client_secret: "${GITHUB_CLIENT_SECRET}"
+
 dashboard:
   url: "https://${DOMAIN}"
   service_token: "${DASHBOARD_SERVICE_TOKEN}"
