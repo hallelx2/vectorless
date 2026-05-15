@@ -40,6 +40,8 @@ interface DocumentDetail {
   created_at: string;
   updated_at?: string;
   metadata?: Record<string, unknown>;
+  // Populated by the engine when status === "failed".
+  error_message?: string;
 }
 
 interface TocSection {
@@ -71,6 +73,22 @@ const statusColors: Record<string, string> = {
   summarizing: "bg-amber-100 text-amber-700 border-amber-200",
   failed: "bg-red-100 text-red-700 border-red-200",
 };
+
+// Map well-known engine error fragments to user-actionable hints.
+// Falls back to the raw message so we never hide what the engine said.
+function humanizeIngestError(raw: string): string {
+  const lower = raw.toLowerCase();
+  if (lower.includes("encryption key") || lower.includes("encrypted")) {
+    return "This PDF is password- or DRM-protected. Print it to PDF (or use a tool to remove encryption) and try again.";
+  }
+  if (lower.includes("malformed pdf")) {
+    return `The PDF couldn't be parsed: ${raw}. Try re-saving it from the original source.`;
+  }
+  if (lower.includes("unsupported")) {
+    return `Unsupported format: ${raw}.`;
+  }
+  return raw;
+}
 
 async function fetchJSON<T>(url: string): Promise<T | null> {
   const res = await fetch(url);
@@ -254,9 +272,20 @@ export default function DocumentDetailPage({
                 </div>
               )}
               {doc.status === "failed" && (
-                <div className="text-sm text-destructive py-8 text-center">
-                  Parsing failed. Try uploading again — if it keeps
-                  failing, the file format may not be supported.
+                <div className="space-y-2 py-8 text-center">
+                  <p className="text-sm font-medium text-destructive">
+                    Parsing failed
+                  </p>
+                  {doc.error_message ? (
+                    <p className="text-xs text-muted-foreground font-mono break-words px-4">
+                      {humanizeIngestError(doc.error_message)}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Try uploading again — if it keeps failing, the
+                      file format may not be supported.
+                    </p>
+                  )}
                 </div>
               )}
               {sections.map((section, index) => (
