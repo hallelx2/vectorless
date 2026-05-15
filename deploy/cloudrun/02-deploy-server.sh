@@ -27,6 +27,9 @@ source "$ENV_FILE"
 : "${NEON_SERVER_URL:?}"; : "${GEMINI_API_KEY:?}"
 : "${STORAGE_ENDPOINT:?}"; : "${STORAGE_REGION:?}"; : "${STORAGE_BUCKET:?}"
 : "${STORAGE_ACCESS_KEY:?}"; : "${STORAGE_SECRET_KEY:?}"
+: "${QSTASH_TOKEN:?Set QSTASH_TOKEN in .env (https://console.upstash.com/qstash)}"
+: "${QSTASH_CURRENT_SIGNING_KEY:?Set QSTASH_CURRENT_SIGNING_KEY in .env}"
+: "${QSTASH_NEXT_SIGNING_KEY:?Set QSTASH_NEXT_SIGNING_KEY in .env}"
 
 # Generate the shared secret if not already in .env.
 if [[ -z "${UPSTREAM_AUTH_TOKEN:-}" ]]; then
@@ -77,6 +80,13 @@ CONFIG_FILE="$SCRIPT_DIR/.server.config.generated.yaml"
 export UPSTREAM_AUTH_TOKEN NEON_SERVER_URL GEMINI_API_KEY
 export STORAGE_ENDPOINT STORAGE_REGION STORAGE_BUCKET
 export STORAGE_ACCESS_KEY STORAGE_SECRET_KEY
+export QSTASH_TOKEN QSTASH_CURRENT_SIGNING_KEY QSTASH_NEXT_SIGNING_KEY
+# QStash needs the engine's public URL to register webhook callbacks.
+# On a fresh deploy SERVER_URL isn't known yet; bootstrap with a
+# placeholder, then re-run this script after the first deploy so the
+# config has the real URL baked in. (The script writes SERVER_URL back
+# to .env at the end — second run pulls it in for free.)
+export SERVER_URL="${SERVER_URL:-https://placeholder.invalid}"
 
 envsubst < "$SCRIPT_DIR/server.config.yaml.tpl" > "$CONFIG_FILE"
 

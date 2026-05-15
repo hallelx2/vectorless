@@ -35,10 +35,17 @@ engine:
       secret_key: "${STORAGE_SECRET_KEY}"
       use_path_style: false
 
+  # QStash drives ingest jobs as HTTP push: every job is a POST to
+  # ${webhook_base_url}/internal/jobs/{kind} signed by Upstash. This
+  # lets Cloud Run scale to zero — instances spin up on the inbound
+  # webhook the same way they do for any user-facing request.
   queue:
-    driver: "river"
-    river:
-      num_workers: 4
+    driver: "qstash"
+    qstash:
+      token: "${QSTASH_TOKEN}"
+      webhook_base_url: "${SERVER_URL}"
+      current_signing_key: "${QSTASH_CURRENT_SIGNING_KEY}"
+      next_signing_key: "${QSTASH_NEXT_SIGNING_KEY}"
 
   llm:
     driver: "gemini"
