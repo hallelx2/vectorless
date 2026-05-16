@@ -4,7 +4,10 @@
 server:
   addr: ":8080"
   read_timeout: 30s
-  write_timeout: 120s
+  # write_timeout has to cover the longest synchronous request, which
+  # for us is the QStash ingest webhook. We bumped Cloud Run to 600s
+  # so this matches.
+  write_timeout: 600s
   drain_timeout: 15s
 
 auth:
