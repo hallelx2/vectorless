@@ -1,7 +1,39 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, use } from "react";
+import {
+  use,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import Link from "next/link";
+import {
+  Background,
+  BackgroundVariant,
+  Controls,
+  Handle,
+  MiniMap,
+  Position,
+  ReactFlow,
+  ReactFlowProvider,
+  type Edge,
+  type Node,
+  type NodeProps,
+} from "@xyflow/react";
+import "@xyflow/react/dist/style.css";
+import dagre from "@dagrejs/dagre";
+import {
+  ArrowLeft,
+  ChevronDown,
+  ChevronRight,
+  FileText,
+  Hash,
+  Layers,
+  Loader2,
+  X,
+} from "lucide-react";
+
 import {
   Card,
   CardContent,
@@ -13,16 +45,6 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  ArrowLeft,
-  X,
-  Layers,
-  Hash,
-  FileText,
-  ZoomIn,
-  ZoomOut,
-  Maximize2,
-} from "lucide-react";
 import { MarkdownSummary } from "@/components/ui/markdown";
 
 // ---------------------------------------------------------------------------
@@ -32,9 +54,7 @@ import { MarkdownSummary } from "@/components/ui/markdown";
 interface TocSection {
   section_id: string;
   order: number;
-  /** Depth from the backend's structural extraction. 1 = top-level. */
   depth?: number;
-  /** Parent's section_id; "" means top-level. */
   parent_id?: string;
   title: string;
   summary: string;
@@ -50,90 +70,145 @@ interface TocData {
   sections: TocSection[];
 }
 
-/** Internal tree node used for layout computation. */
-interface TreeNode {
+interface DocNodeData extends Record<string, unknown> {
   section: TocSection;
-  level: number;
-  children: TreeNode[];
+  level: 1 | 2 | 3;
+  hasChildren: boolean;
+  isCollapsed: boolean;
+  hiddenCount: number;
+  onToggle: (id: string) => void;
 }
 
-/** Positioned node ready for SVG rendering. */
-interface PositionedNode {
-  id: string;
-  section: TocSection;
-  level: number;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  children: string[];
-}
+type DocNode = Node<DocNodeData, "doc">;
 
 // ---------------------------------------------------------------------------
-// Constants
+// Custom node — a compact card with an H-level badge + collapse chevron.
 // ---------------------------------------------------------------------------
-
-const NODE_WIDTH = 180;
-const NODE_HEIGHT = 64;
-const H_GAP = 32;
-const V_GAP = 80;
 
 const LEVEL_STYLES: Record<
   number,
-  { bg: string; border: string; text: string; badge: string }
+  { card: string; badge: string; ring: string }
 > = {
   1: {
-    bg: "fill-primary/10",
-    border: "stroke-primary",
-    text: "fill-primary",
-    badge: "H1",
+    card: "border-primary/40 bg-primary/[0.04]",
+    badge: "bg-primary/10 text-primary border-primary/30",
+    ring: "ring-primary",
   },
   2: {
-    bg: "fill-blue-50",
-    border: "stroke-blue-200",
-    text: "fill-blue-700",
-    badge: "H2",
+    card: "border-blue-300/60 bg-blue-50/60 dark:bg-blue-950/30",
+    badge: "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-950 dark:text-blue-300",
+    ring: "ring-blue-400",
   },
   3: {
-    bg: "fill-slate-50",
-    border: "stroke-slate-200",
-    text: "fill-slate-600",
-    badge: "H3",
+    card: "border-slate-300/60 bg-slate-50 dark:bg-slate-900/40",
+    badge: "bg-slate-100 text-slate-700 border-slate-300 dark:bg-slate-900 dark:text-slate-300",
+    ring: "ring-slate-400",
   },
 };
 
-function getLevelStyle(level: number) {
-  return LEVEL_STYLES[level] || LEVEL_STYLES[3];
+function DocNodeView({ data, selected }: NodeProps<DocNode>) {
+  const style = LEVEL_STYLES[data.level] ?? LEVEL_STYLES[3];
+  return (
+    <div
+      className={[
+        "group rounded-xl border bg-background shadow-sm transition-shadow",
+        "min-w-[220px] max-w-[260px] px-3 py-2.5",
+        style.card,
+        selected ? `ring-2 ring-offset-2 ${style.ring}` : "hover:shadow-md",
+      ].join(" ")}
+    >
+      <Handle
+        type="target"
+        position={Position.Top}
+        className="!h-1.5 !w-1.5 !min-h-0 !min-w-0 !border-0 !bg-muted-foreground/50"
+      />
+
+      <div className="flex items-start gap-2">
+        <span
+          className={[
+            "font-data inline-flex shrink-0 items-center rounded border px-1.5 py-0.5",
+            "text-[10px] font-semibold tracking-wide uppercase",
+            style.badge,
+          ].join(" ")}
+        >
+          H{data.level}
+        </span>
+        <p className="text-[12.5px] leading-snug font-medium text-foreground line-clamp-2">
+          {data.section.title || "Untitled section"}
+        </p>
+      </div>
+
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <span className="font-data text-[10px] uppercase tracking-wider text-muted-foreground">
+          {data.section.token_count
+            ? `${data.section.token_count.toLocaleString()} tok`
+            : "—"}
+        </span>
+        {data.hasChildren && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              data.onToggle(data.section.section_id);
+            }}
+            className={[
+              "font-data inline-flex items-center gap-1 rounded border px-1.5 py-0.5",
+              "text-[10px] font-medium text-muted-foreground hover:text-foreground hover:bg-accent transition-colors",
+            ].join(" ")}
+            aria-label={data.isCollapsed ? "Expand children" : "Collapse children"}
+          >
+            {data.isCollapsed ? (
+              <>
+                <ChevronRight className="size-3" />
+                {data.hiddenCount}
+              </>
+            ) : (
+              <ChevronDown className="size-3" />
+            )}
+          </button>
+        )}
+      </div>
+
+      <Handle
+        type="source"
+        position={Position.Bottom}
+        className="!h-1.5 !w-1.5 !min-h-0 !min-w-0 !border-0 !bg-muted-foreground/50"
+      />
+    </div>
+  );
+}
+
+const nodeTypes = { doc: DocNodeView };
+
+// ---------------------------------------------------------------------------
+// Layout via dagre. Fixed node dimensions matching DocNodeView's box.
+// ---------------------------------------------------------------------------
+
+const NODE_W = 240;
+const NODE_H = 84;
+
+function layoutWithDagre(nodes: DocNode[], edges: Edge[]): DocNode[] {
+  const g = new dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
+  g.setGraph({ rankdir: "TB", nodesep: 28, ranksep: 64 });
+
+  for (const n of nodes) g.setNode(n.id, { width: NODE_W, height: NODE_H });
+  for (const e of edges) g.setEdge(e.source, e.target);
+
+  dagre.layout(g);
+
+  return nodes.map((n) => {
+    const pos = g.node(n.id);
+    return {
+      ...n,
+      // dagre returns the node center; React Flow positions by top-left.
+      position: { x: pos.x - NODE_W / 2, y: pos.y - NODE_H / 2 },
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------
-// Tree building helpers
+// Tree helpers
 // ---------------------------------------------------------------------------
-
-/**
- * Infer a heading level from a section title. Used only as a fallback
- * when the backend doesn't supply depth — modern uploads include
- * depth + parent_id so this code path is rare.
- */
-function inferLevel(section: TocSection, _index: number, total: number): number {
-  const title = section.title.trim();
-
-  // Numbered headings: "1.", "1.2", "1.2.3"
-  const numberedMatch = title.match(/^(\d+(?:\.\d+)*)[.\s):\-]/);
-  if (numberedMatch) {
-    const depth = numberedMatch[1].split(".").length;
-    return Math.min(depth, 3);
-  }
-
-  // Roman numeral top-level: "I.", "II.", "III."
-  if (/^[IVXLC]+[.\s)]/i.test(title)) return 1;
-
-  // Lettered sub-sections: "(a)", "a.", "A."
-  if (/^[(\s]*[a-zA-Z][).\s]/.test(title) && total > 3) return 2;
-
-  // Default: everything is level 1 (flat list rendered as top-level nodes)
-  return 1;
-}
 
 /**
  * Returns true when at least one section reports a real depth or
@@ -146,300 +221,78 @@ function hasBackendHierarchy(sections: TocSection[]): boolean {
 }
 
 /**
- * Build a tree from the backend's depth + parent_id metadata when
- * present. Wires children to their declared parent_id and falls back
- * to the regex-on-title heuristic only for legacy documents that
- * predate the backend hierarchy.
+ * Map each section_id to its direct children ids. Empty parent_id
+ * (which the backend uses for top-level sections) is the synthetic
+ * "root" key.
  */
-function buildTree(sections: TocSection[]): TreeNode[] {
-  if (hasBackendHierarchy(sections)) {
-    return buildTreeFromBackend(sections);
-  }
-  return buildTreeFromTitlePatterns(sections);
-}
-
-function buildTreeFromBackend(sections: TocSection[]): TreeNode[] {
-  // Construct every node first so children can find their parents
-  // regardless of the order they arrive in.
-  const nodes = new Map<string, TreeNode>();
+function indexChildren(sections: TocSection[]): Map<string, string[]> {
+  const out = new Map<string, string[]>();
   for (const s of sections) {
-    const depth = s.depth ?? 1;
-    nodes.set(s.section_id, {
-      section: s,
-      // Clamp to the 1..3 range the H1/H2/H3 styling supports.
-      level: Math.max(1, Math.min(depth, 3)),
-      children: [],
-    });
+    const parent = s.parent_id ?? "";
+    if (!out.has(parent)) out.set(parent, []);
+    out.get(parent)!.push(s.section_id);
   }
-  const roots: TreeNode[] = [];
-  for (const s of sections) {
-    const node = nodes.get(s.section_id);
-    if (!node) continue;
-    const parentID = s.parent_id ?? "";
-    const parent = parentID ? nodes.get(parentID) : null;
-    if (parent) {
-      parent.children.push(node);
-    } else {
-      roots.push(node);
-    }
-  }
-  return roots;
+  return out;
 }
 
 /**
- * Title-pattern fallback. Original stack-based approach for documents
- * that don't carry backend depth/parent_id.
+ * Order id → depth for every section. Falls back to depth=1 when the
+ * backend didn't supply it.
  */
-function buildTreeFromTitlePatterns(sections: TocSection[]): TreeNode[] {
-  const total = sections.length;
-  const roots: TreeNode[] = [];
-  const stack: TreeNode[] = [];
-
-  for (let i = 0; i < sections.length; i++) {
-    const section = sections[i];
-    const level = inferLevel(section, i, total);
-    const node: TreeNode = { section, level, children: [] };
-
-    while (stack.length > 0 && stack[stack.length - 1].level >= level) {
-      stack.pop();
-    }
-    if (stack.length === 0) {
-      roots.push(node);
-    } else {
-      stack[stack.length - 1].children.push(node);
-    }
-    stack.push(node);
+function indexDepths(sections: TocSection[]): Map<string, number> {
+  const out = new Map<string, number>();
+  for (const s of sections) {
+    out.set(s.section_id, Math.max(1, s.depth ?? 1));
   }
-
-  return roots;
+  return out;
 }
-
-// ---------------------------------------------------------------------------
-// Layout engine
-// ---------------------------------------------------------------------------
 
 /**
- * Compute positions for every node in the tree. Uses a bottom-up approach:
- * 1. Measure subtree widths recursively.
- * 2. Position children centered under their parent.
+ * Returns the set of section IDs that are descendants of a collapsed
+ * ancestor — those should be hidden from the rendered graph.
+ *
+ * Walks from collapsed nodes outward via the children index, so it's
+ * O(visible nodes) instead of O(N²).
  */
-function layoutTree(roots: TreeNode[]): {
-  nodes: PositionedNode[];
-  width: number;
-  height: number;
-} {
-  const positioned: PositionedNode[] = [];
-  let maxDepth = 0;
-
-  /** Returns the total width consumed by this subtree. */
-  function measureWidth(node: TreeNode): number {
-    if (node.children.length === 0) return NODE_WIDTH;
-    const childrenWidth = node.children.reduce(
-      (sum, child) => sum + measureWidth(child) + H_GAP,
-      -H_GAP
-    );
-    return Math.max(NODE_WIDTH, childrenWidth);
+function computeHidden(
+  collapsed: Set<string>,
+  childrenOf: Map<string, string[]>,
+): Set<string> {
+  const hidden = new Set<string>();
+  const stack: string[] = [];
+  for (const id of collapsed) {
+    for (const c of childrenOf.get(id) ?? []) stack.push(c);
   }
-
-  /** Place a node and its descendants. */
-  function place(node: TreeNode, x: number, y: number, availableWidth: number) {
-    const depth = Math.floor(y / (NODE_HEIGHT + V_GAP)) + 1;
-    if (depth > maxDepth) maxDepth = depth;
-
-    const nodeX = x + availableWidth / 2 - NODE_WIDTH / 2;
-
-    const posNode: PositionedNode = {
-      id: node.section.section_id,
-      section: node.section,
-      level: node.level,
-      x: nodeX,
-      y,
-      width: NODE_WIDTH,
-      height: NODE_HEIGHT,
-      children: node.children.map((c) => c.section.section_id),
-    };
-    positioned.push(posNode);
-
-    if (node.children.length > 0) {
-      const childrenTotalWidth = node.children.reduce(
-        (sum, child) => sum + measureWidth(child) + H_GAP,
-        -H_GAP
-      );
-      let cx = x + availableWidth / 2 - childrenTotalWidth / 2;
-      const cy = y + NODE_HEIGHT + V_GAP;
-      for (const child of node.children) {
-        const cw = measureWidth(child);
-        place(child, cx, cy, cw);
-        cx += cw + H_GAP;
-      }
-    }
+  while (stack.length) {
+    const id = stack.pop()!;
+    if (hidden.has(id)) continue;
+    hidden.add(id);
+    for (const c of childrenOf.get(id) ?? []) stack.push(c);
   }
+  return hidden;
+}
 
-  // Measure total width across all roots
-  const totalRootsWidth = roots.reduce(
-    (sum, root) => sum + measureWidth(root) + H_GAP,
-    -H_GAP
-  );
-
-  // Place each root side by side
-  let rx = 0;
-  for (const root of roots) {
-    const rw = measureWidth(root);
-    place(root, rx, 0, rw);
-    rx += rw + H_GAP;
+/**
+ * Counts every descendant of `id` (transitively). Used to show
+ * "+N" on the collapse chevron so users know the size of the
+ * hidden subtree before they expand it.
+ */
+function countDescendants(
+  id: string,
+  childrenOf: Map<string, string[]>,
+): number {
+  let total = 0;
+  const stack: string[] = [...(childrenOf.get(id) ?? [])];
+  while (stack.length) {
+    const cur = stack.pop()!;
+    total++;
+    for (const c of childrenOf.get(cur) ?? []) stack.push(c);
   }
-
-  return {
-    nodes: positioned,
-    width: Math.max(totalRootsWidth, NODE_WIDTH),
-    height: maxDepth * (NODE_HEIGHT + V_GAP) - V_GAP + NODE_HEIGHT,
-  };
+  return total;
 }
 
 // ---------------------------------------------------------------------------
-// SVG sub-components
-// ---------------------------------------------------------------------------
-
-function GraphNode({
-  node,
-  isSelected,
-  onClick,
-}: {
-  node: PositionedNode;
-  isSelected: boolean;
-  onClick: () => void;
-}) {
-  const style = getLevelStyle(node.level);
-  const title =
-    node.section.title.length > 22
-      ? node.section.title.slice(0, 20) + "..."
-      : node.section.title;
-  const tokens = node.section.token_count;
-
-  return (
-    <g
-      className="cursor-pointer transition-opacity hover:opacity-90"
-      onClick={onClick}
-      role="button"
-      tabIndex={0}
-      aria-label={`Section: ${node.section.title}`}
-    >
-      {/* Shadow */}
-      <rect
-        x={node.x + 2}
-        y={node.y + 2}
-        width={node.width}
-        height={node.height}
-        rx={10}
-        className="fill-black/5"
-      />
-      {/* Node body */}
-      <rect
-        x={node.x}
-        y={node.y}
-        width={node.width}
-        height={node.height}
-        rx={10}
-        className={`${style.bg} ${style.border}`}
-        strokeWidth={isSelected ? 2.5 : 1.5}
-      />
-      {/* Level badge */}
-      <rect
-        x={node.x + 8}
-        y={node.y + 8}
-        width={26}
-        height={16}
-        rx={4}
-        className={`${style.border}`}
-        strokeWidth={1}
-        fillOpacity={0.15}
-      />
-      <text
-        x={node.x + 21}
-        y={node.y + 19.5}
-        textAnchor="middle"
-        className={`${style.text} text-[9px] font-semibold`}
-        style={{ fontFamily: "ui-monospace, monospace" }}
-      >
-        {style.badge}
-      </text>
-      {/* Title */}
-      <text
-        x={node.x + NODE_WIDTH / 2}
-        y={node.y + 30}
-        textAnchor="middle"
-        className={`${style.text} text-[11px] font-medium`}
-      >
-        {title}
-      </text>
-      {/* Token count */}
-      {tokens != null && (
-        <text
-          x={node.x + NODE_WIDTH / 2}
-          y={node.y + 48}
-          textAnchor="middle"
-          className="fill-muted-foreground text-[9px]"
-          style={{ fontFamily: "ui-monospace, monospace" }}
-        >
-          {tokens.toLocaleString()} tokens
-        </text>
-      )}
-    </g>
-  );
-}
-
-function GraphEdge({
-  parent,
-  child,
-}: {
-  parent: PositionedNode;
-  child: PositionedNode;
-}) {
-  const x1 = parent.x + parent.width / 2;
-  const y1 = parent.y + parent.height;
-  const x2 = child.x + child.width / 2;
-  const y2 = child.y;
-  const midY = (y1 + y2) / 2;
-
-  return (
-    <path
-      d={`M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`}
-      className="stroke-border"
-      strokeWidth={1.5}
-      fill="none"
-    />
-  );
-}
-
-/** Dashed horizontal edge connecting sequential siblings. */
-function SequentialEdge({
-  left,
-  right,
-}: {
-  left: PositionedNode;
-  right: PositionedNode;
-}) {
-  const x1 = left.x + left.width;
-  const y1 = left.y + left.height / 2;
-  const x2 = right.x;
-  const y2 = right.y + right.height / 2;
-
-  return (
-    <line
-      x1={x1}
-      y1={y1}
-      x2={x2}
-      y2={y2}
-      className="stroke-border"
-      strokeWidth={1}
-      strokeDasharray="4 3"
-      opacity={0.5}
-    />
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Main page component
+// Page
 // ---------------------------------------------------------------------------
 
 export default function DocumentGraphPage({
@@ -452,58 +305,129 @@ export default function DocumentGraphPage({
   const [toc, setToc] = useState<TocData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [zoom, setZoom] = useState(1);
 
-  // Fetch ToC data
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+
+  // Fetch ToC.
   useEffect(() => {
-    async function fetchToc() {
+    let alive = true;
+    (async () => {
       try {
         const res = await fetch(`/api/dashboard/documents/${docId}/toc`);
         if (!res.ok) {
-          setError("Failed to load document structure");
+          if (alive) setError("Failed to load document structure");
           return;
         }
-        const data = await res.json();
-        setToc(data);
+        const data = (await res.json()) as TocData;
+        if (alive) setToc(data);
       } catch {
-        setError("Failed to load document structure");
+        if (alive) setError("Failed to load document structure");
       } finally {
-        setIsLoading(false);
+        if (alive) setIsLoading(false);
       }
-    }
-    fetchToc();
+    })();
+    return () => {
+      alive = false;
+    };
   }, [docId]);
 
-  // Build tree and layout
-  const layout = useMemo(() => {
-    if (!toc || toc.sections.length === 0) return null;
-    const tree = buildTree(toc.sections);
-    return layoutTree(tree);
-  }, [toc]);
+  const sections = toc?.sections ?? [];
+  const usesBackendHierarchy = useMemo(
+    () => hasBackendHierarchy(sections),
+    [sections],
+  );
+  const childrenOf = useMemo(() => indexChildren(sections), [sections]);
+  const depthOf = useMemo(() => indexDepths(sections), [sections]);
 
-  const nodeMap = useMemo(() => {
-    if (!layout) return new Map<string, PositionedNode>();
-    const map = new Map<string, PositionedNode>();
-    for (const node of layout.nodes) {
-      map.set(node.id, node);
+  // Auto-collapse depth ≥ 3 the first time data arrives so the initial
+  // view isn't overwhelming. Users can expand from there.
+  const [didAutoCollapse, setDidAutoCollapse] = useState(false);
+  useEffect(() => {
+    if (didAutoCollapse || sections.length === 0) return;
+    const initial = new Set<string>();
+    for (const s of sections) {
+      const d = depthOf.get(s.section_id) ?? 1;
+      const hasKids = (childrenOf.get(s.section_id) ?? []).length > 0;
+      if (hasKids && d >= 2) initial.add(s.section_id);
     }
-    return map;
-  }, [layout]);
+    setCollapsed(initial);
+    setDidAutoCollapse(true);
+  }, [sections, depthOf, childrenOf, didAutoCollapse]);
 
-  const selectedNode = selectedId ? nodeMap.get(selectedId) ?? null : null;
-
-  const handleZoomIn = useCallback(() => {
-    setZoom((z) => Math.min(z + 0.2, 2));
+  const toggleCollapsed = useCallback((id: string) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   }, []);
 
-  const handleZoomOut = useCallback(() => {
-    setZoom((z) => Math.max(z - 0.2, 0.4));
-  }, []);
+  // Build React Flow nodes + edges, filtered by collapse state, then
+  // run dagre to position them.
+  const { rfNodes, rfEdges } = useMemo(() => {
+    if (sections.length === 0) {
+      return { rfNodes: [] as DocNode[], rfEdges: [] as Edge[] };
+    }
 
-  const handleZoomReset = useCallback(() => {
-    setZoom(1);
-  }, []);
+    const hidden = computeHidden(collapsed, childrenOf);
+
+    const nodes: DocNode[] = [];
+    for (const s of sections) {
+      if (hidden.has(s.section_id)) continue;
+      const kids = childrenOf.get(s.section_id) ?? [];
+      const hasChildren = kids.length > 0;
+      const isCollapsed = collapsed.has(s.section_id);
+      const level = Math.min(
+        3,
+        Math.max(1, depthOf.get(s.section_id) ?? 1),
+      ) as 1 | 2 | 3;
+      nodes.push({
+        id: s.section_id,
+        type: "doc",
+        position: { x: 0, y: 0 }, // dagre will overwrite
+        data: {
+          section: s,
+          level,
+          hasChildren,
+          isCollapsed,
+          hiddenCount: isCollapsed
+            ? countDescendants(s.section_id, childrenOf)
+            : 0,
+          onToggle: toggleCollapsed,
+        },
+      });
+    }
+
+    const visibleIds = new Set(nodes.map((n) => n.id));
+    const edges: Edge[] = [];
+    for (const s of sections) {
+      const parent = s.parent_id ?? "";
+      if (!parent) continue;
+      if (!visibleIds.has(parent) || !visibleIds.has(s.section_id)) continue;
+      edges.push({
+        id: `${parent}->${s.section_id}`,
+        source: parent,
+        target: s.section_id,
+        type: "smoothstep",
+        animated: false,
+        style: { stroke: "rgb(148 163 184 / 0.6)", strokeWidth: 1.5 },
+      });
+    }
+
+    const laidOut = layoutWithDagre(nodes, edges);
+    return { rfNodes: laidOut, rfEdges: edges };
+  }, [sections, collapsed, childrenOf, depthOf, toggleCollapsed]);
+
+  const selectedSection = useMemo(() => {
+    if (!selectedId) return null;
+    return sections.find((s) => s.section_id === selectedId) ?? null;
+  }, [selectedId, sections]);
+
+  // Counts for the header pills.
+  const visibleCount = rfNodes.length;
+  const totalCount = sections.length;
 
   // --- Loading state ---
   if (isLoading) {
@@ -511,10 +435,10 @@ export default function DocumentGraphPage({
       <div className="space-y-6">
         <Skeleton className="h-8 w-[150px]" />
         <div className="space-y-2">
-          <Skeleton className="h-8 w-[250px]" />
-          <Skeleton className="h-5 w-[180px]" />
+          <Skeleton className="h-8 w-[280px]" />
+          <Skeleton className="h-4 w-[200px]" />
         </div>
-        <Skeleton className="h-[500px] w-full rounded-xl" />
+        <Skeleton className="h-[560px] w-full rounded-xl" />
       </div>
     );
   }
@@ -525,35 +449,29 @@ export default function DocumentGraphPage({
       <div className="space-y-6">
         <Button variant="ghost" size="sm" asChild>
           <Link href={`/dashboard/documents/${docId}`}>
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="size-4" />
             Back to Document
           </Link>
         </Button>
         <div className="flex flex-col items-center justify-center py-20">
           <h2 className="text-lg font-medium text-foreground">{error}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            The document structure could not be loaded.
-          </p>
         </div>
       </div>
     );
   }
 
-  const sections = toc?.sections || [];
-  const docTitle = toc?.title || "Document";
-
   // --- Empty state ---
-  if (!layout || sections.length === 0) {
+  if (sections.length === 0) {
     return (
       <div className="space-y-6">
         <Button variant="ghost" size="sm" asChild>
           <Link href={`/dashboard/documents/${docId}`}>
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="size-4" />
             Back to Document
           </Link>
         </Button>
         <div className="flex flex-col items-center justify-center py-20">
-          <Layers className="h-10 w-10 text-muted-foreground" />
+          <Layers className="size-10 text-muted-foreground" />
           <h3 className="mt-4 text-sm font-medium text-foreground">
             No sections to visualize
           </h3>
@@ -565,286 +483,256 @@ export default function DocumentGraphPage({
     );
   }
 
-  // Build edges
-  const parentChildEdges: { parent: PositionedNode; child: PositionedNode }[] =
-    [];
-  const sequentialEdges: { left: PositionedNode; right: PositionedNode }[] = [];
-
-  for (const node of layout.nodes) {
-    for (let i = 0; i < node.children.length; i++) {
-      const childNode = nodeMap.get(node.children[i]);
-      if (childNode) {
-        parentChildEdges.push({ parent: node, child: childNode });
-      }
-
-      // Sequential edges between siblings
-      if (i > 0) {
-        const prevChild = nodeMap.get(node.children[i - 1]);
-        if (prevChild && childNode) {
-          sequentialEdges.push({ left: prevChild, right: childNode });
-        }
-      }
-    }
-  }
-
-  // Also add sequential edges between root nodes
-  const rootNodes = layout.nodes.filter(
-    (n) => !layout.nodes.some((p) => p.children.includes(n.id))
-  );
-  for (let i = 1; i < rootNodes.length; i++) {
-    sequentialEdges.push({ left: rootNodes[i - 1], right: rootNodes[i] });
-  }
-
-  const PADDING = 60;
-  const svgWidth = layout.width + PADDING * 2;
-  const svgHeight = layout.height + PADDING * 2;
-
   return (
     <div className="space-y-6">
-      {/* Back link */}
       <Button variant="ghost" size="sm" asChild>
         <Link href={`/dashboard/documents/${docId}`}>
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft className="size-4" />
           Back to Document
         </Link>
       </Button>
 
-      {/* Header */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="font-display text-2xl font-semibold text-foreground">
             Document Structure
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Visual graph of {sections.length} sections in {docTitle}
+            {totalCount} {totalCount === 1 ? "section" : "sections"} in{" "}
+            <span className="font-medium text-foreground">
+              {toc?.title || "this document"}
+            </span>
+            {visibleCount !== totalCount && (
+              <>
+                {" "}
+                · showing{" "}
+                <span className="font-medium text-foreground">
+                  {visibleCount}
+                </span>
+              </>
+            )}
+            {!usesBackendHierarchy && (
+              <>
+                {" "}
+                ·{" "}
+                <span className="italic text-amber-700 dark:text-amber-400">
+                  legacy doc — hierarchy inferred from titles
+                </span>
+              </>
+            )}
           </p>
         </div>
         <div className="flex items-center gap-2">
           <Badge variant="secondary" className="font-mono text-xs">
-            <Hash className="mr-1 h-3 w-3" />
-            {docId.slice(0, 12)}...
+            <Hash className="mr-1 size-3" />
+            {docId.slice(0, 12)}…
           </Badge>
           <Badge variant="secondary" className="text-xs">
-            <Layers className="mr-1 h-3 w-3" />
-            {sections.length} sections
+            <Layers className="mr-1 size-3" />
+            {totalCount} sections
           </Badge>
         </div>
       </div>
 
-      {/* Graph + detail panel */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* SVG Graph */}
-        <Card className={selectedNode ? "lg:col-span-2" : "lg:col-span-3"}>
-          <CardHeader className="flex flex-row items-center justify-between pb-3">
+        <Card
+          className={selectedSection ? "lg:col-span-2" : "lg:col-span-3"}
+        >
+          <CardHeader className="flex-row items-center justify-between py-3">
             <CardTitle className="text-base">Section Graph</CardTitle>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={handleZoomOut}
-                aria-label="Zoom out"
+                size="sm"
+                className="h-8 text-xs"
+                onClick={() => setCollapsed(new Set())}
               >
-                <ZoomOut className="h-4 w-4" />
+                Expand all
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-8 px-2 text-xs font-mono"
-                onClick={handleZoomReset}
+                className="h-8 text-xs"
+                onClick={() => {
+                  // Collapse every node with children.
+                  const next = new Set<string>();
+                  for (const s of sections) {
+                    if ((childrenOf.get(s.section_id) ?? []).length > 0) {
+                      next.add(s.section_id);
+                    }
+                  }
+                  setCollapsed(next);
+                }}
               >
-                {Math.round(zoom * 100)}%
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={handleZoomIn}
-                aria-label="Zoom in"
-              >
-                <ZoomIn className="h-4 w-4" />
-              </Button>
-              <Separator orientation="vertical" className="mx-1 h-5" />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8"
-                onClick={handleZoomReset}
-                aria-label="Fit to view"
-              >
-                <Maximize2 className="h-4 w-4" />
+                Collapse all
               </Button>
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <ScrollArea className="h-[520px] w-full">
-              <div
-                className="min-w-full overflow-auto p-6"
-                style={{
-                  transform: `scale(${zoom})`,
-                  transformOrigin: "top left",
-                  width: svgWidth * zoom > 0 ? svgWidth : "100%",
-                }}
-              >
-                <svg
-                  width={svgWidth}
-                  height={svgHeight}
-                  viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-                  className="mx-auto block"
+            <div className="relative h-[640px] w-full overflow-hidden rounded-b-xl border-t bg-[hsl(var(--muted))]/40">
+              <ReactFlowProvider>
+                <ReactFlow
+                  nodes={rfNodes}
+                  edges={rfEdges}
+                  nodeTypes={nodeTypes}
+                  onNodeClick={(_, node) =>
+                    setSelectedId(node.id === selectedId ? null : node.id)
+                  }
+                  fitView
+                  fitViewOptions={{ padding: 0.2, includeHiddenNodes: false }}
+                  minZoom={0.15}
+                  maxZoom={1.5}
+                  proOptions={{ hideAttribution: true }}
+                  nodesDraggable={false}
+                  nodesConnectable={false}
+                  edgesFocusable={false}
+                  panOnDrag
+                  panOnScroll
+                  zoomOnScroll
                 >
-                  <g transform={`translate(${PADDING}, ${PADDING})`}>
-                    {/* Sequential edges (dashed, behind everything) */}
-                    {sequentialEdges.map((e, i) => (
-                      <SequentialEdge key={`seq-${i}`} left={e.left} right={e.right} />
-                    ))}
-
-                    {/* Parent-child edges */}
-                    {parentChildEdges.map((e, i) => (
-                      <GraphEdge
-                        key={`edge-${i}`}
-                        parent={e.parent}
-                        child={e.child}
-                      />
-                    ))}
-
-                    {/* Nodes */}
-                    {layout.nodes.map((node) => (
-                      <GraphNode
-                        key={node.id}
-                        node={node}
-                        isSelected={node.id === selectedId}
-                        onClick={() =>
-                          setSelectedId(node.id === selectedId ? null : node.id)
-                        }
-                      />
-                    ))}
-                  </g>
-                </svg>
-              </div>
-            </ScrollArea>
-
-            {/* Legend */}
+                  <Background
+                    variant={BackgroundVariant.Dots}
+                    gap={20}
+                    size={1}
+                    className="!bg-transparent"
+                  />
+                  <Controls
+                    showInteractive={false}
+                    className="!border !border-border !shadow-sm [&>button]:!bg-background [&>button]:!border-border [&>button:hover]:!bg-accent"
+                  />
+                  <MiniMap
+                    pannable
+                    zoomable
+                    nodeStrokeWidth={2}
+                    nodeColor={(n) => {
+                      const data = (n as DocNode).data;
+                      if (!data) return "#cbd5e1";
+                      return data.level === 1
+                        ? "hsl(var(--primary))"
+                        : data.level === 2
+                          ? "#93c5fd"
+                          : "#cbd5e1";
+                    }}
+                    className="!border !border-border !bg-background"
+                  />
+                </ReactFlow>
+              </ReactFlowProvider>
+              {rfNodes.length === 0 && (
+                <div className="absolute inset-0 flex items-center justify-center text-sm text-muted-foreground">
+                  <Loader2 className="mr-2 size-4 animate-spin" />
+                  Laying out tree…
+                </div>
+              )}
+            </div>
             <div className="flex flex-wrap items-center gap-4 border-t px-6 py-3">
               <span className="text-xs font-medium text-muted-foreground">
                 Legend:
               </span>
-              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="inline-block h-3 w-3 rounded-sm border border-primary bg-primary/10" />
-                Level 1 (H1)
-              </span>
-              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="inline-block h-3 w-3 rounded-sm border border-blue-200 bg-blue-50" />
-                Level 2 (H2)
-              </span>
-              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="inline-block h-3 w-3 rounded-sm border border-slate-200 bg-slate-50" />
-                Level 3 (H3)
-              </span>
-              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="inline-block h-6 w-px bg-border" />
-                Parent-child
-              </span>
-              <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                <span className="inline-block h-px w-6 border-t border-dashed border-border" />
-                Sequential
+              <Legend swatch="border-primary/40 bg-primary/[0.04]" label="H1 (top-level)" />
+              <Legend
+                swatch="border-blue-300/60 bg-blue-50/60"
+                label="H2"
+              />
+              <Legend
+                swatch="border-slate-300/60 bg-slate-50"
+                label="H3+"
+              />
+              <span className="text-xs text-muted-foreground">
+                Click a node to inspect · scroll to zoom · drag to pan ·
+                chevron to collapse
               </span>
             </div>
           </CardContent>
         </Card>
 
-        {/* Detail side panel */}
-        {selectedNode && (
+        {selectedSection && (
           <Card className="h-fit lg:col-span-1">
-            <CardHeader className="flex flex-row items-start justify-between pb-3">
+            <CardHeader className="flex-row items-start justify-between pb-3">
               <CardTitle className="text-base">Section Detail</CardTitle>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 shrink-0"
+                className="size-7"
                 onClick={() => setSelectedId(null)}
                 aria-label="Close detail panel"
               >
-                <X className="h-4 w-4" />
+                <X className="size-4" />
               </Button>
             </CardHeader>
             <CardContent className="space-y-4">
-              {/* Title */}
               <div>
                 <p className="text-xs font-medium text-muted-foreground">
                   Title
                 </p>
-                <p className="mt-0.5 text-sm font-medium text-foreground">
-                  {selectedNode.section.title}
+                <p className="mt-0.5 text-sm font-medium text-foreground break-words">
+                  {selectedSection.title || "Untitled section"}
                 </p>
               </div>
 
               <Separator />
 
-              {/* Metadata row */}
               <div className="flex flex-wrap gap-2">
-                <Badge
-                  variant="outline"
-                  className="text-xs"
-                >
-                  {getLevelStyle(selectedNode.level).badge}
+                <Badge variant="outline" className="text-xs">
+                  H{Math.min(3, Math.max(1, selectedSection.depth ?? 1))}
                 </Badge>
-                {selectedNode.section.page_range && (
+                {selectedSection.page_range && (
                   <Badge variant="secondary" className="font-mono text-xs">
-                    pp. {selectedNode.section.page_range}
+                    pp. {selectedSection.page_range}
                   </Badge>
                 )}
-                {selectedNode.section.token_count != null && (
+                {selectedSection.token_count != null && (
                   <Badge variant="secondary" className="text-xs">
-                    {selectedNode.section.token_count.toLocaleString()} tokens
+                    {selectedSection.token_count.toLocaleString()} tokens
                   </Badge>
                 )}
                 <Badge
                   variant="outline"
                   className="font-mono text-[10px] text-muted-foreground"
                 >
-                  #{selectedNode.section.order}
+                  #{selectedSection.order}
                 </Badge>
               </div>
 
               <Separator />
 
-              {/* Summary */}
-              {selectedNode.section.summary ? (
+              {selectedSection.summary ? (
                 <div>
                   <p className="mb-1.5 text-xs font-medium text-muted-foreground">
                     Summary
                   </p>
                   <ScrollArea className="max-h-[260px]">
-                    <MarkdownSummary content={selectedNode.section.summary} />
+                    <MarkdownSummary content={selectedSection.summary} />
                   </ScrollArea>
                 </div>
               ) : (
-                <p className="text-sm text-muted-foreground italic">
+                <p className="text-sm italic text-muted-foreground">
                   No summary available for this section.
                 </p>
               )}
 
-              <Separator />
-
-              {/* Children count */}
-              {selectedNode.children.length > 0 && (
-                <div>
-                  <p className="text-xs font-medium text-muted-foreground">
-                    Sub-sections
-                  </p>
-                  <p className="mt-0.5 text-sm text-foreground">
-                    {selectedNode.children.length} direct child
-                    {selectedNode.children.length !== 1 ? "ren" : ""}
-                  </p>
-                </div>
+              {(childrenOf.get(selectedSection.section_id)?.length ?? 0) >
+                0 && (
+                <>
+                  <Separator />
+                  <div>
+                    <p className="text-xs font-medium text-muted-foreground">
+                      Sub-sections
+                    </p>
+                    <p className="mt-0.5 text-sm text-foreground">
+                      {childrenOf.get(selectedSection.section_id)?.length}{" "}
+                      direct ·{" "}
+                      {countDescendants(selectedSection.section_id, childrenOf)}{" "}
+                      total
+                    </p>
+                  </div>
+                </>
               )}
 
-              {/* Link to full section */}
               <Button size="sm" className="w-full" asChild>
                 <Link
-                  href={`/dashboard/documents/${docId}/sections/${selectedNode.id}`}
+                  href={`/dashboard/documents/${docId}/sections/${selectedSection.section_id}`}
                 >
-                  <FileText className="h-3.5 w-3.5" />
+                  <FileText className="size-3.5" />
                   View Full Section
                 </Link>
               </Button>
@@ -853,5 +741,14 @@ export default function DocumentGraphPage({
         )}
       </div>
     </div>
+  );
+}
+
+function Legend({ swatch, label }: { swatch: string; label: string }) {
+  return (
+    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      <span className={`inline-block size-3 rounded-sm border ${swatch}`} />
+      {label}
+    </span>
   );
 }
