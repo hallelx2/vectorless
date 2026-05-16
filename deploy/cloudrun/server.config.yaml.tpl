@@ -29,14 +29,9 @@ engine:
     max_conns: 10
 
   storage:
-    driver: "s3"
-    s3:
-      endpoint: "${STORAGE_ENDPOINT}"
-      region: "${STORAGE_REGION}"
-      bucket: "${STORAGE_BUCKET}"
-      access_key: "${STORAGE_ACCESS_KEY}"
-      secret_key: "${STORAGE_SECRET_KEY}"
-      use_path_style: false
+    driver: "gcs"
+    gcs:
+      bucket: "${GCS_BUCKET}"
 
   # QStash drives ingest jobs as HTTP push: every job is a POST to
   # ${webhook_base_url}/internal/jobs/{kind} signed by Upstash. This

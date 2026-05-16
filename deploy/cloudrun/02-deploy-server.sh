@@ -25,8 +25,7 @@ source "$ENV_FILE"
 
 : "${PROJECT_ID:?}"; : "${REGION:?}"
 : "${NEON_SERVER_URL:?}"; : "${GEMINI_API_KEY:?}"
-: "${STORAGE_ENDPOINT:?}"; : "${STORAGE_REGION:?}"; : "${STORAGE_BUCKET:?}"
-: "${STORAGE_ACCESS_KEY:?}"; : "${STORAGE_SECRET_KEY:?}"
+: "${GCS_BUCKET:?Set GCS_BUCKET in .env — engine uses native GCS via runtime SA}"
 : "${QSTASH_TOKEN:?Set QSTASH_TOKEN in .env (https://console.upstash.com/qstash)}"
 : "${QSTASH_CURRENT_SIGNING_KEY:?Set QSTASH_CURRENT_SIGNING_KEY in .env}"
 : "${QSTASH_NEXT_SIGNING_KEY:?Set QSTASH_NEXT_SIGNING_KEY in .env}"
@@ -78,8 +77,7 @@ CONFIG_FILE="$SCRIPT_DIR/.server.config.generated.yaml"
 
 # Export every required var so envsubst can pick them up.
 export UPSTREAM_AUTH_TOKEN NEON_SERVER_URL GEMINI_API_KEY
-export STORAGE_ENDPOINT STORAGE_REGION STORAGE_BUCKET
-export STORAGE_ACCESS_KEY STORAGE_SECRET_KEY
+export GCS_BUCKET
 export QSTASH_TOKEN QSTASH_CURRENT_SIGNING_KEY QSTASH_NEXT_SIGNING_KEY
 # QStash needs the engine's public URL to register webhook callbacks.
 # On a fresh deploy SERVER_URL isn't known yet; bootstrap with a
