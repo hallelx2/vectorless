@@ -32,6 +32,10 @@ import { MarkdownSummary } from "@/components/ui/markdown";
 interface TocSection {
   section_id: string;
   order: number;
+  /** Depth from the backend's structural extraction. 1 = top-level. */
+  depth?: number;
+  /** Parent's section_id; "" means top-level. */
+  parent_id?: string;
   title: string;
   summary: string;
   page_range: string;
@@ -107,9 +111,9 @@ function getLevelStyle(level: number) {
 // ---------------------------------------------------------------------------
 
 /**
- * Infer a heading level from a section title.
- * Looks for patterns like "1." (H1), "1.2" (H2), "1.2.3" (H3), etc.
- * Falls back to a simple order-based heuristic when no numbering is present.
+ * Infer a heading level from a section title. Used only as a fallback
+ * when the backend doesn't supply depth — modern uploads include
+ * depth + parent_id so this code path is rare.
  */
 function inferLevel(section: TocSection, _index: number, total: number): number {
   const title = section.title.trim();
@@ -132,11 +136,61 @@ function inferLevel(section: TocSection, _index: number, total: number): number 
 }
 
 /**
- * Build a tree from flat sections using inferred heading levels.
- * Uses a stack-based approach: each section is placed as a child of the most
- * recent ancestor with a lower level.
+ * Returns true when at least one section reports a real depth or
+ * parent_id — i.e. the backend gave us a structural tree to honor.
+ */
+function hasBackendHierarchy(sections: TocSection[]): boolean {
+  return sections.some(
+    (s) => (s.depth ?? 0) > 0 || (s.parent_id ?? "") !== "",
+  );
+}
+
+/**
+ * Build a tree from the backend's depth + parent_id metadata when
+ * present. Wires children to their declared parent_id and falls back
+ * to the regex-on-title heuristic only for legacy documents that
+ * predate the backend hierarchy.
  */
 function buildTree(sections: TocSection[]): TreeNode[] {
+  if (hasBackendHierarchy(sections)) {
+    return buildTreeFromBackend(sections);
+  }
+  return buildTreeFromTitlePatterns(sections);
+}
+
+function buildTreeFromBackend(sections: TocSection[]): TreeNode[] {
+  // Construct every node first so children can find their parents
+  // regardless of the order they arrive in.
+  const nodes = new Map<string, TreeNode>();
+  for (const s of sections) {
+    const depth = s.depth ?? 1;
+    nodes.set(s.section_id, {
+      section: s,
+      // Clamp to the 1..3 range the H1/H2/H3 styling supports.
+      level: Math.max(1, Math.min(depth, 3)),
+      children: [],
+    });
+  }
+  const roots: TreeNode[] = [];
+  for (const s of sections) {
+    const node = nodes.get(s.section_id);
+    if (!node) continue;
+    const parentID = s.parent_id ?? "";
+    const parent = parentID ? nodes.get(parentID) : null;
+    if (parent) {
+      parent.children.push(node);
+    } else {
+      roots.push(node);
+    }
+  }
+  return roots;
+}
+
+/**
+ * Title-pattern fallback. Original stack-based approach for documents
+ * that don't carry backend depth/parent_id.
+ */
+function buildTreeFromTitlePatterns(sections: TocSection[]): TreeNode[] {
   const total = sections.length;
   const roots: TreeNode[] = [];
   const stack: TreeNode[] = [];
@@ -146,17 +200,14 @@ function buildTree(sections: TocSection[]): TreeNode[] {
     const level = inferLevel(section, i, total);
     const node: TreeNode = { section, level, children: [] };
 
-    // Pop stack until we find a parent with a strictly lower level
     while (stack.length > 0 && stack[stack.length - 1].level >= level) {
       stack.pop();
     }
-
     if (stack.length === 0) {
       roots.push(node);
     } else {
       stack[stack.length - 1].children.push(node);
     }
-
     stack.push(node);
   }
 

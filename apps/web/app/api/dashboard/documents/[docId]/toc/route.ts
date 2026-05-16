@@ -46,6 +46,10 @@ export async function GET(
       section_id: s.id ?? "",
       order: i,
       depth: s.depth ?? 0,
+      // parent_id is "" when the section's parent is the synthetic
+      // root (which we filter out above), so the section becomes a
+      // top-level node in the dashboard's view.
+      parent_id: s.parent_id ?? "",
       title: s.title ?? "",
       summary: s.summary ?? "",
       page_range: "",
