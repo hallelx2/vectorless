@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { ArrowRight } from 'lucide-react';
 import InstallTabs from './InstallTabs';
+import HeroShader from './HeroShader';
 import { useGsapEffect, useScopedRef, gsap } from '@/hooks/useGsap';
 
 export default function Hero() {
@@ -47,10 +49,19 @@ export default function Hero() {
       ref={ref}
       className="relative min-h-[100vh] pt-32 pb-24 px-6 md:px-12 overflow-hidden flex items-center"
     >
-      <div className="absolute inset-0 grid-paper [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)] pointer-events-none" />
+      {/* CSS gradient fallback — always present; the WebGL shader layers
+          on top of it on desktop, and is the only background on mobile /
+          reduced-motion. */}
       <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1100px] h-[600px] bg-[radial-gradient(ellipse_at_center,rgba(20,86,240,0.10)_0%,rgba(234,94,193,0.05)_40%,transparent_70%)] blur-[40px] pointer-events-none" />
 
-      <div className="hero-canvas relative w-full max-w-[1240px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+      {/* Animated brand shader — desktop only (lg+), recolored blue→pink. */}
+      <div className="hidden lg:block">
+        <HeroShader />
+      </div>
+
+      <div className="absolute inset-0 grid-paper [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)] pointer-events-none" />
+
+      <div className="hero-canvas relative z-10 w-full max-w-[1240px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
         <div className="lg:col-span-7 text-left">
           <div className="hero-chip inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border-light bg-white/70 backdrop-blur-sm mb-8 shadow-sm">
             <span className="relative flex h-2 w-2">
@@ -110,10 +121,19 @@ export default function Hero() {
           <div className="hero-cta flex flex-col sm:flex-row items-start sm:items-center gap-3 mb-3">
             <Link
               href="/register"
-              className="group relative inline-flex items-center gap-2 bg-bg-dark text-white px-6 py-3.5 rounded-full text-[15px] font-medium hover:bg-black transition-colors"
+              className="group relative inline-flex items-center gap-3 bg-bg-dark text-white pl-6 pr-2 py-2 rounded-full text-[15px] font-medium hover:bg-black transition-colors"
             >
-              Start building free
-              <span className="inline-block transition-transform group-hover:translate-x-1">→</span>
+              {/* Text-roll: two stacked copies, the column slides up 50%
+                  on hover so the second copy rolls into view. */}
+              <span className="inline-flex overflow-hidden h-[24px]">
+                <span className="flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover:-translate-y-1/2">
+                  <span className="flex h-[24px] items-center">Start building free</span>
+                  <span className="flex h-[24px] items-center">Start building free</span>
+                </span>
+              </span>
+              <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white">
+                <ArrowRight className="h-4 w-4 text-bg-dark transition-transform duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover:-rotate-45" />
+              </span>
             </Link>
             <Link
               href="https://github.com/hallelx2/vectorless"

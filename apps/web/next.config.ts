@@ -20,7 +20,7 @@ const nextConfig: NextConfig = {
     ],
   },
   // output: 'standalone', // Disabled: requires symlink permissions on Windows
-  transpilePackages: ['motion'],
+  transpilePackages: ['motion', '@paper-design/shaders-react', '@paper-design/shaders'],
   webpack: (config, {dev}) => {
     // HMR is disabled in AI Studio via DISABLE_HMR env var.
     // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
