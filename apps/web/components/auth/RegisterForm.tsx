@@ -5,13 +5,17 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { AlertCircle, Check, Eye, EyeOff, Loader2 } from "lucide-react";
+import { AlertCircle, ArrowRight, Check, Eye, EyeOff, Loader2 } from "lucide-react";
 
 import { signUp } from "@/lib/auth-client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
+/** Premium filled-to-outline input treatment (matches LoginForm). */
+const AUTH_INPUT =
+  "h-11 rounded-lg border-transparent bg-secondary/40 shadow-none transition-all duration-200 placeholder:text-muted-foreground/70 focus-visible:bg-background focus-visible:border-primary/40 focus-visible:ring-4 focus-visible:ring-primary/10";
 
 const registerSchema = z
   .object({
@@ -89,6 +93,7 @@ export function RegisterForm() {
           type="text"
           placeholder="Your full name"
           autoComplete="name"
+          className={AUTH_INPUT}
           {...register("name")}
           aria-invalid={!!errors.name}
         />
@@ -102,6 +107,7 @@ export function RegisterForm() {
           type="email"
           placeholder="you@vectorless.dev"
           autoComplete="email"
+          className={AUTH_INPUT}
           {...register("email")}
           aria-invalid={!!errors.email}
         />
@@ -118,7 +124,7 @@ export function RegisterForm() {
             autoComplete="new-password"
             {...register("password")}
             aria-invalid={!!errors.password}
-            className="pr-10"
+            className={`${AUTH_INPUT} pr-10`}
           />
           <button
             type="button"
@@ -157,6 +163,7 @@ export function RegisterForm() {
           type={showPassword ? "text" : "password"}
           placeholder="Re-enter your password"
           autoComplete="new-password"
+          className={AUTH_INPUT}
           {...register("confirmPassword")}
           aria-invalid={!!errors.confirmPassword}
         />
@@ -165,7 +172,11 @@ export function RegisterForm() {
         )}
       </div>
 
-      <Button type="submit" className="w-full h-10" disabled={isSubmitting}>
+      <Button
+        type="submit"
+        className="group w-full h-11 rounded-lg shadow-sm transition-all hover:shadow-md"
+        disabled={isSubmitting}
+      >
         {isSubmitting ? (
           <>
             <Loader2 className="size-4 animate-spin" />
@@ -174,7 +185,7 @@ export function RegisterForm() {
         ) : (
           <>
             Create workspace
-            <span aria-hidden>→</span>
+            <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
           </>
         )}
       </Button>

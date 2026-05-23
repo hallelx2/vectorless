@@ -9,7 +9,7 @@ export const metadata = {
 export default function RegisterPage() {
   return (
     <div className="space-y-7">
-      <header className="space-y-2">
+      <header className="auth-rise space-y-2">
         <h1 className="font-display text-[28px] md:text-[32px] font-medium leading-tight tracking-[-0.02em]">
           Start free.
         </h1>
@@ -18,9 +18,11 @@ export default function RegisterPage() {
         </p>
       </header>
 
-      <SocialLoginButtons />
+      <div className="auth-rise auth-d1">
+        <SocialLoginButtons />
+      </div>
 
-      <div className="relative">
+      <div className="auth-rise auth-d2 relative">
         <div className="absolute inset-0 flex items-center">
           <span className="w-full border-t border-border" />
         </div>
@@ -31,9 +33,11 @@ export default function RegisterPage() {
         </div>
       </div>
 
-      <RegisterForm />
+      <div className="auth-rise auth-d3">
+        <RegisterForm />
+      </div>
 
-      <p className="text-center text-[13px] text-muted-foreground">
+      <p className="auth-rise auth-d4 text-center text-[13px] text-muted-foreground">
         Already have an account?{" "}
         <Link
           href="/login"

@@ -6,13 +6,20 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { AlertCircle, Eye, EyeOff, Loader2 } from "lucide-react";
+import { AlertCircle, ArrowRight, Eye, EyeOff, Loader2 } from "lucide-react";
 
 import { signIn } from "@/lib/auth-client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
+/**
+ * Premium input treatment: a soft filled field that resolves to a
+ * crisp outline + brand glow on focus (the Linear/Stripe pattern).
+ */
+const AUTH_INPUT =
+  "h-11 rounded-lg border-transparent bg-secondary/40 shadow-none transition-all duration-200 placeholder:text-muted-foreground/70 focus-visible:bg-background focus-visible:border-primary/40 focus-visible:ring-4 focus-visible:ring-primary/10";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -69,6 +76,7 @@ export function LoginForm() {
           type="email"
           placeholder="you@vectorless.dev"
           autoComplete="email"
+          className={AUTH_INPUT}
           {...register("email")}
           aria-invalid={!!errors.email}
         />
@@ -95,7 +103,7 @@ export function LoginForm() {
             autoComplete="current-password"
             {...register("password")}
             aria-invalid={!!errors.password}
-            className="pr-10"
+            className={`${AUTH_INPUT} pr-10`}
           />
           <button
             type="button"
@@ -111,7 +119,11 @@ export function LoginForm() {
         )}
       </div>
 
-      <Button type="submit" className="w-full h-10" disabled={isSubmitting}>
+      <Button
+        type="submit"
+        className="group w-full h-11 rounded-lg shadow-sm transition-all hover:shadow-md"
+        disabled={isSubmitting}
+      >
         {isSubmitting ? (
           <>
             <Loader2 className="size-4 animate-spin" />
@@ -120,7 +132,7 @@ export function LoginForm() {
         ) : (
           <>
             Sign in
-            <span aria-hidden>→</span>
+            <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
           </>
         )}
       </Button>

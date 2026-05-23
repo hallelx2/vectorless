@@ -25,7 +25,7 @@ export function SocialLoginButtons() {
       <Button
         type="button"
         variant="outline"
-        className="w-full h-10 gap-2.5"
+        className="w-full h-11 rounded-lg gap-2.5 transition-all hover:border-foreground/20 hover:bg-secondary/40"
         disabled={loadingProvider !== null}
         onClick={() => handleSocialLogin("google")}
       >
@@ -40,7 +40,7 @@ export function SocialLoginButtons() {
       <Button
         type="button"
         variant="outline"
-        className="w-full h-10 gap-2.5"
+        className="w-full h-11 rounded-lg gap-2.5 transition-all hover:border-foreground/20 hover:bg-secondary/40"
         disabled={loadingProvider !== null}
         onClick={() => handleSocialLogin("github")}
       >

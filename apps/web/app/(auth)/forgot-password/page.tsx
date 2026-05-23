@@ -11,6 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+const AUTH_INPUT =
+  "h-11 rounded-lg border-transparent bg-secondary/40 shadow-none transition-all duration-200 placeholder:text-muted-foreground/70 focus-visible:bg-background focus-visible:border-primary/40 focus-visible:ring-4 focus-visible:ring-primary/10";
+
 const forgotPasswordSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
 });
@@ -59,7 +62,7 @@ export default function ForgotPasswordPage() {
           </header>
         </div>
 
-        <Button variant="outline" className="w-full h-10" asChild>
+        <Button variant="outline" className="w-full h-11 rounded-lg" asChild>
           <Link href="/login">
             <ArrowLeft className="size-3.5" />
             Back to sign in
@@ -71,7 +74,7 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="space-y-7">
-      <header className="space-y-2">
+      <header className="auth-rise space-y-2">
         <h1 className="font-display text-[28px] md:text-[32px] font-medium leading-tight tracking-[-0.02em]">
           Reset your password.
         </h1>
@@ -80,7 +83,7 @@ export default function ForgotPasswordPage() {
         </p>
       </header>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="auth-rise auth-d1 space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="email" className="text-[13px]">Email</Label>
           <Input
@@ -88,6 +91,7 @@ export default function ForgotPasswordPage() {
             type="email"
             placeholder="you@vectorless.dev"
             autoComplete="email"
+            className={AUTH_INPUT}
             {...register("email")}
             aria-invalid={!!errors.email}
           />
@@ -96,7 +100,7 @@ export default function ForgotPasswordPage() {
           )}
         </div>
 
-        <Button type="submit" className="w-full h-10" disabled={isSubmitting}>
+        <Button type="submit" className="w-full h-11 rounded-lg shadow-sm transition-all hover:shadow-md" disabled={isSubmitting}>
           {isSubmitting ? (
             <>
               <Loader2 className="size-4 animate-spin" />

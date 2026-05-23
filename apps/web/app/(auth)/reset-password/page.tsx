@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { AlertCircle, ArrowLeft, CheckCircle, Eye, EyeOff, Loader2 } from "lucide-react";
+import { AlertCircle, ArrowLeft, ArrowRight, CheckCircle, Eye, EyeOff, Loader2 } from "lucide-react";
 
 import { authClient } from "@/lib/auth-client";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -14,6 +14,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
+
+const AUTH_INPUT =
+  "h-11 rounded-lg border-transparent bg-secondary/40 shadow-none transition-all duration-200 placeholder:text-muted-foreground/70 focus-visible:bg-background focus-visible:border-primary/40 focus-visible:ring-4 focus-visible:ring-primary/10";
 
 const resetPasswordSchema = z
   .object({
@@ -72,7 +75,7 @@ function ResetPasswordForm() {
             This reset link is missing a token or has already been used.
           </p>
         </header>
-        <Button variant="outline" className="w-full h-10" asChild>
+        <Button variant="outline" className="w-full h-11 rounded-lg" asChild>
           <Link href="/forgot-password">
             <ArrowLeft className="size-3.5" />
             Request a new link
@@ -98,9 +101,12 @@ function ResetPasswordForm() {
             </p>
           </header>
         </div>
-        <Button className="w-full h-10" onClick={() => router.push("/login")}>
+        <Button
+          className="group w-full h-11 rounded-lg shadow-sm transition-all hover:shadow-md"
+          onClick={() => router.push("/login")}
+        >
           Sign in
-          <span aria-hidden>→</span>
+          <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" />
         </Button>
       </div>
     );
@@ -108,7 +114,7 @@ function ResetPasswordForm() {
 
   return (
     <div className="space-y-7">
-      <header className="space-y-2">
+      <header className="auth-rise space-y-2">
         <h1 className="font-display text-[28px] md:text-[32px] font-medium leading-tight tracking-[-0.02em]">
           Set a new password.
         </h1>
@@ -117,7 +123,7 @@ function ResetPasswordForm() {
         </p>
       </header>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="auth-rise auth-d1 space-y-4">
         {error && (
           <Alert variant="destructive">
             <AlertCircle className="size-4" />
@@ -135,7 +141,7 @@ function ResetPasswordForm() {
               autoComplete="new-password"
               {...register("password")}
               aria-invalid={!!errors.password}
-              className="pr-10"
+              className={`${AUTH_INPUT} pr-10`}
             />
             <button
               type="button"
@@ -158,6 +164,7 @@ function ResetPasswordForm() {
             type={showPassword ? "text" : "password"}
             placeholder="Re-enter your password"
             autoComplete="new-password"
+            className={AUTH_INPUT}
             {...register("confirmPassword")}
             aria-invalid={!!errors.confirmPassword}
           />
@@ -166,7 +173,7 @@ function ResetPasswordForm() {
           )}
         </div>
 
-        <Button type="submit" className="w-full h-10" disabled={isSubmitting}>
+        <Button type="submit" className="w-full h-11 rounded-lg shadow-sm transition-all hover:shadow-md" disabled={isSubmitting}>
           {isSubmitting ? (
             <>
               <Loader2 className="size-4 animate-spin" />
@@ -177,7 +184,7 @@ function ResetPasswordForm() {
           )}
         </Button>
 
-        <Button variant="ghost" className="w-full h-10" asChild>
+        <Button variant="ghost" className="w-full h-11 rounded-lg" asChild>
           <Link href="/login">
             <ArrowLeft className="size-3.5" />
             Back to sign in
