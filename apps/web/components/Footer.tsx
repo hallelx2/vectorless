@@ -21,6 +21,7 @@ export default function Footer() {
               <li><Link href="#how-it-works" className="text-[16px] font-medium text-[#f3f4f6] hover:text-primary-400 transition-colors">How It Works</Link></li>
               <li><Link href="#docs" className="text-[16px] font-medium text-[#f3f4f6] hover:text-primary-400 transition-colors">Docs</Link></li>
               <li><Link href="#sdk" className="text-[16px] font-medium text-[#f3f4f6] hover:text-primary-400 transition-colors">SDK</Link></li>
+              <li><Link href="/whitepaper" className="text-[16px] font-medium text-[#f3f4f6] hover:text-primary-400 transition-colors">Whitepaper</Link></li>
             </ul>
           </div>
 
