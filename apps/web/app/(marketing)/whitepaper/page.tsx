@@ -33,7 +33,7 @@ export default function WhitepaperPage() {
       <Nav />
       <main>
         {/* Header */}
-        <section className="relative overflow-hidden px-6 md:px-12 pt-20 pb-16">
+        <section className="relative overflow-hidden px-6 md:px-12 pt-28 sm:pt-32 pb-16">
           <div className="absolute inset-0 grid-paper [mask-image:radial-gradient(ellipse_at_top,black_15%,transparent_70%)] pointer-events-none" />
           <div className="relative z-10 max-w-[1200px] mx-auto">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border-light bg-white/70 backdrop-blur-sm mb-8 shadow-sm">
