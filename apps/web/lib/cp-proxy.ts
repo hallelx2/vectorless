@@ -38,6 +38,14 @@ async function getCookieHeader(): Promise<string> {
   return (await headers()).get("cookie") ?? "";
 }
 
+/** Extract a single cookie value from a raw Cookie header string. */
+function parseCookie(cookieHeader: string, name: string): string | null {
+  const m = cookieHeader.match(
+    new RegExp(`(?:^|;\\s*)${name}=([^;]+)`),
+  );
+  return m ? decodeURIComponent(m[1]) : null;
+}
+
 /**
  * Returns the user's first org id (orgs are listed in created_at
  * order on the CP). Returns null if the user has no orgs OR the
@@ -103,6 +111,13 @@ export async function forwardToCP(
     cookie,
     "X-Vectorless-Org": orgId,
   };
+  // Scope to the user's selected store (set by the header store switcher),
+  // so document lists/trees/queries reflect the active store. Absent =
+  // org-wide (all stores), preserving prior behaviour.
+  const storeId = parseCookie(cookie, "vls_store");
+  if (storeId) {
+    headersInit["X-Vectorless-Store"] = storeId;
+  }
   let body: BodyInit | undefined;
   const method = opts.method ?? "GET";
   if (opts.body !== undefined && method !== "GET") {

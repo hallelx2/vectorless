@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   FileText,
+  Boxes,
   FlaskConical,
   BarChart3,
   Key,
@@ -62,6 +63,7 @@ const NAV_GROUPS = [
   {
     label: "Content",
     items: [
+      { title: "Stores", url: "/dashboard/stores", icon: Boxes },
       {
         title: "Documents",
         url: "/dashboard/documents",

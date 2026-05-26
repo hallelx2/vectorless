@@ -6,6 +6,7 @@ import { ChevronRight, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import UserMenu from "./UserMenu";
+import StoreSwitcher from "./StoreSwitcher";
 
 interface DashboardHeaderProps {
   onMobileMenuToggle?: () => void;
@@ -81,8 +82,9 @@ export default function DashboardHeader({
         </nav>
       </div>
 
-      {/* Right side: user menu */}
+      {/* Right side: store switcher + user menu */}
       <div className="flex items-center gap-3">
+        <StoreSwitcher />
         <UserMenu />
       </div>
     </header>

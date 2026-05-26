@@ -26,8 +26,19 @@ import {
   Loader2,
   ExternalLink,
   Network,
+  FileText,
+  Download,
+  Copy,
+  Check,
 } from "lucide-react";
 import { MarkdownSummary } from "@/components/ui/markdown";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface DocumentDetail {
   doc_id: string;
@@ -118,6 +129,12 @@ export default function DocumentDetailPage({
 
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // llms.txt viewer state
+  const [llmsOpen, setLlmsOpen] = useState(false);
+  const [llmsText, setLlmsText] = useState("");
+  const [llmsLoading, setLlmsLoading] = useState(false);
+  const [llmsCopied, setLlmsCopied] = useState(false);
+
   // Doc metadata: poll every 3s while parsing is in flight, stop
   // once the engine reports ready/failed. SWR handles dedup +
   // revalidation, so multiple tabs don't hammer the API.
@@ -150,6 +167,29 @@ export default function DocumentDetailPage({
 
   const isLoading = isLoadingDoc;
   const error = docError ? "Failed to load document" : null;
+
+  const openLlms = useCallback(async () => {
+    setLlmsOpen(true);
+    if (llmsText) return;
+    setLlmsLoading(true);
+    try {
+      const res = await fetch(`/api/dashboard/documents/${docId}/llms-txt`);
+      setLlmsText(res.ok ? await res.text() : "Failed to load llms.txt");
+    } catch {
+      setLlmsText("Failed to load llms.txt");
+    } finally {
+      setLlmsLoading(false);
+    }
+  }, [docId, llmsText]);
+
+  function downloadLlms() {
+    const blob = new Blob([llmsText], { type: "text/markdown;charset=utf-8" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `${(doc?.title || "document").replace(/[^a-z0-9]+/gi, "-").toLowerCase()}.llms.txt`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
 
   const handleDelete = useCallback(async () => {
     if (!confirm("Are you sure you want to delete this document? This action cannot be undone.")) return;
@@ -245,6 +285,12 @@ export default function DocumentDetailPage({
               View Graph
             </Link>
           </Button>
+          {isReady && (
+            <Button variant="outline" onClick={openLlms}>
+              <FileText className="h-4 w-4" />
+              llms.txt
+            </Button>
+          )}
           <Button
             variant="outline"
             className="text-destructive hover:bg-destructive hover:text-destructive-foreground"
@@ -399,6 +445,58 @@ export default function DocumentDetailPage({
           </CardContent>
         </Card>
       </div>
+
+      {/* llms.txt viewer */}
+      <Dialog open={llmsOpen} onOpenChange={setLlmsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="size-4" /> llms.txt
+            </DialogTitle>
+            <DialogDescription>
+              This document as an llms.txt map — title, summary, and a section
+              outline an agent can read natively.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={!llmsText || llmsLoading}
+              onClick={() => {
+                void navigator.clipboard.writeText(llmsText);
+                setLlmsCopied(true);
+                setTimeout(() => setLlmsCopied(false), 1500);
+              }}
+            >
+              {llmsCopied ? (
+                <Check className="size-3.5" />
+              ) : (
+                <Copy className="size-3.5" />
+              )}
+              {llmsCopied ? "Copied" : "Copy"}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={downloadLlms}
+              disabled={!llmsText || llmsLoading}
+            >
+              <Download className="size-3.5" />
+              Download
+            </Button>
+          </div>
+          {llmsLoading ? (
+            <div className="flex justify-center py-10 text-muted-foreground">
+              <Loader2 className="size-5 animate-spin" />
+            </div>
+          ) : (
+            <pre className="max-h-[60vh] overflow-auto whitespace-pre-wrap rounded-md border bg-muted/40 p-4 font-mono text-xs">
+              {llmsText}
+            </pre>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

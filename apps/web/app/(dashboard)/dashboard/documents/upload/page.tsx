@@ -106,6 +106,12 @@ export default function UploadDocumentPage() {
         return;
       }
 
+      // Scope the upload to the active store (header store switcher). The
+      // store's profile then drives how the engine structures this doc.
+      const storeMatch = document.cookie.match(/(?:^|;\s*)vls_store=([^;]+)/);
+      const baseHeaders: Record<string, string> = { "X-Vectorless-Org": orgId };
+      if (storeMatch) baseHeaders["X-Vectorless-Store"] = decodeURIComponent(storeMatch[1]);
+
       let res: Response;
       if (selectedFile) {
         const formData = new FormData();
@@ -116,7 +122,7 @@ export default function UploadDocumentPage() {
         res = await fetch(`${cpBase}/v1/documents`, {
           method: "POST",
           credentials: "include",
-          headers: { "X-Vectorless-Org": orgId },
+          headers: baseHeaders,
           body: formData,
         });
       } else if (url.trim()) {
@@ -125,7 +131,7 @@ export default function UploadDocumentPage() {
           credentials: "include",
           headers: {
             "Content-Type": "application/json",
-            "X-Vectorless-Org": orgId,
+            ...baseHeaders,
           },
           body: JSON.stringify({
             url: url.trim(),
