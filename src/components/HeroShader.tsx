@@ -34,7 +34,7 @@ export default function HeroShader() {
   const render = motionOk && inView;
 
   return (
-    <div ref={hostRef} className="absolute inset-0 overflow-hidden pointer-events-none">
+    <div ref={hostRef} className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
       {render && (
         <GrainGradient
           className="absolute inset-0 h-full w-full opacity-40"

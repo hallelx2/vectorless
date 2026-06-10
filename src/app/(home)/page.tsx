@@ -105,7 +105,7 @@ export default function HomePage() {
       {/* ============ Hero ============ */}
       <section className="relative min-h-[90vh] flex flex-col items-center justify-center px-6 pt-24 pb-20 text-center">
         <HeroShader />
-        <div className="absolute inset-0 grid-paper [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)] pointer-events-none" />
+        <div className="absolute inset-0 grid-paper [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)] pointer-events-none -z-10" />
 
         <div className="hero-mark relative z-10">
           <VectorlessMark size={64} />
@@ -127,7 +127,7 @@ export default function HomePage() {
           <svg
             aria-hidden
             viewBox="0 0 520 36"
-            className="absolute left-1/2 -bottom-4 -translate-x-1/2 w-[60%] max-w-[400px] h-[24px] pointer-events-none"
+            className="absolute left-1/2 -bottom-4 -translate-x-1/2 w-[60%] max-w-[400px] h-[24px] pointer-events-none z-20"
           >
             <path
               d="M4 22 C 120 6, 260 6, 514 18"
@@ -145,7 +145,7 @@ export default function HomePage() {
           No chunking. No embeddings. No vector DB. Vectorless parses documents into structured maps any LLM can navigate — <span className="text-vl-ink font-medium">precision retrieval with citations you can trust.</span>
         </p>
 
-        <div className="hero-cta relative z-20 mt-12 flex flex-wrap items-center justify-center gap-4 gsap-hidden">
+        <div className="hero-cta relative z-30 mt-12 flex flex-wrap items-center justify-center gap-4 opacity-0">
           <Link
             href="/docs"
             className="group relative inline-flex items-center gap-3 bg-vl-ink text-white pl-8 pr-3 py-3.5 rounded-full text-[16px] font-medium transition hover:bg-black"
