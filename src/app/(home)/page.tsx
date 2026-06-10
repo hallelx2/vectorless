@@ -161,10 +161,10 @@ export default function HomePage() {
             </span>
           </Link>
           <Link
-            href="https://github.com/hallelx2/vectorless"
+            href="https://github.com/hallelx2/vectorless-engine"
             className="inline-flex items-center gap-2 text-[16px] font-medium text-vl-ink px-8 py-4 rounded-full border border-vl-hairline bg-white/50 backdrop-blur-sm hover:bg-white transition-colors"
           >
-            <GithubIcon /> View on GitHub
+            <GithubIcon /> Star on GitHub
           </Link>
         </div>
 
@@ -288,7 +288,7 @@ export default function HomePage() {
           </div>
           <div className="flex gap-8">
             <Link href="/docs" className="text-sm text-vl-muted hover:text-vl-ink">Documentation</Link>
-            <Link href="https://github.com/hallelx2/vectorless" className="text-sm text-vl-muted hover:text-vl-ink">GitHub</Link>
+            <Link href="https://github.com/hallelx2/vectorless-engine" className="text-sm text-vl-muted hover:text-vl-ink">GitHub</Link>
             <Link href="#" className="text-sm text-vl-muted hover:text-vl-ink">Status</Link>
           </div>
           <div className="text-[11px] font-mono text-vl-muted uppercase tracking-widest">

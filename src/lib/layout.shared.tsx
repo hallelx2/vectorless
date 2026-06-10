@@ -48,6 +48,6 @@ export function baseOptions(): BaseLayoutProps {
         external: true,
       },
     ],
-    githubUrl: `https://github.com/${gitConfig.user}/${gitConfig.repo}`,
+    githubUrl: `https://github.com/${gitConfig.user}/vectorless-engine`,
   };
 }
