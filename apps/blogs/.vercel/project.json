@@ -1,0 +1,16 @@
+{
+  "projectId": "prj_NgfV08gylZB0IMTiK3SBS9eG7BFa",
+  "orgId": "team_fRT3JqS9WXaErZ3MPOJqCcdg",
+  "projectName": "vectorless-blog",
+  "settings": {
+    "createdAt": 1781973251317,
+    "framework": "nextjs",
+    "devCommand": null,
+    "installCommand": null,
+    "buildCommand": null,
+    "outputDirectory": null,
+    "rootDirectory": "apps/blogs",
+    "directoryListing": false,
+    "nodeVersion": "24.x"
+  }
+}
