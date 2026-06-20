@@ -347,8 +347,8 @@ export default function BlogPage() {
       {/* Subtle blueprint grid backdrop */}
       <div className="absolute inset-0 grid-paper pointer-events-none opacity-25" />
 
-      {/* Main Grid Wrapper */}
-      <div className="relative z-10 w-full max-w-[1300px] mx-auto flex-grow flex flex-col p-6 md:p-12 lg:px-16">
+      {/* Main Content Wrapper */}
+      <div className="relative z-10 w-full flex-grow flex flex-col p-6 md:p-12 lg:px-16">
         
         {/* Header Block */}
         <header className="w-full py-8 flex items-center justify-between border-b border-[#E5E7EB] relative z-20">
