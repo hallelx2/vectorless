@@ -12,7 +12,8 @@ import {
   BookOpen, 
   Terminal,
   ChevronRight,
-  Menu
+  Menu,
+  ArrowUpRight
 } from 'lucide-react';
 import { VectorlessIcon, VectorlessDot } from './VectorlessIcon';
 
@@ -151,61 +152,106 @@ const BLOG_POSTS: BlogPost[] = [
   }
 ];
 
-// Technical blueprint vectors
+// High-fidelity blueprint schematic visualizations
 function BlueprintIllustration({ type }: { type: BlogPost['imageType'] }) {
-  if (type === 'architecture') {
-    return (
-      <svg className="w-full h-full max-h-[140px]" viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <line x1="20" y1="60" x2="180" y2="60" stroke="#E5E7EB" strokeWidth="1" strokeDasharray="2 2" />
-        <line x1="100" y1="10" x2="100" y2="110" stroke="#E5E7EB" strokeWidth="1" strokeDasharray="2 2" />
-        <circle cx="100" cy="30" r="4" fill="#1456F0" />
-        <line x1="100" y1="34" x2="60" y2="70" stroke="#1456F0" strokeWidth="1.5" />
-        <line x1="100" y1="34" x2="140" y2="70" stroke="#1456F0" strokeWidth="1.5" />
-        <circle cx="60" cy="70" r="4" fill="#0A0A0A" />
-        <circle cx="140" cy="70" r="4" fill="#0A0A0A" />
-        <line x1="60" y1="74" x2="40" y2="100" stroke="#E5E7EB" strokeWidth="1.5" />
-        <line x1="60" y1="74" x2="80" y2="100" stroke="#E5E7EB" strokeWidth="1.5" />
-        <circle cx="40" cy="100" r="3" fill="#ea5ec1" />
-        <circle cx="80" cy="100" r="3" fill="#71717A" />
-        <path d="M10,10 L30,10 M10,10 L10,30" stroke="#1456F0" strokeWidth="1.5" />
-        <path d="M190,110 L170,110 M190,110 L190,90" stroke="#EA5EC1" strokeWidth="1.5" />
-      </svg>
-    );
-  }
-  if (type === 'database') {
-    return (
-      <svg className="w-full h-full max-h-[140px]" viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <line x1="10" y1="60" x2="190" y2="60" stroke="#E5E7EB" strokeWidth="1" strokeDasharray="3 3" />
-        <g transform="translate(60, 20)">
-          <ellipse cx="40" cy="15" rx="25" ry="8" stroke="#0A0A0A" strokeWidth="1.5" />
-          <path d="M15,15 L15,45 A25,8 0 0 0 65,45 L65,15" stroke="#0A0A0A" strokeWidth="1.5" fill="none" />
-          <path d="M15,45 L15,75 A25,8 0 0 0 65,75 L65,45" stroke="#1456F0" strokeWidth="1.5" fill="none" />
-          <line x1="40" y1="45" x2="100" y2="45" stroke="#EA5EC1" strokeWidth="1.5" strokeDasharray="3 3" />
-          <circle cx="100" cy="45" r="3.5" fill="#EA5EC1" />
-        </g>
-      </svg>
-    );
-  }
-  if (type === 'code') {
-    return (
-      <svg className="w-full h-full max-h-[140px]" viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="15" y="15" width="170" height="90" rx="4" fill="#0A0A0A" />
-        <rect x="30" y="35" width="60" height="6" rx="3" fill="#64748B" />
-        <rect x="30" y="47" width="100" height="6" rx="3" fill="#1456F0" />
-        <rect x="45" y="59" width="80" height="6" rx="3" fill="#EA5EC1" />
-        <rect x="45" y="71" width="40" height="6" rx="3" fill="#64748B" />
-        <rect x="30" y="83" width="20" height="6" rx="3" fill="#1456F0" />
-      </svg>
-    );
-  }
   return (
-    <svg className="w-full h-full max-h-[140px]" viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M20,90 Q60,40 100,75 T180,30" stroke="#1456F0" strokeWidth="2" strokeLinecap="round" />
-      <path d="M20,90 H180" stroke="#E5E7EB" strokeWidth="1.5" />
-      <circle cx="100" cy="75" r="4" fill="#0A0A0A" stroke="white" strokeWidth="1.5" />
-      <circle cx="180" cy="30" r="4" fill="#EA5EC1" stroke="white" strokeWidth="1.5" />
-      <line x1="180" y1="30" x2="180" y2="90" stroke="#EA5EC1" strokeWidth="1" strokeDasharray="3 3" />
-    </svg>
+    <div className="w-full h-full relative flex items-center justify-center bg-[#FDFDFD] border border-border-light rounded-lg overflow-hidden group-hover/card:border-brand-blue/30 transition-colors duration-300 min-h-[160px] p-6">
+      {/* Schematic coordinate lines */}
+      <div className="absolute inset-0 pointer-events-none opacity-40">
+        <div className="absolute top-2 left-2 font-data text-[7px] text-text-muted">SYS_REF // X_01</div>
+        <div className="absolute bottom-2 right-2 font-data text-[7px] text-text-muted">SCALE // 1:1.0</div>
+        <div className="absolute inset-x-4 top-1/2 border-t border-dashed border-black/[0.04]" />
+        <div className="absolute inset-y-4 left-1/2 border-l border-dashed border-black/[0.04]" />
+      </div>
+
+      {type === 'architecture' && (
+        <svg className="w-full h-[110px]" viewBox="0 0 200 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+          {/* Main Tree structure */}
+          <path d="M100 20 L50 60 H150 Z" stroke="#1456F0" strokeWidth="1" strokeDasharray="3 3" opacity="0.3" />
+          <line x1="100" y1="20" x2="100" y2="90" stroke="#1456F0" strokeWidth="1.2" />
+          <line x1="100" y1="45" x2="50" y2="70" stroke="#1456F0" strokeWidth="1.2" />
+          <line x1="100" y1="45" x2="150" y2="70" stroke="#1456F0" strokeWidth="1.2" />
+          
+          {/* Node representation */}
+          <circle cx="100" cy="20" r="4.5" fill="#1456F0" stroke="#FFFFFF" strokeWidth="1.5" />
+          <circle cx="100" cy="45" r="3.5" fill="#0A0A0A" />
+          <circle cx="50" cy="70" r="3.5" fill="#0A0A0A" />
+          <circle cx="150" cy="70" r="3.5" fill="#0A0A0A" />
+          
+          {/* Target points */}
+          <circle cx="100" cy="90" r="5" fill="#EA5EC1" stroke="#FFFFFF" strokeWidth="1.5" className="animate-pulse" />
+          <line x1="100" y1="90" x2="135" y2="90" stroke="#EA5EC1" strokeWidth="1" strokeDasharray="2 2" />
+          <text x="140" y="93" className="font-data text-[7px]" fill="#EA5EC1">TARGET</text>
+          
+          {/* Tree branch outlines */}
+          <rect x="80" y="10" width="40" height="6" rx="1" fill="#1456F0" fillOpacity="0.05" stroke="#1456F0" strokeWidth="0.5" />
+          <text x="83" y="15" className="font-data text-[5px]" fill="#1456F0">node.root</text>
+        </svg>
+      )}
+
+      {type === 'database' && (
+        <svg className="w-full h-[110px]" viewBox="0 0 200 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+          {/* Coordinate grid */}
+          <rect x="40" y="15" width="120" height="80" rx="4" stroke="black" strokeWidth="0.8" strokeDasharray="4 4" opacity="0.15" />
+          
+          {/* DB Cylinder shapes */}
+          <g transform="translate(60, 25)">
+            <ellipse cx="40" cy="12" rx="22" ry="6" stroke="#0A0A0A" strokeWidth="1.2" />
+            <path d="M18,12 L18,36 A22,6 0 0 0 62,36 L62,12" stroke="#0A0A0A" strokeWidth="1.2" fill="none" />
+            <ellipse cx="40" cy="36" rx="22" ry="6" stroke="#1456F0" strokeWidth="1.2" fill="#1456F0" fillOpacity="0.03" />
+            <path d="M18,36 L18,60 A22,6 0 0 0 62,60 L62,36" stroke="#1456F0" strokeWidth="1.2" fill="none" />
+            <ellipse cx="40" cy="60" rx="22" ry="6" stroke="#EA5EC1" strokeWidth="1.2" fill="#EA5EC1" fillOpacity="0.05" />
+            
+            {/* Index label indicator */}
+            <line x1="62" y1="36" x2="88" y2="36" stroke="#1456F0" strokeWidth="1" />
+            <circle cx="88" cy="36" r="2" fill="#1456F0" />
+            <text x="94" y="39" className="font-data text-[6px]" fill="#1456F0">v_index</text>
+          </g>
+        </svg>
+      )}
+
+      {type === 'code' && (
+        <svg className="w-full h-[110px]" viewBox="0 0 200 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+          {/* Code Window Border */}
+          <rect x="25" y="15" width="150" height="80" rx="4" fill="#0A0A0A" stroke="#E5E7EB" strokeWidth="0.8" />
+          
+          {/* Custom syntax drawing */}
+          <g transform="translate(35, 25)">
+            {/* Header / Dots */}
+            <circle cx="5" cy="5" r="2.5" fill="#EF4444" />
+            <circle cx="15" cy="5" r="2.5" fill="#F59E0B" />
+            <circle cx="25" cy="5" r="2.5" fill="#10B981" />
+            
+            {/* Lines */}
+            <rect x="5" y="20" width="40" height="4" rx="2" fill="#64748B" />
+            <rect x="5" y="30" width="85" height="4" rx="2" fill="#1456F0" />
+            <rect x="15" y="40" width="70" height="4" rx="2" fill="#EA5EC1" />
+            <rect x="15" y="50" width="45" height="4" rx="2" fill="#64748B" />
+            <rect x="5" y="60" width="25" height="4" rx="2" fill="#10B981" />
+          </g>
+        </svg>
+      )}
+
+      {type === 'benchmark' && (
+        <svg className="w-full h-[110px]" viewBox="0 0 200 110" fill="none" xmlns="http://www.w3.org/2000/svg">
+          {/* Axis lines */}
+          <line x1="30" y1="20" x2="30" y2="90" stroke="#0A0A0A" strokeWidth="1.2" />
+          <line x1="30" y1="90" x2="175" y2="90" stroke="#0A0A0A" strokeWidth="1.2" />
+          
+          {/* Performance Curves */}
+          <path d="M30,85 C 55,80 80,45 105,42 T 170,18" stroke="#1456F0" strokeWidth="1.8" strokeLinecap="round" />
+          <path d="M30,85 C 55,83 80,75 105,70 T 170,60" stroke="#A1A1AA" strokeWidth="1.2" strokeLinecap="round" opacity="0.6" />
+          
+          {/* Interactive target dots */}
+          <circle cx="105" cy="42" r="3.5" fill="#0A0A0A" stroke="#FFFFFF" strokeWidth="1" />
+          <circle cx="170" cy="18" r="4.5" fill="#EA5EC1" stroke="#FFFFFF" strokeWidth="1.5" />
+          
+          {/* Grid annotations */}
+          <line x1="170" y1="18" x2="170" y2="90" stroke="#EA5EC1" strokeWidth="0.8" strokeDasharray="2 2" />
+          <text x="135" y="85" className="font-data text-[6px]" fill="#EA5EC1">94.2% ACC</text>
+        </svg>
+      )}
+    </div>
   );
 }
 
@@ -231,20 +277,6 @@ export default function BlogPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const openSandbox = () => {
-    setIngestionStep(0);
-    setRetrievedResult(null);
-    setHighlightedSection(null);
-    setShowDemoModal(true);
-  };
-
-  const selectDoc = (docId: typeof selectedDoc) => {
-    setIngestionStep(0);
-    setRetrievedResult(null);
-    setHighlightedSection(null);
-    setSelectedDoc(docId);
-  };
-
   // Ingestion simulation steps
   useEffect(() => {
     if (showDemoModal) {
@@ -259,6 +291,20 @@ export default function BlogPage() {
       };
     }
   }, [showDemoModal, selectedDoc]);
+
+  const openSandbox = () => {
+    setIngestionStep(0);
+    setRetrievedResult(null);
+    setHighlightedSection(null);
+    setShowDemoModal(true);
+  };
+
+  const selectDoc = (docId: typeof selectedDoc) => {
+    setIngestionStep(0);
+    setRetrievedResult(null);
+    setHighlightedSection(null);
+    setSelectedDoc(docId);
+  };
 
   // Handle mock retrieval
   const handleRetrieve = (e: React.FormEvent) => {
@@ -321,9 +367,9 @@ export default function BlogPage() {
     <div className="min-h-screen w-full relative bg-white text-[#0A0A0A] font-sans selection:bg-[#bfdbfe] selection:text-[#1d4ed8] flex flex-col justify-between overflow-x-hidden">
       
       {/* Decorative gradient overlay matching landing page */}
-      <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1100px] h-[600px] bg-[radial-gradient(ellipse_at_center,rgba(20,86,240,0.08)_0%,rgba(234,94,193,0.04)_40%,transparent_70%)] blur-[40px] pointer-events-none" />
+      <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[1100px] h-[600px] bg-[radial-gradient(ellipse_at_center,rgba(20,86,240,0.06)_0%,rgba(234,94,193,0.03)_40%,transparent_70%)] blur-[40px] pointer-events-none" />
 
-      {/* Grid Backdrop (Only visible on main index page) */}
+      {/* Grid Backdrop */}
       {!activeArticle && (
         <div className="absolute inset-0 grid-paper [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_75%)] pointer-events-none opacity-80" />
       )}
@@ -388,98 +434,93 @@ export default function BlogPage() {
       </nav>
 
       {/* Main Container */}
-      <div className="relative z-10 w-full flex-grow flex flex-col p-6 pt-24 md:p-12 md:pt-32 lg:px-16 max-w-[1240px] mx-auto">
+      <div className="relative z-10 w-full flex-grow flex flex-col p-6 pt-24 md:p-12 md:pt-32 lg:px-16 max-w-[1200px] mx-auto">
         
         <AnimatePresence mode="wait">
           {activeArticle ? (
-            /* FULL PAGE ARTICLE READER VIEW (Sleek Clean Canvas, Minimal Grid) */
+            /* EDITORIAL FULL PAGE READER VIEW */
             <motion.main 
               key="article-reader"
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 15 }}
               transition={{ duration: 0.4 }}
-              className="flex-grow max-w-3xl mx-auto w-full py-16 md:py-24"
+              className="flex-grow max-w-2xl mx-auto w-full py-16 md:py-24"
             >
-              <div className="flex items-center gap-3 font-data text-[10px] uppercase tracking-widest text-text-muted mb-6">
+              <div className="flex items-center gap-3 font-data text-[10px] uppercase tracking-[0.15em] text-text-muted mb-8">
                 <span className="text-brand-blue font-semibold">{activeArticle.category}</span>
-                <span>•</span>
+                <span>/</span>
                 <span>{activeArticle.date}</span>
-                <span>•</span>
+                <span>/</span>
                 <span>{activeArticle.readTime}</span>
               </div>
 
-              <h1 className="text-4xl md:text-6xl font-display font-medium tracking-tight text-[#0A0A0A] leading-[1.08] mb-8">
+              <h1 className="text-4xl md:text-6xl font-serif text-[#0A0A0A] leading-[1.1] tracking-tight mb-8">
                 {activeArticle.title}
               </h1>
 
-              {/* Author Row */}
-              <div className="flex items-center gap-4 bg-white border border-[#E5E7EB] p-4 rounded-xl mb-12 shadow-sm">
-                <div className="relative w-12 h-12 rounded-full overflow-hidden border border-[#E5E7EB]">
-                  <img 
-                    src={activeArticle.author.avatarUrl} 
-                    alt={activeArticle.author.name}
-                    className="object-cover w-full h-full"
-                    referrerPolicy="no-referrer"
-                  />
+              {/* Author & Info bar */}
+              <div className="flex items-center justify-between border-y border-border-gray py-4 my-10">
+                <div className="flex items-center gap-3">
+                  <div className="relative w-10 h-10 rounded-full overflow-hidden border border-border-gray">
+                    <img 
+                      src={activeArticle.author.avatarUrl} 
+                      alt={activeArticle.author.name}
+                      className="object-cover w-full h-full"
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-xs font-semibold text-[#0A0A0A]">{activeArticle.author.name}</span>
+                    <span className="text-[9px] font-data text-text-muted tracking-wider uppercase">{activeArticle.author.role}</span>
+                  </div>
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-sm font-semibold text-[#0A0A0A]">{activeArticle.author.name}</span>
-                  <span className="text-[10px] font-data text-text-muted">{activeArticle.author.role}</span>
-                </div>
+                
+                <span className="font-data text-[9px] uppercase tracking-wider text-text-muted">
+                  Log // {activeArticle.id}.txt
+                </span>
               </div>
 
-              {/* Blueprint Illustration Card */}
-              <div className="bg-[#FCFCFD] border border-[#E5E7EB] rounded-2xl flex items-center justify-center p-12 min-h-[220px] mb-12 shadow-sm">
-                <div className="max-w-[400px] w-full">
-                  <BlueprintIllustration type={activeArticle.imageType} />
-                </div>
-              </div>
-
-              {/* Article Content */}
-              <article className="prose max-w-none space-y-8 text-text-secondary">
+              {/* Editorial Content Layout */}
+              <article className="prose prose-slate max-w-none text-text-secondary leading-relaxed font-sans space-y-6">
                 {activeArticle.content.map((paragraph, pIdx) => {
                   if (/^\d+\.\s/.test(paragraph)) {
                     const parts = paragraph.split(/^\d+\.\s/);
                     const titleAndText = parts[1].split(/:\s/);
                     return (
-                      <div key={pIdx} className="pl-6 border-l-2 border-brand-blue my-6">
+                      <div key={pIdx} className="pl-6 border-l border-brand-blue my-8 py-1">
                         {titleAndText.length > 1 ? (
                           <>
-                            <h4 className="font-display font-semibold text-base text-[#0A0A0A] mb-2">{titleAndText[0]}</h4>
-                            <p className="text-[16px] md:text-[18px] leading-relaxed text-text-secondary font-light">{titleAndText[1]}</p>
+                            <h4 className="font-serif text-lg text-[#0A0A0A] mb-1.5">{titleAndText[0]}</h4>
+                            <p className="text-base text-text-secondary font-light">{titleAndText[1]}</p>
                           </>
                         ) : (
-                          <p className="text-[16px] md:text-[18px] leading-relaxed text-text-secondary font-light">{parts[1]}</p>
+                          <p className="text-base text-text-secondary font-light">{parts[1]}</p>
                         )}
                       </div>
                     );
                   }
                   return (
-                    <p key={pIdx} className="text-[17px] md:text-[19px] leading-relaxed font-light text-text-secondary">
+                    <p key={pIdx} className="text-[17px] md:text-[18px] font-light leading-relaxed">
                       {paragraph}
                     </p>
                   );
                 })}
               </article>
 
-              {/* Back to Library Index */}
-              <div className="mt-16 pt-8 border-t border-[#E5E7EB] flex items-center justify-between">
+              {/* Back to Index Navigation */}
+              <div className="mt-20 pt-8 border-t border-border-gray flex items-center justify-between">
                 <button
                   onClick={() => setActiveArticle(null)}
-                  className="group flex items-center gap-2 border border-border-gray hover:border-brand-blue hover:bg-black/[0.02] px-5 py-2.5 rounded-full font-data text-[10px] uppercase tracking-wider transition-all duration-300 shadow-sm cursor-pointer"
+                  className="group flex items-center gap-2 border border-border-gray hover:border-brand-blue hover:bg-black/[0.02] px-5 py-2.5 rounded-full font-data text-[10px] uppercase tracking-wider transition-all duration-300 shadow-xs cursor-pointer"
                 >
                   <ArrowRight className="w-3.5 h-3.5 rotate-180 text-text-muted group-hover:text-brand-blue" />
                   <span>Return to Index</span>
                 </button>
-
-                <span className="font-data text-[10px] uppercase text-text-muted tracking-widest">
-                  File: {activeArticle.id}.log
-                </span>
               </div>
             </motion.main>
           ) : (
-            /* MAGAZINE LIST VIEW */
+            /* PREMIUM EDITORIAL INDEX LAYOUT */
             <motion.div
               key="magazine-list"
               initial={{ opacity: 0 }}
@@ -487,52 +528,42 @@ export default function BlogPage() {
               exit={{ opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              {/* Hero Header matching landing page style */}
-              <section className="py-16 md:py-24 border-b border-[#E5E7EB]">
-                <div className="max-w-[850px] relative">
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border-light bg-white/70 backdrop-blur-sm mb-6 shadow-sm">
-                    <span className="relative flex h-2 w-2">
+              {/* Massive Newspaper Editorial Header */}
+              <section className="py-20 md:py-28 border-b border-[#0A0A0A] relative">
+                <div className="max-w-[900px]">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-border-gray bg-white/70 backdrop-blur-xs mb-8 shadow-xs">
+                    <span className="relative flex h-1.5 w-1.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-500 opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-500" />
+                      <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary-500" />
                     </span>
-                    <span className="font-data text-[11px] font-medium text-text-muted tracking-[0.16em] uppercase">
+                    <span className="font-data text-[10px] font-medium text-text-muted tracking-[0.16em] uppercase">
                       Vectorless Intelligence Log
                     </span>
                   </div>
 
-                  <h1 className="font-display text-[40px] sm:text-5xl md:text-7xl font-medium leading-[0.98] tracking-[-0.03em] text-text-base mb-8 relative">
-                    <span>Document retrieval for the </span>
-                    <span className="relative inline-block">
-                      <span className="font-serif italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-brand-blue via-primary-500 to-brand-pink">
-                        reasoning era.
-                      </span>
-                      {/* Underline vector */}
-                      <svg aria-hidden viewBox="0 0 520 36" className="absolute left-0 -bottom-3.5 w-[90%] max-w-[460px] h-[28px] opacity-90">
-                        <path d="M4 22 C 120 6, 260 6, 514 18" fill="none" stroke="#1456f0" strokeWidth="2.5" strokeLinecap="round" />
-                        <path d="M16 30 C 140 18, 280 18, 502 28" fill="none" stroke="#ea5ec1" strokeWidth="1.5" strokeLinecap="round" />
-                      </svg>
-                    </span>
+                  <h1 className="font-serif text-[42px] sm:text-[60px] md:text-[84px] font-normal leading-[0.95] tracking-tight text-[#0A0A0A] mb-8">
+                    Document retrieval for the <span className="italic font-light text-transparent bg-clip-text bg-gradient-to-r from-brand-blue via-primary-500 to-brand-pink">reasoning era.</span>
                   </h1>
 
-                  <p className="text-lg md:text-xl font-light text-text-secondary leading-relaxed max-w-[650px] mt-10">
-                    Deep dives, engineering specifications, and core performance analyses of structure-preserving retrieval architectures.
+                  <p className="text-lg md:text-xl font-light text-text-secondary leading-relaxed max-w-[620px] mt-6">
+                    A technical journal examining the design of structure-preserving retrieval architectures, no-chunking models, and deterministic RAG systems.
                   </p>
                 </div>
               </section>
 
-              {/* Categories Navigation Bar */}
-              <section className="py-8 flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-[#E5E7EB] sticky top-0 bg-white/80 backdrop-blur-md z-30">
-                <div className="flex flex-wrap items-center gap-1.5">
+              {/* Categories Navigation Bar - Sticky pill outline style */}
+              <section className="py-6 flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-border-gray sticky top-0 bg-white/85 backdrop-blur-md z-30">
+                <div className="flex flex-wrap items-center gap-1">
                   {categories.map((cat) => {
                     const isActive = selectedCategory === cat;
                     return (
                       <button
                         key={cat}
                         onClick={() => setSelectedCategory(cat)}
-                        className={`px-4 py-2 rounded-full text-xs font-data uppercase tracking-wider transition-all duration-200 cursor-pointer border ${
+                        className={`px-4 py-1.5 rounded-full text-xs font-data uppercase tracking-wider transition-all duration-200 cursor-pointer ${
                           isActive 
-                          ? 'bg-[#0A0A0A] text-white font-semibold border-transparent shadow-sm' 
-                          : 'text-text-muted hover:text-[#0A0A0A] hover:bg-black/5 border-transparent'
+                          ? 'bg-[#0A0A0A] text-white font-semibold shadow-xs' 
+                          : 'text-text-muted hover:text-[#0A0A0A] hover:bg-black/5'
                         }`}
                       >
                         {cat}
@@ -543,14 +574,14 @@ export default function BlogPage() {
                 
                 <button 
                   onClick={openSandbox}
-                  className="bg-brand-blue hover:bg-primary-600 text-white px-5 py-2.5 rounded-full font-data text-[10px] uppercase tracking-wider transition-all duration-300 shadow-md flex items-center gap-2 cursor-pointer self-start md:self-auto"
+                  className="bg-brand-blue hover:bg-primary-600 text-white px-5 py-2.5 rounded-full font-data text-[10px] uppercase tracking-wider transition-all duration-300 shadow-sm flex items-center gap-2 cursor-pointer self-start md:self-auto"
                 >
                   Terminal Sandbox
                   <span className="w-1.5 h-1.5 rounded-full bg-[#EA5EC1] animate-ping" />
                 </button>
               </section>
 
-              {/* Featured Article Layout */}
+              {/* Featured Headline Section (Split Grid Layout) */}
               <AnimatePresence mode="wait">
                 {selectedCategory === 'All' && featuredPost && (
                   <motion.section 
@@ -559,12 +590,12 @@ export default function BlogPage() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
                     onClick={() => setActiveArticle(featuredPost)}
-                    className="py-12 border-b border-[#E5E7EB] cursor-pointer group"
+                    className="py-16 border-b border-border-gray cursor-pointer group/hero"
                   >
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-center">
-                      <div className="lg:col-span-8 flex flex-col justify-between">
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
+                      <div className="lg:col-span-8 flex flex-col justify-between h-full">
                         <div>
-                          <div className="flex items-center gap-3 font-data text-[10px] uppercase tracking-widest text-text-muted mb-6">
+                          <div className="flex items-center gap-3 font-data text-[10px] uppercase tracking-widest text-text-muted mb-5">
                             <span className="text-brand-blue font-semibold">{featuredPost.category}</span>
                             <span>•</span>
                             <span>{featuredPost.date}</span>
@@ -572,22 +603,22 @@ export default function BlogPage() {
                             <span>{featuredPost.readTime}</span>
                           </div>
 
-                          <h2 className="text-3xl md:text-5xl font-display font-medium tracking-tight text-[#0A0A0A] group-hover:text-brand-blue transition-colors leading-[1.1] mb-6">
+                          <h2 className="text-3xl md:text-5xl font-serif text-[#0A0A0A] group-hover/hero:text-brand-blue transition-colors duration-300 leading-[1.08] mb-6">
                             {featuredPost.title}
                           </h2>
 
-                          <p className="text-base text-text-secondary font-light leading-relaxed max-w-[700px] mb-8">
+                          <p className="text-base text-text-secondary font-light leading-relaxed max-w-[680px] mb-10">
                             {featuredPost.snippet}
                           </p>
                         </div>
 
-                        <div className="flex items-center gap-2 text-xs font-data uppercase tracking-[0.2em] font-semibold group-hover:translate-x-1 transition-transform">
-                          <span>Analyze Specification</span>
-                          <ArrowRight className="w-4 h-4 text-brand-pink" />
+                        <div className="flex items-center gap-2.5 text-xs font-data uppercase tracking-[0.2em] font-semibold text-[#0A0A0A] group-hover/hero:text-brand-blue transition-colors">
+                          <span>Analyze Article</span>
+                          <ArrowRight className="w-4 h-4 text-brand-pink group-hover/hero:translate-x-1.5 transition-transform duration-300" />
                         </div>
                       </div>
 
-                      <div className="lg:col-span-4 bg-white border border-[#E5E7EB] rounded-2xl flex items-center justify-center p-8 min-h-[220px] shadow-sm group-hover:border-[#C0C0C0] transition-all duration-300">
+                      <div className="lg:col-span-4 w-full group-hover/hero:border-[#A1A1AA] transition-colors duration-300">
                         <BlueprintIllustration type={featuredPost.imageType} />
                       </div>
                     </div>
@@ -595,9 +626,9 @@ export default function BlogPage() {
                 )}
               </AnimatePresence>
 
-              {/* Post Grid List */}
+              {/* Grid-based Newspaper List View (Thin border divisions, no card shadows) */}
               <section className="py-12">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-x-12 md:gap-y-16">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 border-l border-t border-border-gray">
                   <AnimatePresence mode="popLayout">
                     {displayPosts.map((post, idx) => (
                       <motion.article
@@ -608,60 +639,68 @@ export default function BlogPage() {
                         exit={{ opacity: 0 }}
                         transition={{ duration: 0.3, delay: idx * 0.02 }}
                         onClick={() => setActiveArticle(post)}
-                        className="flex flex-col justify-between cursor-pointer group h-full pb-8 border-b border-[#E5E7EB]"
+                        className="flex flex-col justify-between cursor-pointer group/card h-full p-8 border-r border-b border-border-gray hover:bg-[#FAF8F5]/30 transition-colors duration-300"
                       >
-                        <div>
-                          <div className="flex items-center justify-between font-data text-[9px] uppercase tracking-widest text-text-muted mb-4">
-                            <span className="text-brand-blue font-semibold">{post.category}</span>
-                            <span>{post.date}</span>
+                        <div className="flex flex-col h-full justify-between">
+                          <div>
+                            {/* Eyebrow / meta info */}
+                            <div className="flex items-center justify-between font-data text-[9px] uppercase tracking-widest text-text-muted mb-5">
+                              <span className="text-brand-blue font-semibold">{post.category}</span>
+                              <span>{post.date}</span>
+                            </div>
+
+                            {/* Headline */}
+                            <h3 className="text-2xl font-serif text-[#0A0A0A] group-hover/card:text-brand-blue transition-colors duration-300 leading-tight mb-4">
+                              {post.title}
+                            </h3>
+
+                            {/* Short Intro */}
+                            <p className="text-xs text-text-secondary leading-relaxed font-light mb-8">
+                              {post.snippet}
+                            </p>
                           </div>
 
-                          <h3 className="text-xl font-display font-semibold text-[#0A0A0A] group-hover:text-brand-blue transition-colors leading-snug mb-3">
-                            {post.title}
-                          </h3>
-
-                          <p className="text-xs text-text-secondary leading-relaxed font-light mb-6">
-                            {post.snippet}
-                          </p>
-                        </div>
-
-                        <div className="bg-white border border-[#E5E7EB]/70 rounded-xl flex items-center justify-center p-6 min-h-[140px] mb-6 group-hover:border-[#E5E7EB] transition-colors shadow-xs">
-                          <BlueprintIllustration type={post.imageType} />
-                        </div>
-
-                        <div className="flex items-center gap-3">
-                          <div className="relative w-8 h-8 rounded-full overflow-hidden border border-[#E5E7EB]">
-                            <img 
-                              src={post.author.avatarUrl} 
-                              alt={post.author.name}
-                              className="object-cover w-full h-full"
-                              referrerPolicy="no-referrer"
-                            />
+                          {/* Render fine blueprint drawing card */}
+                          <div className="mb-8">
+                            <BlueprintIllustration type={post.imageType} />
                           </div>
-                          <div className="flex flex-col">
-                            <span className="text-xs font-semibold text-[#0A0A0A]">{post.author.name}</span>
-                            <span className="text-[9px] font-data text-text-muted">{post.author.role}</span>
+
+                          {/* Author line */}
+                          <div className="flex items-center gap-3 pt-4 border-t border-border-light">
+                            <div className="relative w-8 h-8 rounded-full overflow-hidden border border-border-gray">
+                              <img 
+                                src={post.author.avatarUrl} 
+                                alt={post.author.name}
+                                className="object-cover w-full h-full"
+                                referrerPolicy="no-referrer"
+                              />
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-xs font-semibold text-[#0A0A0A]">{post.author.name}</span>
+                              <span className="text-[9px] font-data text-text-muted uppercase tracking-wider">{post.author.role}</span>
+                            </div>
                           </div>
                         </div>
                       </motion.article>
                     ))}
                   </AnimatePresence>
-
-                  {displayPosts.length === 0 && (
-                    <div className="col-span-1 md:col-span-3 py-20 text-center border border-dashed border-border-gray rounded-2xl flex flex-col items-center justify-center gap-3 bg-[#FCFCFD]">
-                      <span className="font-display font-medium text-text-secondary">No matching logs found</span>
-                      <button 
-                        onClick={() => setSelectedCategory('All')}
-                        className="text-xs font-data uppercase tracking-wider text-brand-blue hover:underline cursor-pointer"
-                      >
-                        Return to Index
-                      </button>
-                    </div>
-                  )}
                 </div>
+
+                {/* Empty State */}
+                {displayPosts.length === 0 && (
+                  <div className="py-20 text-center border border-dashed border-border-gray rounded-2xl flex flex-col items-center justify-center gap-3 bg-[#FCFCFD]">
+                    <span className="font-display font-medium text-text-secondary">No matching logs found</span>
+                    <button 
+                      onClick={() => setSelectedCategory('All')}
+                      className="text-xs font-data uppercase tracking-wider text-brand-blue hover:underline cursor-pointer"
+                    >
+                      Return to Index
+                    </button>
+                  </div>
+                )}
               </section>
 
-              {/* Footer */}
+              {/* Newspaper Footer */}
               <footer className="py-12 border-t border-border-gray flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-text-muted font-data uppercase tracking-widest mt-12">
                 <div className="flex items-center gap-2 text-[#0A0A0A] cursor-pointer" onClick={() => setActiveArticle(null)}>
                   <VectorlessDot size={18} />
@@ -769,7 +808,7 @@ export default function BlogPage() {
                 )}
               </div>
 
-              {/* Right Panel: Terminal Output (Dark) */}
+              {/* Right Panel: Terminal Output */}
               <div className="w-full md:w-1/2 bg-[#0A0A0A] text-white p-6 flex flex-col justify-between font-mono">
                 <div className="flex-grow flex flex-col justify-between">
                   <div>
