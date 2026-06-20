@@ -231,13 +231,23 @@ export default function BlogPage() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const openSandbox = () => {
+    setIngestionStep(0);
+    setRetrievedResult(null);
+    setHighlightedSection(null);
+    setShowDemoModal(true);
+  };
+
+  const selectDoc = (docId: typeof selectedDoc) => {
+    setIngestionStep(0);
+    setRetrievedResult(null);
+    setHighlightedSection(null);
+    setSelectedDoc(docId);
+  };
+
   // Ingestion simulation steps
   useEffect(() => {
     if (showDemoModal) {
-      setIngestionStep(0);
-      setRetrievedResult(null);
-      setHighlightedSection(null);
-      
       const t1 = setTimeout(() => setIngestionStep(1), 700);
       const t2 = setTimeout(() => setIngestionStep(2), 1400);
       const t3 = setTimeout(() => setIngestionStep(3), 2100);
@@ -532,7 +542,7 @@ export default function BlogPage() {
                 </div>
                 
                 <button 
-                  onClick={() => setShowDemoModal(true)}
+                  onClick={openSandbox}
                   className="bg-brand-blue hover:bg-primary-600 text-white px-5 py-2.5 rounded-full font-data text-[10px] uppercase tracking-wider transition-all duration-300 shadow-md flex items-center gap-2 cursor-pointer self-start md:self-auto"
                 >
                   Terminal Sandbox
@@ -718,7 +728,7 @@ export default function BlogPage() {
                       return (
                         <button
                           key={doc.id}
-                          onClick={() => setSelectedDoc(doc.id as any)}
+                          onClick={() => selectDoc(doc.id as any)}
                           className={`w-full p-3 rounded-lg border text-left flex items-center justify-between cursor-pointer transition-all duration-200 ${
                             isSel 
                             ? 'border-brand-blue bg-brand-blue/5' 
