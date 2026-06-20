@@ -342,32 +342,37 @@ export default function BlogPage() {
     : filteredPosts;
 
   return (
-    <div className="min-h-screen w-full relative bg-[#FCFCFD] text-[#0A0A0A] font-sans selection:bg-[#bfdbfe]/50 flex flex-col justify-between">
+    <div className="min-h-screen w-full relative bg-[#FAF6EE] text-[#0F0F0F] font-sans selection:bg-[#bfdbfe]/50 flex flex-col justify-between">
       
       {/* Editorial top accent line */}
       <div className="h-1 bg-gradient-to-r from-[#1456F0] via-[#855BDE] to-[#EA5EC1] w-full" />
 
-      {/* Subtle blueprint grid backdrop */}
-      <div className="absolute inset-0 grid-paper pointer-events-none opacity-25" />
+      {/* Subtle blueprint grid backdrop - hidden when reading article */}
+      {!activeArticle && (
+        <div className="absolute inset-0 grid-paper pointer-events-none opacity-25" />
+      )}
 
       {/* Main Content Wrapper */}
       <div className="relative z-10 w-full flex-grow flex flex-col p-6 md:p-12 lg:px-16">
         
         {/* Header Block */}
-        <header className="w-full py-8 flex items-center justify-between border-b border-[#E5E7EB] relative z-20">
-          <div className="flex items-center gap-3 cursor-pointer group">
+        <header className="w-full py-8 flex items-center justify-between border-b border-[#E3DFD5] relative z-20">
+          <div 
+            onClick={() => setActiveArticle(null)} 
+            className="flex items-center gap-3 cursor-pointer group"
+          >
             <VectorlessIcon size={34} />
             <div className="flex flex-col">
-              <span className="text-[#0A0A0A] text-2xl font-display font-medium tracking-tight">
+              <span className="text-[#0F0F0F] text-2xl font-display font-medium tracking-tight">
                 Vectorless
               </span>
-              <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#71717A] font-semibold">
+              <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#70706F] font-semibold">
                 Intelligence Log
               </span>
             </div>
           </div>
 
-          <nav className="hidden md:flex items-center gap-8 text-xs font-mono uppercase tracking-wider text-[#3F3F46]">
+          <nav className="hidden md:flex items-center gap-8 text-xs font-mono uppercase tracking-wider text-[#3F3F3E]">
             {['Engine', 'SDKs', 'Documentation', 'Control Plane'].map((link) => (
               <a 
                 key={link} 
@@ -381,275 +386,292 @@ export default function BlogPage() {
 
           <button 
             onClick={() => setShowDemoModal(true)}
-            className="bg-[#0A0A0A] hover:bg-[#1456F0] text-white px-5 py-2.5 rounded-lg font-mono text-[10px] uppercase tracking-wider transition-all duration-300 shadow-sm flex items-center gap-2"
+            className="bg-[#0F0F0F] hover:bg-[#1456F0] text-white px-5 py-2.5 rounded-lg font-mono text-[10px] uppercase tracking-wider transition-all duration-300 shadow-sm flex items-center gap-2 cursor-pointer animate-fade-in"
           >
             Terminal Sandbox
             <span className="w-1.5 h-1.5 rounded-full bg-[#EA5EC1] animate-ping" />
           </button>
         </header>
 
-        {/* Hero Section */}
-        <section className="py-16 md:py-24 border-b border-[#E5E7EB]">
-          <div className="max-w-[850px]">
-            <span className="font-mono text-xs uppercase tracking-[0.2em] text-[#1456F0] font-semibold mb-4 block">
-              Volume IV · Technical Library
-            </span>
-            <h1 className="text-5xl md:text-7xl font-display font-medium tracking-tight text-[#0A0A0A] leading-[1.05] mb-8">
-              Document retrieval for the <span className="font-serif italic bg-gradient-to-r from-[#1456F0] to-[#EA5EC1] bg-clip-text text-transparent">reasoning era</span>.
-            </h1>
-            <p className="text-lg md:text-xl font-light text-[#3F3F46] leading-relaxed max-w-[650px]">
-              Deep dives, implementation specifications, and performance analyses of structure-preserving retrieval architectures.
-            </p>
-          </div>
-        </section>
-
-        {/* Categories Bar */}
-        <section className="py-8 flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-[#E5E7EB] sticky top-0 bg-[#FCFCFD]/90 backdrop-blur-md z-30">
-          <div className="flex flex-wrap items-center gap-1.5">
-            {categories.map((cat) => {
-              const isActive = selectedCategory === cat;
-              return (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 py-2 rounded-lg text-xs font-mono uppercase tracking-wider transition-all duration-200 cursor-pointer ${
-                    isActive 
-                    ? 'bg-[#0A0A0A] text-white font-semibold' 
-                    : 'text-[#71717A] hover:text-[#0A0A0A] hover:bg-slate-100/50'
-                  }`}
-                >
-                  {cat}
-                </button>
-              );
-            })}
-          </div>
-          
-          <div className="hidden lg:flex items-center gap-2 text-xs font-mono text-[#71717A]">
-            <BookOpen className="w-4 h-4 text-[#1456F0]" />
-            <span>Format: Structural / Open-Source Spec</span>
-          </div>
-        </section>
-
-        {/* Featured Editorial Hero Article */}
         <AnimatePresence mode="wait">
-          {selectedCategory === 'All' && featuredPost && (
-            <motion.section 
-              key="hero-spec"
-              initial={{ opacity: 0, y: 10 }}
+          {activeArticle ? (
+            /* FULL PAGE ARTICLE READER VIEW (Warm cream background, flat, no grid lines) */
+            <motion.main 
+              key="article-reader"
+              initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setActiveArticle(featuredPost)}
-              className="py-12 border-b border-[#E5E7EB] cursor-pointer group"
+              exit={{ opacity: 0, y: 15 }}
+              transition={{ duration: 0.4 }}
+              className="flex-grow max-w-3xl mx-auto w-full py-16 md:py-24"
             >
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
-                <div className="lg:col-span-8 flex flex-col justify-between">
-                  <div>
-                    <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-widest text-[#71717A] mb-6">
-                      <span className="text-[#1456F0] font-semibold">{featuredPost.category}</span>
-                      <span>•</span>
-                      <span>{featuredPost.date}</span>
-                      <span>•</span>
-                      <span>{featuredPost.readTime}</span>
-                    </div>
+              <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-widest text-[#70706F] mb-6">
+                <span className="text-[#1456F0] font-semibold">{activeArticle.category}</span>
+                <span>•</span>
+                <span>{activeArticle.date}</span>
+                <span>•</span>
+                <span>{activeArticle.readTime}</span>
+              </div>
 
-                    <h2 className="text-3xl md:text-5xl font-display font-medium tracking-tight text-[#0A0A0A] group-hover:text-[#1456F0] transition-colors leading-[1.1] mb-6">
-                      {featuredPost.title}
-                    </h2>
+              <h1 className="text-4xl md:text-6xl font-display font-semibold tracking-tight text-[#0F0F0F] leading-[1.08] mb-8">
+                {activeArticle.title}
+              </h1>
 
-                    <p className="text-base text-[#3F3F46] font-light leading-relaxed max-w-[700px] mb-8">
-                      {featuredPost.snippet}
-                    </p>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-[0.2em] font-semibold group-hover:translate-x-1 transition-transform">
-                    <span>Analyze Specification</span>
-                    <ArrowRight className="w-4 h-4 text-[#EA5EC1]" />
-                  </div>
+              {/* Author Card */}
+              <div className="flex items-center gap-4 bg-[#FAF8F5] border border-[#E3DFD5] p-5 rounded-2xl mb-12 shadow-xs">
+                <div className="relative w-12 h-12 rounded-full overflow-hidden border border-[#E3DFD5]">
+                  <img 
+                    src={activeArticle.author.avatarUrl} 
+                    alt={activeArticle.author.name}
+                    className="object-cover w-full h-full"
+                    referrerPolicy="no-referrer"
+                  />
                 </div>
-
-                <div className="lg:col-span-4 bg-[#FCFCFD] border border-[#E5E7EB] rounded-2xl flex items-center justify-center p-8 min-h-[220px] shadow-xs group-hover:shadow-sm transition-all duration-300">
-                  <BlueprintIllustration type={featuredPost.imageType} />
+                <div className="flex flex-col">
+                  <span className="text-sm font-semibold text-[#0F0F0F]">{activeArticle.author.name}</span>
+                  <span className="text-[10px] font-mono text-[#70706F]">{activeArticle.author.role}</span>
                 </div>
               </div>
-            </motion.section>
-          )}
-        </AnimatePresence>
 
-        {/* Magazine Grid List */}
-        <section className="py-12">
-          <motion.div 
-            layout
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-x-12 md:gap-y-16"
-          >
-            <AnimatePresence mode="popLayout">
-              {displayPosts.map((post, idx) => (
-                <motion.article
-                  key={post.id}
-                  layout
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3, delay: idx * 0.02 }}
-                  onClick={() => setActiveArticle(post)}
-                  className="flex flex-col justify-between cursor-pointer group h-full pb-8 border-b border-[#E5E7EB]/80"
-                >
-                  <div>
-                    {/* Header meta */}
-                    <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-[#71717A] mb-4">
-                      <span className="text-[#1456F0] font-semibold">{post.category}</span>
-                      <span>{post.date}</span>
-                    </div>
+              {/* Large Accent Illustration */}
+              <div className="bg-[#FAF8F5] border border-[#E3DFD5] rounded-3xl flex items-center justify-center p-12 min-h-[220px] mb-12">
+                <div className="max-w-[400px] w-full">
+                  <BlueprintIllustration type={activeArticle.imageType} />
+                </div>
+              </div>
 
-                    {/* Title */}
-                    <h3 className="text-xl font-display font-medium text-[#0A0A0A] group-hover:text-[#1456F0] transition-colors leading-snug mb-3">
-                      {post.title}
-                    </h3>
-
-                    {/* Snippet */}
-                    <p className="text-xs text-[#3F3F46] leading-relaxed font-light mb-6">
-                      {post.snippet}
+              {/* Article Content with Premium Typography */}
+              <article className="prose max-w-none space-y-8 text-[#3F3F3E]">
+                {activeArticle.content.map((paragraph, pIdx) => {
+                  // If it starts with a number list item like "1. "
+                  if (/^\d+\.\s/.test(paragraph)) {
+                    const parts = paragraph.split(/^\d+\.\s/);
+                    const titleAndText = parts[1].split(/:\s/);
+                    return (
+                      <div key={pIdx} className="pl-6 border-l-2 border-[#1456F0] my-6">
+                        {titleAndText.length > 1 ? (
+                          <>
+                            <h4 className="font-display font-semibold text-base text-[#0F0F0F] mb-2">{titleAndText[0]}</h4>
+                            <p className="text-[16px] md:text-[18px] leading-relaxed text-[#3F3F3E] font-light">{titleAndText[1]}</p>
+                          </>
+                        ) : (
+                          <p className="text-[16px] md:text-[18px] leading-relaxed text-[#3F3F3E] font-light">{parts[1]}</p>
+                        )}
+                      </div>
+                    );
+                  }
+                  return (
+                    <p key={pIdx} className="text-[17px] md:text-[19px] leading-relaxed font-light text-[#3F3F3E]">
+                      {paragraph}
                     </p>
-                  </div>
+                  );
+                })}
+              </article>
 
-                  {/* Card Illustration */}
-                  <div className="bg-[#FCFCFD] border border-[#E5E7EB]/50 rounded-xl flex items-center justify-center p-6 min-h-[140px] mb-6 group-hover:border-[#E5E7EB] transition-colors">
-                    <BlueprintIllustration type={post.imageType} />
-                  </div>
-
-                  {/* Author */}
-                  <div className="flex items-center gap-3">
-                    <div className="relative w-8 h-8 rounded-full overflow-hidden border border-[#E5E7EB]">
-                      <img 
-                        src={post.author.avatarUrl} 
-                        alt={post.author.name}
-                        className="object-cover w-full h-full"
-                        referrerPolicy="no-referrer"
-                      />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-xs font-semibold text-[#0A0A0A]">{post.author.name}</span>
-                      <span className="text-[9px] font-mono text-[#71717A]">{post.author.role}</span>
-                    </div>
-                  </div>
-                </motion.article>
-              ))}
-            </AnimatePresence>
-
-            {/* Empty State */}
-            {displayPosts.length === 0 && (
-              <div className="col-span-1 md:col-span-3 py-20 text-center border border-dashed border-[#E5E7EB] rounded-2xl flex flex-col items-center justify-center gap-3 bg-[#FCFCFD]">
-                <span className="font-display font-medium text-slate-800">No matching logs found</span>
-                <button 
-                  onClick={() => setSelectedCategory('All')}
-                  className="text-xs font-mono uppercase tracking-wider text-[#1456F0] hover:underline cursor-pointer"
+              {/* Back button at the bottom */}
+              <div className="mt-16 pt-8 border-t border-[#E3DFD5] flex items-center justify-between">
+                <button
+                  onClick={() => setActiveArticle(null)}
+                  className="group flex items-center gap-2 border border-[#E3DFD5] hover:border-[#1456F0] hover:bg-[#FAF8F5] px-5 py-2.5 rounded-lg font-mono text-[10px] uppercase tracking-wider transition-all duration-300 shadow-xs cursor-pointer"
                 >
-                  Return to Index
+                  <ArrowRight className="w-3.5 h-3.5 rotate-180 text-[#70706F] group-hover:text-[#1456F0]" />
+                  <span>Return to Library</span>
                 </button>
+
+                <span className="font-mono text-[10px] uppercase text-[#70706F] tracking-widest">
+                  File: {activeArticle.id}.log
+                </span>
               </div>
-            )}
-          </motion.div>
-        </section>
-
-        {/* Footer */}
-        <footer className="py-12 border-t border-[#E5E7EB] flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-[#71717A] font-mono uppercase tracking-widest mt-12">
-          <div className="flex items-center gap-3 text-[#0A0A0A]">
-            <VectorlessIcon size={24} />
-            <span className="font-display font-medium text-sm normal-case tracking-normal">Vectorless</span>
-          </div>
-          <p className="text-[10px]">
-            © {new Date().getFullYear()} Vectorless. All rights reserved.
-          </p>
-          <div className="flex items-center gap-4 text-[10px]">
-            <a href="#" className="hover:text-[#0A0A0A] transition-colors">Privacy</a>
-            <span>/</span>
-            <a href="#" className="hover:text-[#0A0A0A] transition-colors">Terms</a>
-          </div>
-        </footer>
-
-      </div>
-
-      {/* FULL ARTICLE SIDE SHEET DRAWER */}
-      <AnimatePresence>
-        {activeArticle && (
-          <div className="fixed inset-0 z-50 flex justify-end">
-            {/* Backdrop */}
-            <motion.div 
+            </motion.main>
+          ) : (
+            /* MAGAZINE LIST VIEW */
+            <motion.div
+              key="magazine-list"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              onClick={() => setActiveArticle(null)}
-              className="absolute inset-0 bg-[#0A0A0A]/30 backdrop-blur-xs"
-            />
-
-            {/* Slide-out Sheet */}
-            <motion.div 
-              initial={{ x: '100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '100%' }}
-              transition={{ type: 'spring', damping: 26, stiffness: 220 }}
-              className="relative w-full max-w-[680px] h-full bg-[#FCFCFD] border-l border-[#E5E7EB] shadow-2xl z-10 flex flex-col text-[#0A0A0A] p-6 md:p-12 overflow-y-auto"
+              transition={{ duration: 0.3 }}
             >
-              <button 
-                onClick={() => setActiveArticle(null)}
-                className="absolute top-6 right-6 border border-[#E5E7EB] hover:bg-slate-100 p-2 rounded-lg cursor-pointer transition-all"
-                aria-label="Close sheet"
-              >
-                <X className="w-4 h-4 text-[#71717A]" />
-              </button>
-
-              <div className="mt-8 flex flex-col h-full justify-between">
-                <div>
-                  <div className="flex items-center gap-3 font-mono text-[9px] uppercase tracking-widest text-[#71717A] mb-8">
-                    <span className="text-[#1456F0] font-semibold">{activeArticle.category}</span>
-                    <span>•</span>
-                    <span>{activeArticle.date}</span>
-                    <span>•</span>
-                    <span>{activeArticle.readTime}</span>
-                  </div>
-
-                  <h2 className="text-3xl md:text-4xl font-display font-medium tracking-tight text-[#0A0A0A] mb-8 leading-tight">
-                    {activeArticle.title}
-                  </h2>
-
-                  {/* Author Card */}
-                  <div className="flex items-center gap-4 bg-[#FCFCFD] border border-[#E5E7EB] p-4 rounded-xl mb-8">
-                    <div className="relative w-10 h-10 rounded-full overflow-hidden border border-[#E5E7EB]">
-                      <img 
-                        src={activeArticle.author.avatarUrl} 
-                        alt={activeArticle.author.name}
-                        className="object-cover w-full h-full"
-                      />
-                    </div>
-                    <div>
-                      <h5 className="font-semibold text-xs text-[#0A0A0A]">{activeArticle.author.name}</h5>
-                      <p className="text-[10px] text-[#71717A] leading-normal">{activeArticle.author.role}</p>
-                    </div>
-                  </div>
-
-                  {/* Text Contents */}
-                  <div className="space-y-6 text-sm md:text-base leading-relaxed text-[#3F3F46] font-light">
-                    {activeArticle.content.map((paragraph, pIdx) => (
-                      <p key={pIdx}>
-                        {paragraph}
-                      </p>
-                    ))}
-                  </div>
+              {/* Hero Section */}
+              <section className="py-16 md:py-24 border-b border-[#E3DFD5]">
+                <div className="max-w-[850px]">
+                  <span className="font-mono text-xs uppercase tracking-[0.2em] text-[#1456F0] font-semibold mb-4 block">
+                    Volume IV · Technical Library
+                  </span>
+                  <h1 className="text-5xl md:text-7xl font-display font-medium tracking-tight text-[#0F0F0F] leading-[1.05] mb-8">
+                    Document retrieval for the <span className="font-serif italic bg-gradient-to-r from-[#1456F0] to-[#EA5EC1] bg-clip-text text-transparent">reasoning era</span>.
+                  </h1>
+                  <p className="text-lg md:text-xl font-light text-[#3F3F3E] leading-relaxed max-w-[650px]">
+                    Deep dives, implementation specifications, and performance analyses of structure-preserving retrieval architectures.
+                  </p>
                 </div>
+              </section>
 
-                <div className="border-t border-[#E5E7EB] pt-8 mt-12 text-[11px] font-mono uppercase tracking-widest text-[#71717A] flex items-center justify-between">
-                  <span>File: spec_dump.log</span>
-                  <button 
-                    onClick={() => setActiveArticle(null)}
-                    className="text-[#1456F0] hover:underline font-bold"
+              {/* Categories Bar */}
+              <section className="py-8 flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-[#E3DFD5] sticky top-0 bg-[#FAF6EE]/90 backdrop-blur-md z-30">
+                <div className="flex flex-wrap items-center gap-1.5">
+                  {categories.map((cat) => {
+                    const isActive = selectedCategory === cat;
+                    return (
+                      <button
+                        key={cat}
+                        onClick={() => setSelectedCategory(cat)}
+                        className={`px-4 py-2 rounded-lg text-xs font-mono uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+                          isActive 
+                          ? 'bg-[#0F0F0F] text-white font-semibold' 
+                          : 'text-[#70706F] hover:text-[#0F0F0F] hover:bg-[#FAF8F5]'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    );
+                  })}
+                </div>
+                
+                <div className="hidden lg:flex items-center gap-2 text-xs font-mono text-[#70706F]">
+                  <BookOpen className="w-4 h-4 text-[#1456F0]" />
+                  <span>Format: Structural / Open-Source Spec</span>
+                </div>
+              </section>
+
+              {/* Featured Editorial Hero Article */}
+              <AnimatePresence mode="wait">
+                {selectedCategory === 'All' && featuredPost && (
+                  <motion.section 
+                    key="hero-spec"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0 }}
+                    onClick={() => setActiveArticle(featuredPost)}
+                    className="py-12 border-b border-[#E3DFD5] cursor-pointer group"
                   >
-                    Close Log
-                  </button>
+                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
+                      <div className="lg:col-span-8 flex flex-col justify-between">
+                        <div>
+                          <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-widest text-[#70706F] mb-6">
+                            <span className="text-[#1456F0] font-semibold">{featuredPost.category}</span>
+                            <span>•</span>
+                            <span>{featuredPost.date}</span>
+                            <span>•</span>
+                            <span>{featuredPost.readTime}</span>
+                          </div>
+
+                          <h2 className="text-3xl md:text-5xl font-display font-medium tracking-tight text-[#0F0F0F] group-hover:text-[#1456F0] transition-colors leading-[1.1] mb-6">
+                            {featuredPost.title}
+                          </h2>
+
+                          <p className="text-base text-[#3F3F3E] font-light leading-relaxed max-w-[700px] mb-8">
+                            {featuredPost.snippet}
+                          </p>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-[0.2em] font-semibold group-hover:translate-x-1 transition-transform">
+                          <span>Analyze Specification</span>
+                          <ArrowRight className="w-4 h-4 text-[#EA5EC1]" />
+                        </div>
+                      </div>
+
+                      <div className="lg:col-span-4 bg-[#FAF8F5] border border-[#E3DFD5] rounded-2xl flex items-center justify-center p-8 min-h-[220px] shadow-xs group-hover:shadow-sm transition-all duration-300">
+                        <BlueprintIllustration type={featuredPost.imageType} />
+                      </div>
+                    </div>
+                  </motion.section>
+                )}
+              </AnimatePresence>
+
+              {/* Magazine Grid List */}
+              <section className="py-12">
+                <div 
+                  className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-x-12 md:gap-y-16"
+                >
+                  <AnimatePresence mode="popLayout">
+                    {displayPosts.map((post, idx) => (
+                      <motion.article
+                        key={post.id}
+                        layout
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.3, delay: idx * 0.02 }}
+                        onClick={() => setActiveArticle(post)}
+                        className="flex flex-col justify-between cursor-pointer group h-full pb-8 border-b border-[#E3DFD5]/80"
+                      >
+                        <div>
+                          {/* Header meta */}
+                          <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-[#70706F] mb-4">
+                            <span className="text-[#1456F0] font-semibold">{post.category}</span>
+                            <span>{post.date}</span>
+                          </div>
+
+                          {/* Title */}
+                          <h3 className="text-xl font-display font-semibold text-[#0F0F0F] group-hover:text-[#1456F0] transition-colors leading-snug mb-3">
+                            {post.title}
+                          </h3>
+
+                          {/* Snippet */}
+                          <p className="text-xs text-[#3F3F3E] leading-relaxed font-light mb-6">
+                            {post.snippet}
+                          </p>
+                        </div>
+
+                        {/* Card Illustration */}
+                        <div className="bg-[#FAF8F5] border border-[#E3DFD5]/50 rounded-xl flex items-center justify-center p-6 min-h-[140px] mb-6 group-hover:border-[#E3DFD5] transition-colors">
+                          <BlueprintIllustration type={post.imageType} />
+                        </div>
+
+                        {/* Author */}
+                        <div className="flex items-center gap-3">
+                          <div className="relative w-8 h-8 rounded-full overflow-hidden border border-[#E3DFD5]">
+                            <img 
+                              src={post.author.avatarUrl} 
+                              alt={post.author.name}
+                              className="object-cover w-full h-full"
+                              referrerPolicy="no-referrer"
+                            />
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-xs font-semibold text-[#0F0F0F]">{post.author.name}</span>
+                            <span className="text-[9px] font-mono text-[#70706F]">{post.author.role}</span>
+                          </div>
+                        </div>
+                      </motion.article>
+                    ))}
+                  </AnimatePresence>
+
+                  {/* Empty State */}
+                  {displayPosts.length === 0 && (
+                    <div className="col-span-1 md:col-span-3 py-20 text-center border border-dashed border-[#E3DFD5] rounded-2xl flex flex-col items-center justify-center gap-3 bg-[#FAF8F5]">
+                      <span className="font-display font-medium text-slate-800">No matching logs found</span>
+                      <button 
+                        onClick={() => setSelectedCategory('All')}
+                        className="text-xs font-mono uppercase tracking-wider text-[#1456F0] hover:underline cursor-pointer"
+                      >
+                        Return to Index
+                      </button>
+                    </div>
+                  )}
                 </div>
-              </div>
+              </section>
+
+              {/* Footer */}
+              <footer className="py-12 border-t border-[#E3DFD5] flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-[#70706F] font-mono uppercase tracking-widest mt-12">
+                <div className="flex items-center gap-3 text-[#0F0F0F]">
+                  <VectorlessIcon size={24} />
+                  <span className="font-display font-medium text-sm normal-case tracking-normal">Vectorless</span>
+                </div>
+                <p className="text-[10px]">
+                  © {new Date().getFullYear()} Vectorless. All rights reserved.
+                </p>
+                <div className="flex items-center gap-4 text-[10px]">
+                  <a href="#" className="hover:text-[#0F0F0F] transition-colors">Privacy</a>
+                  <span>/</span>
+                  <a href="#" className="hover:text-[#0F0F0F] transition-colors">Terms</a>
+                </div>
+              </footer>
             </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
+          )}
+        </AnimatePresence>
+
+      </div>
 
       {/* DYNAMIC INTERACTIVE RETRIEVAL TERMINAL SANDBOX */}
       <AnimatePresence>

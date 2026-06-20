@@ -17,19 +17,19 @@
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
   --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
 
-  --color-vl-canvas: #fcfcfd;
-  --color-vl-ink: #0a0a0a;
-  --color-vl-secondary: #3f3f46;
-  --color-vl-muted: #71717a;
-  --color-vl-hairline: #e5e7eb;
+  --color-vl-canvas: #FAF6EE;
+  --color-vl-ink: #0F0F0F;
+  --color-vl-secondary: #3F3F3E;
+  --color-vl-muted: #70706F;
+  --color-vl-hairline: #E3DFD5;
   --color-vl-blue: #1456f0;
   --color-vl-pink: #ea5ec1;
 
   --color-primary-500: #3b82f6;
   --color-primary-600: #2563eb;
 
-  --color-border-light: #f2f3f5;
-  --color-border-gray: #e5e7eb;
+  --color-border-light: #F0EDE6;
+  --color-border-gray: #E3DFD5;
 
   /* shadcn/ui color mappings for Tailwind v4 */
   --color-background: hsl(var(--background));
@@ -59,43 +59,43 @@
 }
 
 :root {
-  --background: 0 0% 99%; /* #fcfcfd */
-  --foreground: 0 0% 13.3%;
-  --card: 0 0% 100%;
-  --card-foreground: 0 0% 13.3%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 0 0% 13.3%;
+  --background: 40 38% 96%; /* #FAF6EE */
+  --foreground: 0 0% 9.4%; /* #0F0F0F */
+  --card: 40 20% 98%; /* #FAF8F5 */
+  --card-foreground: 0 0% 9.4%;
+  --popover: 40 20% 98%;
+  --popover-foreground: 0 0% 9.4%;
   --primary: 222 89% 51%; /* #1456f0 */
   --primary-foreground: 0 0% 100%;
-  --secondary: 210 15% 95%;
-  --secondary-foreground: 210 15% 30%;
-  --muted: 210 15% 96%;
-  --muted-foreground: 210 10% 45%;
-  --accent: 210 15% 95%;
-  --accent-foreground: 210 15% 30%;
+  --secondary: 40 15% 94%;
+  --secondary-foreground: 0 0% 24.7%;
+  --muted: 40 15% 94%;
+  --muted-foreground: 0 0% 43.9%;
+  --accent: 40 15% 94%;
+  --accent-foreground: 0 0% 24.7%;
   --destructive: 0 84% 60%;
   --destructive-foreground: 0 0% 100%;
-  --border: 220 13% 91%;
-  --input: 220 13% 91%;
+  --border: 40 13% 86%; /* #E3DFD5 */
+  --input: 40 13% 86%;
   --ring: 222 89% 51%;
   --radius: 0.625rem;
 
   /* Fumadocs overrides for strict light theme */
-  --color-fd-background: #fcfcfd;
-  --color-fd-foreground: #0a0a0a;
-  --color-fd-muted: #f4f5f7;
-  --color-fd-muted-foreground: #71717a;
-  --color-fd-border: #e5e7eb;
+  --color-fd-background: #FAF6EE;
+  --color-fd-foreground: #0F0F0F;
+  --color-fd-muted: #FAF8F5;
+  --color-fd-muted-foreground: #70706F;
+  --color-fd-border: #E3DFD5;
   --color-fd-primary: #1456f0;
   --color-fd-primary-foreground: #ffffff;
 }
 
 /* Force Light Theme — Disable dark mode overrides */
 .dark {
-  --background: 0 0% 99% !important;
-  --foreground: 0 0% 13.3% !important;
-  --color-fd-background: #fcfcfd !important;
-  --color-fd-foreground: #0a0a0a !important;
+  --background: 40 38% 96% !important;
+  --foreground: 0 0% 9.4% !important;
+  --color-fd-background: #FAF6EE !important;
+  --color-fd-foreground: #0F0F0F !important;
 }
 
 @layer base {
