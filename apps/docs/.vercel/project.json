@@ -1,0 +1,15 @@
+{
+  "projectId": "prj_m8I8KJFJvYImLfb7ts9aJATgiCNE",
+  "orgId": "team_fRT3JqS9WXaErZ3MPOJqCcdg",
+  "projectName": "vectorless-docs",
+  "settings": {
+    "framework": "nextjs",
+    "devCommand": null,
+    "installCommand": null,
+    "buildCommand": null,
+    "outputDirectory": null,
+    "rootDirectory": "apps/docs",
+    "directoryListing": false,
+    "nodeVersion": "24.x"
+  }
+}

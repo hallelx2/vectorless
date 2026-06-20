@@ -17,19 +17,19 @@
   --font-mono: var(--font-geist-mono), ui-monospace, SFMono-Regular, monospace;
   --font-serif: var(--font-instrument-serif), ui-serif, Georgia, serif;
 
-  --color-vl-canvas: #FAF6EE;
-  --color-vl-ink: #0F0F0F;
-  --color-vl-secondary: #3F3F3E;
-  --color-vl-muted: #70706F;
-  --color-vl-hairline: #E3DFD5;
+  --color-vl-canvas: #ffffff;
+  --color-vl-ink: #0a0a0a;
+  --color-vl-secondary: #3f3f46;
+  --color-vl-muted: #71717a;
+  --color-vl-hairline: #e4e4e7;
   --color-vl-blue: #1456f0;
   --color-vl-pink: #ea5ec1;
 
   --color-primary-500: #3b82f6;
   --color-primary-600: #2563eb;
 
-  --color-border-light: #F0EDE6;
-  --color-border-gray: #E3DFD5;
+  --color-border-light: #f4f4f5;
+  --color-border-gray: #e4e4e7;
 
   /* shadcn/ui color mappings for Tailwind v4 */
   --color-background: hsl(var(--background));
@@ -59,43 +59,43 @@
 }
 
 :root {
-  --background: 40 38% 96%; /* #FAF6EE */
-  --foreground: 0 0% 9.4%; /* #0F0F0F */
-  --card: 40 20% 98%; /* #FAF8F5 */
-  --card-foreground: 0 0% 9.4%;
-  --popover: 40 20% 98%;
-  --popover-foreground: 0 0% 9.4%;
-  --primary: 222 89% 51%; /* #1456f0 */
-  --primary-foreground: 0 0% 100%;
-  --secondary: 40 15% 94%;
-  --secondary-foreground: 0 0% 24.7%;
-  --muted: 40 15% 94%;
-  --muted-foreground: 0 0% 43.9%;
-  --accent: 40 15% 94%;
-  --accent-foreground: 0 0% 24.7%;
-  --destructive: 0 84% 60%;
-  --destructive-foreground: 0 0% 100%;
-  --border: 40 13% 86%; /* #E3DFD5 */
-  --input: 40 13% 86%;
-  --ring: 222 89% 51%;
+  --background: 0 0% 100%; /* #ffffff */
+  --foreground: 240 10% 3.9%; /* #09090b */
+  --card: 0 0% 100%;
+  --card-foreground: 240 10% 3.9%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 240 10% 3.9%;
+  --primary: 222.2 47.4% 11.2%;
+  --primary-foreground: 210 20% 98%;
+  --secondary: 240 4.8% 95.9%;
+  --secondary-foreground: 240 5.9% 10%;
+  --muted: 240 4.8% 95.9%;
+  --muted-foreground: 240 3.8% 46.1%;
+  --accent: 240 4.8% 95.9%;
+  --accent-foreground: 240 5.9% 10%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 20% 98%;
+  --border: 240 5.9% 90%; /* #e4e4e7 */
+  --input: 240 5.9% 90%;
+  --ring: 240 5.9% 10%;
   --radius: 0.625rem;
 
   /* Fumadocs overrides for strict light theme */
-  --color-fd-background: #FAF6EE;
-  --color-fd-foreground: #0F0F0F;
-  --color-fd-muted: #FAF8F5;
-  --color-fd-muted-foreground: #70706F;
-  --color-fd-border: #E3DFD5;
+  --color-fd-background: #ffffff;
+  --color-fd-foreground: #0a0a0a;
+  --color-fd-muted: #f4f4f5;
+  --color-fd-muted-foreground: #71717a;
+  --color-fd-border: #e4e4e7;
   --color-fd-primary: #1456f0;
   --color-fd-primary-foreground: #ffffff;
 }
 
 /* Force Light Theme — Disable dark mode overrides */
 .dark {
-  --background: 40 38% 96% !important;
-  --foreground: 0 0% 9.4% !important;
-  --color-fd-background: #FAF6EE !important;
-  --color-fd-foreground: #0F0F0F !important;
+  --background: 0 0% 100% !important;
+  --foreground: 240 10% 3.9% !important;
+  --color-fd-background: #ffffff !important;
+  --color-fd-foreground: #0a0a0a !important;
 }
 
 @layer base {
