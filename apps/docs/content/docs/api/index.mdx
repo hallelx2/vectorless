@@ -1,0 +1,46 @@
+---
+title: API Reference
+description: The Vectorless HTTP API — generated from the engine's OpenAPI spec.
+---
+
+<Callout type="warn">
+  This page is a placeholder. The full reference will be **generated from the
+  engine's OpenAPI specification** so it always matches the running engine.
+</Callout>
+
+The Vectorless engine exposes an HTTP API for ingesting documents and asking
+questions. Once the OpenAPI spec lands, every endpoint, schema, and example on
+this page will be rendered directly from it.
+
+## Planned surface
+
+A sketch of the endpoints this reference will document:
+
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `POST` | `/v1/documents` | Ingest a document and build its tree |
+| `GET` | `/v1/documents/{id}` | Fetch a document's metadata and tree |
+| `POST` | `/v1/ask` | Ask a question (runs `treewalk`) |
+| `GET` | `/v1/health` | Engine health check |
+
+## Authentication
+
+Requests authenticate with an API key:
+
+```http
+POST /v1/ask HTTP/1.1
+Host: your-engine.example.com
+Authorization: Bearer vl_...
+Content-Type: application/json
+
+{
+  "document": "doc_123",
+  "question": "What changed in Q3 revenue?",
+  "strategy": "treewalk"
+}
+```
+
+## Prefer a typed client?
+
+Most users should reach for an [SDK](/docs/sdks) rather than the raw API — the
+clients wrap auth, retries, and the response shapes for you.

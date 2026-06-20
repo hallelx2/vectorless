@@ -1,0 +1,59 @@
+---
+title: Go
+description: The vectorless-go client — idiomatic and context-aware.
+---
+
+<Callout type="info">
+  Placeholder guide — full reference lands with the SDK release. Snippets show
+  the intended API shape.
+</Callout>
+
+## Install
+
+```bash
+go get github.com/hallelx2/vectorless-go
+```
+
+## Initialize
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"os"
+
+	vectorless "github.com/hallelx2/vectorless-go"
+)
+
+func main() {
+	vl := vectorless.New(
+		vectorless.WithBaseURL(os.Getenv("VECTORLESS_API_URL")),
+		vectorless.WithAPIKey(os.Getenv("VECTORLESS_API_KEY")),
+	)
+
+	ctx := context.Background()
+
+	doc, err := vl.Documents.Ingest(ctx, vectorless.IngestParams{
+		Source: "./report.pdf",
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	result, err := vl.Ask(ctx, vectorless.AskParams{
+		Document: doc.ID,
+		Question: "Summarize the risk factors.",
+		Strategy: "treewalk",
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(result.Answer)
+	for _, c := range result.Citations {
+		fmt.Println(c.Path, c.Snippet)
+	}
+}
+```

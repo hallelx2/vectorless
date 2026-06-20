@@ -35,6 +35,7 @@ export default function HeroShader() {
   // Respect prefers-reduced-motion.
   useEffect(() => {
     const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMotionOk(!mq.matches);
     const onChange = (e: MediaQueryListEvent) => setMotionOk(!e.matches);
     mq.addEventListener('change', onChange);

@@ -1,0 +1,51 @@
+---
+title: The no-chunking model
+description: Why Vectorless skips fixed-size chunks, embeddings, and the vector DB.
+---
+
+"No chunking, no embeddings, no vector DB" is not a marketing line — it is the
+architecture. Here is what each omission buys you.
+
+## No chunking
+
+Fixed-size chunking cuts a document at arbitrary boundaries — mid-sentence,
+mid-table, mid-argument. That destroys exactly the structure that tells you where
+an answer lives.
+
+Vectorless keeps the document whole and represents it as a
+[tree](/docs/concepts/tree-retrieval). A "unit of retrieval" is a real
+structural node, not an N-token window.
+
+## No embeddings
+
+Embeddings compress meaning into a vector and then approximate relevance by
+distance. They are lossy, model-dependent, and opaque — you cannot ask an
+embedding *why* it matched.
+
+Vectorless lets the agent read node titles and content directly and **reason**
+about relevance, in natural language, with explanations you can inspect.
+
+## No vector DB
+
+A vector database is infrastructure you have to provision, index, tune, and keep
+in sync with your documents. Vectorless needs none of it.
+
+<Callout type="info">
+  What disappears with the vector DB: embedding jobs, index rebuilds, similarity
+  thresholds, dimension mismatches, and re-embedding every time you swap models.
+</Callout>
+
+## The trade-offs, honestly
+
+| | Vector RAG | Vectorless |
+| --- | --- | --- |
+| Retrieval unit | fixed-size chunk | structural node |
+| Relevance | vector distance | agent reasoning |
+| Infra | vector DB + embed pipeline | none |
+| Citations | approximate (chunk-level) | exact (node path) |
+| Cost driver | storage + embeddings | LLM navigation calls |
+| Best at | huge corpora, fuzzy recall | deep questions over structured docs |
+
+Vectorless trades up-front index cost for per-query reasoning. That is the right
+trade when you need **correct, cited** answers over documents that have real
+structure. The reasoning happens in [`treewalk`](/docs/concepts/treewalk).

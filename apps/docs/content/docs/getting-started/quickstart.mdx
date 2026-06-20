@@ -1,0 +1,109 @@
+---
+title: Quickstart
+description: Install an SDK, ingest a document, and ask your first question.
+---
+
+<Callout type="warn">
+  This is a skeleton quickstart. Exact package names, method signatures, and
+  endpoints are finalized alongside the SDK and API reference issues — treat the
+  snippets below as the intended shape.
+</Callout>
+
+## 1. Install
+
+<Tabs items={["TypeScript", "Python", "Go"]}>
+
+```bash tab="TypeScript"
+npm install @vectorless/sdk
+```
+
+```bash tab="Python"
+pip install vectorless
+```
+
+```bash tab="Go"
+go get github.com/hallelx2/vectorless-go
+```
+
+</Tabs>
+
+## 2. Configure
+
+Set your engine endpoint and an LLM provider key.
+
+```bash
+export VECTORLESS_API_URL="https://your-engine.example.com"
+export VECTORLESS_API_KEY="vl_..."
+```
+
+## 3. Ingest a document
+
+<Tabs items={["TypeScript", "Python"]}>
+
+```ts tab="TypeScript"
+import { Vectorless } from '@vectorless/sdk';
+
+const vl = new Vectorless();
+
+const doc = await vl.documents.ingest({
+  source: './annual-report.pdf',
+});
+```
+
+```python tab="Python"
+from vectorless import Vectorless
+
+vl = Vectorless()
+
+doc = vl.documents.ingest(source="./annual-report.pdf")
+```
+
+</Tabs>
+
+## 4. Ask a question
+
+The agent navigates the document tree with `treewalk` and returns an answer with
+citations.
+
+<Tabs items={["TypeScript", "Python"]}>
+
+```ts tab="TypeScript"
+const result = await vl.ask({
+  document: doc.id,
+  question: 'What changed in Q3 revenue, and why?',
+  strategy: 'treewalk',
+});
+
+console.log(result.answer);
+console.log(result.citations); // -> exact tree nodes
+```
+
+```python tab="Python"
+result = vl.ask(
+    document=doc.id,
+    question="What changed in Q3 revenue, and why?",
+    strategy="treewalk",
+)
+
+print(result.answer)
+print(result.citations)  # -> exact tree nodes
+```
+
+</Tabs>
+
+## What you get back
+
+Every response carries the answer **and** the nodes it came from:
+
+```json
+{
+  "answer": "Q3 revenue rose 12% QoQ, driven by ...",
+  "citations": [
+    { "node": "3.2.1", "title": "Q3 Results", "path": ["Financials", "Q3"] }
+  ],
+  "strategy": "treewalk"
+}
+```
+
+Next, read [Core Concepts](/docs/concepts) to understand how the tree and
+`treewalk` produce these citations.

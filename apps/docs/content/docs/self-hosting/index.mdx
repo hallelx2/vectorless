@@ -1,0 +1,71 @@
+---
+title: Self-hosting
+description: Run the Vectorless engine yourself with Docker, Neon, Cloudflare R2, and Upstash QStash.
+---
+
+<Callout type="warn">
+  This page is a placeholder. A complete, step-by-step deployment guide lands in a
+  later release. The architecture below is the intended self-host stack.
+</Callout>
+
+Vectorless is built to be self-hosted with a small, serverless-friendly
+footprint. There is **no vector database** to run — the engine stores document
+trees and orchestrates `treewalk` over managed primitives.
+
+## The stack
+
+| Concern | Service | Role |
+| --- | --- | --- |
+| Database | **Neon** (Postgres) | Document trees, metadata, job state |
+| Object storage | **Cloudflare R2** | Original document files |
+| Background jobs | **Upstash QStash** | Async ingestion / parsing queue |
+| Runtime | **Docker** | The engine container |
+| LLM | your provider | Powers the `treewalk` agent |
+
+## Shape of a deployment
+
+<Steps>
+<Step>
+### Provision the backing services
+
+Create a Neon Postgres database, a Cloudflare R2 bucket, and an Upstash QStash
+queue. Collect their connection strings and credentials.
+</Step>
+
+<Step>
+### Configure the engine
+
+Supply the engine container with the connection details and your LLM provider
+key via environment variables.
+
+```bash
+DATABASE_URL="postgres://...neon..."
+R2_BUCKET="vectorless-docs"
+R2_ACCESS_KEY_ID="..."
+R2_SECRET_ACCESS_KEY="..."
+QSTASH_TOKEN="..."
+LLM_API_KEY="..."
+```
+</Step>
+
+<Step>
+### Run with Docker
+
+```bash
+docker run -p 8080:8080 --env-file .env ghcr.io/hallelx2/vectorless-engine:latest
+```
+</Step>
+
+<Step>
+### Point an SDK at it
+
+Set `VECTORLESS_API_URL` to your deployment and start asking. See the
+[Quickstart](/docs/getting-started/quickstart).
+</Step>
+</Steps>
+
+## Why this stack
+
+- **No vector DB** to provision, scale, or keep in sync.
+- **Serverless-friendly** — Neon, R2, and QStash all scale to zero.
+- **Portable** — the engine is a single Docker image you can run anywhere.

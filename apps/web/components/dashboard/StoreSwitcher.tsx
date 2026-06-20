@@ -43,6 +43,7 @@ export default function StoreSwitcher() {
   const [current, setCurrent] = useState<string>(ALL);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrent(readCookie("vls_store") || ALL);
     fetch("/api/dashboard/stores", { cache: "no-store" })
       .then((r) => (r.ok ? r.json() : []))

@@ -1,0 +1,74 @@
+---
+title: treewalk navigation
+description: The canonical Vectorless strategy — an LLM agent that walks the document tree to the answer.
+---
+
+`treewalk` is the engine's canonical navigation strategy. It turns retrieval
+into a **navigation problem**: an LLM agent starts at the root of the
+[document tree](/docs/concepts/tree-retrieval) and walks toward the nodes that
+answer the question.
+
+<Callout type="warn">
+  `treewalk` is the only name for this strategy. The earlier name **"pageindex"**
+  is retired — do not use it in code, configs, or docs.
+</Callout>
+
+## How a walk works
+
+<Steps>
+<Step>
+### Start at the root
+
+The agent sees the top-level structure of the tree — the titles of the
+document's main sections — and the question.
+</Step>
+
+<Step>
+### Decide where to go
+
+The agent reasons about which branch is most likely to contain the answer and
+descends into it, optionally expanding a node to read its content.
+</Step>
+
+<Step>
+### Walk until confident
+
+It repeats: read titles, expand promising nodes, move up or down. Branches that
+clearly don't matter are never expanded — keeping the work focused.
+</Step>
+
+<Step>
+### Answer and cite
+
+When the agent has gathered enough, it composes an answer and records the exact
+nodes it relied on. Those become the [citations](/docs/concepts/citations).
+</Step>
+</Steps>
+
+## Why navigation beats similarity
+
+- **Explainable.** Each step is a reasoned decision, not a distance score.
+- **Structure-aware.** The agent uses the document's own hierarchy as a guide.
+- **Self-correcting.** If a branch turns out to be a dead end, the agent can
+  back out and try another — something a single similarity query cannot do.
+
+## Using treewalk
+
+You select it per request:
+
+```ts
+const result = await vl.ask({
+  document: doc.id,
+  question: 'How is revenue recognized for multi-year contracts?',
+  strategy: 'treewalk',
+});
+```
+
+The result includes the answer, the citations, and (when enabled) the path the
+agent took through the tree — useful for debugging and for trust.
+
+<Callout type="info">
+  `treewalk` spends LLM calls navigating instead of spending storage on
+  embeddings. Tuning how deep and how broad it walks is covered in the engine
+  configuration reference (coming with the [API reference](/docs/api)).
+</Callout>

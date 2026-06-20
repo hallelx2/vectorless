@@ -14,5 +14,13 @@
     "turbo": "^2.5.0",
     "typescript": "^5.9.0"
   },
+  "pnpm": {
+    "overrides": {
+      "react": "^19.2.7",
+      "react-dom": "^19.2.7",
+      "@types/react": "^19.2.16",
+      "@types/react-dom": "^19.2.3"
+    }
+  },
   "packageManager": "pnpm@10.15.0"
 }
