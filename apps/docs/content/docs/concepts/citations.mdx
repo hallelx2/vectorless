@@ -1,0 +1,49 @@
+---
+title: Citations
+description: Why every Vectorless answer traces back to exact tree nodes.
+---
+
+In Vectorless, citations are not a post-hoc "find the source" step bolted onto a
+generated answer. They are a **property of the engine**: because the
+[`treewalk`](/docs/concepts/treewalk) agent ends its walk on real
+[tree nodes](/docs/concepts/tree-retrieval), the nodes it used *are* the
+citation.
+
+## What a citation contains
+
+Each citation names a node by its place in the tree:
+
+```json
+{
+  "node": "3.2.1",
+  "title": "Revenue",
+  "path": ["Financials", "Q3 Results", "Revenue"],
+  "snippet": "Q3 revenue rose 12% quarter over quarter ..."
+}
+```
+
+- **`node`** — the stable identifier of the node within the document tree.
+- **`path`** — the human-readable trail from the root, so a reader knows exactly
+  where in the document the claim came from.
+- **`snippet`** — the supporting text the agent relied on.
+
+## Why they're trustworthy
+
+<Callout title="Path-correctness">
+  A citation is only useful if it points at the *right* place. Because citations
+  come from the agent's actual navigation path, they are correct by construction
+  — not reconstructed by a second model guessing at sources.
+</Callout>
+
+- **No hallucinated sources.** The agent can only cite nodes it actually
+  visited.
+- **Granular.** Citations land on the specific section or table, not a fuzzy
+  chunk that happened to be nearby in vector space.
+- **Auditable.** Combined with the walk path, you can see *how* the engine
+  reached each cited node.
+
+## Using citations
+
+Render them as footnotes, link them back into your own viewer using the
+`path`, or gate an answer on a minimum number of citations. The
+[SDKs](/docs/sdks) expose them on every response object.

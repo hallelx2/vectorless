@@ -1,0 +1,62 @@
+---
+title: Introduction
+description: Document retrieval for the reasoning era — no chunking, no embeddings, no vector DB.
+icon: House
+---
+
+Vectorless is a **reasoning-based document-retrieval engine**. Instead of
+splitting a document into fixed-size chunks and searching them by vector
+similarity, Vectorless parses the document into a **hierarchical tree** and lets
+an **LLM agent navigate it** — returning answers with precise, path-correct
+citations.
+
+<Callout title="The one-line version">
+  Vectorless parses a document into a tree, an agent walks it with the
+  `treewalk` strategy, and you get an answer plus the exact nodes it came from.
+</Callout>
+
+## Why no chunking, embeddings, or vector DB?
+
+Classic RAG turns retrieval into a nearest-neighbor problem: chunk the text,
+embed every chunk, and hope the question's embedding lands near the right one.
+That throws away the document's structure and makes citations approximate.
+
+Vectorless takes the opposite bet:
+
+- **Structure is signal.** A document already has sections, sub-sections,
+  tables, and ordering. Vectorless preserves that as a tree.
+- **Navigation beats similarity.** An LLM agent reasons about _where_ an answer
+  lives and walks the tree to it — the [`treewalk`](/docs/concepts/treewalk)
+  strategy.
+- **Citations are structural.** Because the agent ends on real nodes, every
+  answer maps back to exact locations in the source.
+
+## What's in these docs
+
+<Cards>
+  <Card
+    title="Getting Started"
+    href="/docs/getting-started"
+    description="Install an SDK, point it at a document, and ask your first question."
+  />
+  <Card
+    title="Core Concepts"
+    href="/docs/concepts"
+    description="Tree retrieval, the no-chunking model, citations, and treewalk."
+  />
+  <Card
+    title="API Reference"
+    href="/docs/api"
+    description="The HTTP API surface — generated from the engine's OpenAPI spec."
+  />
+  <Card
+    title="SDKs"
+    href="/docs/sdks"
+    description="Official clients for TypeScript, Python, and Go."
+  />
+  <Card
+    title="Self-hosting"
+    href="/docs/self-hosting"
+    description="Run the engine yourself on Neon, Cloudflare R2, and Upstash QStash."
+  />
+</Cards>

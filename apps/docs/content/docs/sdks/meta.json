@@ -1,0 +1,5 @@
+{
+  "title": "SDKs",
+  "icon": "Package",
+  "pages": ["index", "typescript", "python", "go"]
+}

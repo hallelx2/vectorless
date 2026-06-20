@@ -1,0 +1,62 @@
+---
+title: Python
+description: The vectorless client for Python — sync and async.
+---
+
+<Callout type="info">
+  Placeholder guide — full reference lands with the SDK release. Snippets show
+  the intended API shape.
+</Callout>
+
+## Install
+
+```bash
+pip install vectorless
+```
+
+## Initialize
+
+```python
+import os
+from vectorless import Vectorless
+
+vl = Vectorless(
+    api_url=os.environ["VECTORLESS_API_URL"],
+    api_key=os.environ["VECTORLESS_API_KEY"],
+)
+```
+
+## Ingest and ask
+
+```python
+doc = vl.documents.ingest(source="./report.pdf")
+
+result = vl.ask(
+    document=doc.id,
+    question="Summarize the risk factors.",
+    strategy="treewalk",
+)
+
+print(result.answer)
+for c in result.citations:
+    print(" › ".join(c.path), c.snippet)
+```
+
+## Async client
+
+```python
+import asyncio
+from vectorless import AsyncVectorless
+
+async def main():
+    vl = AsyncVectorless()
+    doc = await vl.documents.ingest(source="./report.pdf")
+    result = await vl.ask(
+        document=doc.id,
+        question="Walk me through the methodology.",
+        strategy="treewalk",
+    )
+    print(result.answer)
+
+asyncio.run(main())
+```

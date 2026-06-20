@@ -1,0 +1,58 @@
+---
+title: TypeScript
+description: The @vectorless/sdk client for Node.js and edge runtimes.
+---
+
+<Callout type="info">
+  Placeholder guide — full reference lands with the SDK release. Snippets show
+  the intended API shape.
+</Callout>
+
+## Install
+
+```bash
+npm install @vectorless/sdk
+```
+
+## Initialize
+
+```ts
+import { Vectorless } from '@vectorless/sdk';
+
+const vl = new Vectorless({
+  apiUrl: process.env.VECTORLESS_API_URL,
+  apiKey: process.env.VECTORLESS_API_KEY,
+});
+```
+
+## Ingest and ask
+
+```ts
+const doc = await vl.documents.ingest({ source: './report.pdf' });
+
+const result = await vl.ask({
+  document: doc.id,
+  question: 'Summarize the risk factors.',
+  strategy: 'treewalk',
+});
+
+console.log(result.answer);
+for (const c of result.citations) {
+  console.log(c.path.join(' › '), c.snippet);
+}
+```
+
+## Streaming
+
+```ts
+const stream = await vl.ask({
+  document: doc.id,
+  question: 'Walk me through the methodology.',
+  strategy: 'treewalk',
+  stream: true,
+});
+
+for await (const event of stream) {
+  if (event.type === 'token') process.stdout.write(event.text);
+}
+```

@@ -1,0 +1,64 @@
+---
+title: Overview
+description: What Vectorless is, who it's for, and how the pieces fit together.
+---
+
+This section gets you from zero to your first cited answer. If you just want the
+commands, jump to the [Quickstart](/docs/getting-started/quickstart).
+
+## The mental model
+
+Working with Vectorless is three steps:
+
+<Steps>
+<Step>
+### Ingest a document
+
+You hand Vectorless a document (PDF, HTML, Markdown, …). The engine parses it
+into a **tree** — preserving sections, sub-sections, and tables. There is no
+chunking step and nothing to embed.
+</Step>
+
+<Step>
+### Ask a question
+
+You send a natural-language question. An LLM agent runs the
+[`treewalk`](/docs/concepts/treewalk) strategy, navigating the tree to the nodes
+most likely to contain the answer.
+</Step>
+
+<Step>
+### Get an answer with citations
+
+You receive an answer plus the **exact tree nodes** it was derived from — so
+every claim is traceable back to the source.
+</Step>
+</Steps>
+
+## What you'll need
+
+- An LLM provider key (the agent does the reasoning).
+- One of the official [SDKs](/docs/sdks), or direct access to the
+  [HTTP API](/docs/api).
+- A document to ask questions about.
+
+<Callout type="info">
+  The retired name **"pageindex"** referred to an earlier version of this
+  navigation idea. The engine's canonical strategy is now called `treewalk` —
+  use that name everywhere.
+</Callout>
+
+## Next steps
+
+<Cards>
+  <Card
+    title="Quickstart"
+    href="/docs/getting-started/quickstart"
+    description="Install, ingest, and ask — in a few lines."
+  />
+  <Card
+    title="Core Concepts"
+    href="/docs/concepts"
+    description="Understand the tree, treewalk, and citations in depth."
+  />
+</Cards>

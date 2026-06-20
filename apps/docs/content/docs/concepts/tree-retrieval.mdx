@@ -1,0 +1,50 @@
+---
+title: Tree retrieval
+description: How Vectorless turns a document into a navigable hierarchy.
+---
+
+A document is not a bag of words — it has **structure**. Titles, sections,
+sub-sections, lists, and tables encode the author's own map of the content.
+Vectorless treats that structure as the retrieval index.
+
+## From document to tree
+
+When you ingest a document, the engine parses it into a tree of **nodes**. Each
+node corresponds to a structural unit of the source:
+
+```text
+Annual Report
+├─ 1  Overview
+├─ 2  Strategy
+│  ├─ 2.1  Market
+│  └─ 2.2  Roadmap
+└─ 3  Financials
+   ├─ 3.1  Q2 Results
+   └─ 3.2  Q3 Results
+      └─ 3.2.1  Revenue
+```
+
+Every node knows:
+
+- its **title** and **content**,
+- its **path** from the root (e.g. `Financials → Q3 Results → Revenue`),
+- its **parent** and **children**.
+
+## Why a tree
+
+<Callout title="The core trade">
+  Vector RAG flattens the document so it can be compared by similarity. Tree
+  retrieval keeps the document's shape so it can be *reasoned about*.
+</Callout>
+
+- **Locality.** Related content stays together, the way the author intended.
+- **Addressability.** Any answer can be named by its path — that is what makes
+  [citations](/docs/concepts/citations) exact.
+- **Navigability.** An agent can move up, down, and across the tree, expanding
+  only the branches that matter — see [`treewalk`](/docs/concepts/treewalk).
+
+## What this replaces
+
+This single representation does the job that chunking, embedding, and a vector
+index do in classic RAG — without any of those moving parts. The
+[no-chunking model](/docs/concepts/no-chunking) explains why.
