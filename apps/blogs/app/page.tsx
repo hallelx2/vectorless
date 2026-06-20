@@ -1,24 +1,23 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   ArrowRight, 
   X, 
   Calendar, 
-  User, 
   Clock, 
   Check, 
-  ChevronRight, 
   Sparkles,
   Search,
   FileText,
   Database,
   Cpu,
-  FileCheck,
   Play,
-  ArrowLeft,
-  ChevronDown
+  Terminal,
+  ArrowUpRight,
+  BookOpen,
+  ChevronRight
 } from 'lucide-react';
 
 // Categories matching our blog categories
@@ -176,49 +175,72 @@ function VectorlessIcon({ size = 32, className }: { size?: number; className?: s
   );
 }
 
-// Vector illustration components for the blog card backgrounds
-function VectorIllustration({ type }: { type: BlogPost['imageType'] }) {
+// Highly stylized schematic vectors
+function BlueprintIllustration({ type }: { type: BlogPost['imageType'] }) {
   if (type === 'architecture') {
     return (
-      <svg className="w-full max-w-[220px]" viewBox="0 0 200 150" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="20" y="20" width="160" height="110" rx="6" fill="#F8FAFC" stroke="#E2E8F0" strokeWidth="1.5" />
-        <rect x="40" y="40" width="50" height="30" rx="4" fill="#1456f0" fillOpacity="0.08" stroke="#1456f0" strokeWidth="1.5" />
-        <rect x="110" y="40" width="50" height="30" rx="4" fill="#ea5ec1" fillOpacity="0.08" stroke="#ea5ec1" strokeWidth="1.5" />
-        <path d="M90,55 L110,55" stroke="#0A0A0A" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="3 3" />
-        <rect x="75" y="90" width="50" height="25" rx="4" fill="#F1F5F9" stroke="#94A3B8" strokeWidth="1.5" />
-        <path d="M65,70 L75,90" stroke="#94A3B8" strokeWidth="1" />
-        <path d="M135,70 L125,90" stroke="#94A3B8" strokeWidth="1" />
+      <svg className="w-full h-full max-h-[140px]" viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        {/* Coordinates grid back layer */}
+        <line x1="20" y1="60" x2="180" y2="60" stroke="#E5E7EB" strokeWidth="1" strokeDasharray="2 2" />
+        <line x1="100" y1="10" x2="100" y2="110" stroke="#E5E7EB" strokeWidth="1" strokeDasharray="2 2" />
+        
+        {/* Section nodes tree representation */}
+        <circle cx="100" cy="30" r="4" fill="#1456F0" />
+        <line x1="100" y1="34" x2="60" y2="70" stroke="#1456F0" strokeWidth="1.5" />
+        <line x1="100" y1="34" x2="140" y2="70" stroke="#1456F0" strokeWidth="1.5" />
+        
+        <circle cx="60" cy="70" r="4" fill="#0A0A0A" />
+        <circle cx="140" cy="70" r="4" fill="#0A0A0A" />
+        
+        <line x1="60" y1="74" x2="40" y2="100" stroke="#E5E7EB" strokeWidth="1.5" />
+        <line x1="60" y1="74" x2="80" y2="100" stroke="#E5E7EB" strokeWidth="1.5" />
+        
+        <circle cx="40" cy="100" r="3" fill="#ea5ec1" />
+        <circle cx="80" cy="100" r="3" fill="#71717A" />
+        
+        {/* Abstract border paths */}
+        <path d="M10,10 L30,10 M10,10 L10,30" stroke="#1456F0" strokeWidth="1.5" />
+        <path d="M190,110 L170,110 M190,110 L190,90" stroke="#EA5EC1" strokeWidth="1.5" />
       </svg>
     );
   }
   if (type === 'database') {
     return (
-      <svg className="w-full max-w-[220px]" viewBox="0 0 200 150" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="20" y="20" width="160" height="110" rx="6" fill="#F8FAFC" stroke="#E2E8F0" strokeWidth="1.5" />
-        <ellipse cx="100" cy="45" rx="30" ry="12" fill="none" stroke="#1456f0" strokeWidth="1.8" />
-        <path d="M70,45 L70,75 A30,12 0 0 0 130,75 L130,45" fill="none" stroke="#1456f0" strokeWidth="1.8" />
-        <path d="M70,75 L70,105 A30,12 0 0 0 130,105 L130,75" fill="none" stroke="#1456f0" strokeWidth="1.8" />
-        <circle cx="100" cy="75" r="3" fill="#ea5ec1" />
+      <svg className="w-full h-full max-h-[140px]" viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <line x1="10" y1="60" x2="190" y2="60" stroke="#E5E7EB" strokeWidth="1" strokeDasharray="3 3" />
+        
+        {/* Neon database cylinders in technical drawing format */}
+        <g transform="translate(60, 20)">
+          <ellipse cx="40" cy="15" rx="25" ry="8" stroke="#0A0A0A" strokeWidth="1.5" />
+          <path d="M15,15 L15,45 A25,8 0 0 0 65,45 L65,15" stroke="#0A0A0A" strokeWidth="1.5" fill="none" />
+          <path d="M15,45 L15,75 A25,8 0 0 0 65,75 L65,45" stroke="#1456F0" strokeWidth="1.5" fill="none" />
+          
+          <line x1="40" y1="45" x2="100" y2="45" stroke="#EA5EC1" strokeWidth="1.5" strokeDasharray="3 3" />
+          <circle cx="100" cy="45" r="3.5" fill="#EA5EC1" />
+        </g>
       </svg>
     );
   }
   if (type === 'code') {
     return (
-      <svg className="w-full max-w-[220px]" viewBox="0 0 200 150" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <rect x="20" y="20" width="160" height="110" rx="6" fill="#0A0A0A" />
-        <text x="35" y="55" fill="#64748B" fontFamily="monospace" fontSize="10">const client = new VectorlessClient(&#123;</text>
-        <text x="45" y="75" fill="#1456f0" fontFamily="monospace" fontSize="10">  baseUrl: "https://api.vectorless.dev",</text>
-        <text x="45" y="95" fill="#ea5ec1" fontFamily="monospace" fontSize="10">  apiKey: "vl_live_..."</text>
-        <text x="35" y="115" fill="#64748B" fontFamily="monospace" fontSize="10">&#125;);</text>
+      <svg className="w-full h-full max-h-[140px]" viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="15" y="15" width="170" height="90" rx="4" fill="#0A0A0A" />
+        {/* Abstract syntax-highlighted code blocks */}
+        <rect x="30" y="35" width="60" height="6" rx="3" fill="#64748B" />
+        <rect x="30" y="47" width="100" height="6" rx="3" fill="#1456F0" />
+        <rect x="45" y="59" width="80" height="6" rx="3" fill="#EA5EC1" />
+        <rect x="45" y="71" width="40" height="6" rx="3" fill="#64748B" />
+        <rect x="30" y="83" width="20" height="6" rx="3" fill="#1456F0" />
       </svg>
     );
   }
   return (
-    <svg className="w-full max-w-[220px]" viewBox="0 0 200 150" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="20" y="20" width="160" height="110" rx="6" fill="#F8FAFC" stroke="#E2E8F0" strokeWidth="1.5" />
-      <path d="M40,110 L70,50 L100,85 L130,35 L160,95" stroke="#1456f0" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx="130" cy="35" r="3.5" fill="#ea5ec1" stroke="white" strokeWidth="1.5" />
-      <line x1="30" y1="110" x2="170" y2="110" stroke="#94A3B8" strokeWidth="1.5" />
+    <svg className="w-full h-full max-h-[140px]" viewBox="0 0 200 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M20,90 Q60,40 100,75 T180,30" stroke="#1456F0" strokeWidth="2" strokeLinecap="round" />
+      <path d="M20,90 H180" stroke="#E5E7EB" strokeWidth="1.5" />
+      <circle cx="100" cy="75" r="4" fill="#0A0A0A" stroke="white" strokeWidth="1.5" />
+      <circle cx="180" cy="30" r="4" fill="#EA5EC1" stroke="white" strokeWidth="1.5" />
+      <line x1="180" y1="30" x2="180" y2="90" stroke="#EA5EC1" strokeWidth="1" strokeDasharray="3 3" />
     </svg>
   );
 }
@@ -236,30 +258,16 @@ export default function BlogPage() {
   const [retrievedResult, setRetrievedResult] = useState<string | null>(null);
   const [highlightedSection, setHighlightedSection] = useState<number | null>(null);
 
-  // Categories list
-  const categories: Category[] = ['All', 'Product Updates', 'Engineering', 'Guides', 'Features'];
-
-  // Filter Blog Posts
-  const filteredPosts = BLOG_POSTS.filter(post => {
-    if (selectedCategory === 'All') return true;
-    return post.category === selectedCategory;
-  });
-
-  const featuredPost = BLOG_POSTS.find(p => p.id === 'retrieval-reasoning-era');
-  const gridPosts = selectedCategory === 'All' 
-    ? filteredPosts.filter(post => post.id !== 'retrieval-reasoning-era')
-    : filteredPosts;
-
-  // Run mock ingestion steps
+  // Auto processing steps on mock document load
   useEffect(() => {
     if (showDemoModal) {
       setIngestionStep(0);
       setRetrievedResult(null);
       setHighlightedSection(null);
       
-      const timer1 = setTimeout(() => setIngestionStep(1), 800);
-      const timer2 = setTimeout(() => setIngestionStep(2), 1600);
-      const timer3 = setTimeout(() => setIngestionStep(3), 2400);
+      const timer1 = setTimeout(() => setIngestionStep(1), 700);
+      const timer2 = setTimeout(() => setIngestionStep(2), 1400);
+      const timer3 = setTimeout(() => setIngestionStep(3), 2100);
 
       return () => {
         clearTimeout(timer1);
@@ -313,372 +321,338 @@ export default function BlogPage() {
     }, 1200);
   };
 
+  const categories: Category[] = ['All', 'Product Updates', 'Engineering', 'Guides', 'Features'];
+
+  const filteredPosts = BLOG_POSTS.filter(post => {
+    if (selectedCategory === 'All') return true;
+    return post.category === selectedCategory;
+  });
+
+  // Editorial varying card layouts:
+  // Post 1 -> Featured Hero
+  const featuredPost = BLOG_POSTS.find(p => p.id === 'retrieval-reasoning-era');
+  
+  // Grid layout split:
+  // If category is All, show Hero at top, and others in grid.
+  const displayPosts = selectedCategory === 'All'
+    ? BLOG_POSTS.filter(p => p.id !== 'retrieval-reasoning-era')
+    : filteredPosts;
+
   return (
-    <div id="app-root" className="min-h-screen w-full relative bg-[#FCFCFD] text-[#0A0A0A] flex flex-col justify-between font-sans selection:bg-[#bfdbfe]/50">
+    <div className="min-h-screen w-full relative bg-[#FCFCFD] text-[#0A0A0A] font-sans selection:bg-[#bfdbfe]/50 flex flex-col justify-between">
       
-      {/* Accent Hairline Top Border */}
-      <div className="h-1 bg-gradient-to-r from-[#1456F0] to-[#EA5EC1] w-full" />
+      {/* Editorial top accent line */}
+      <div className="h-1 bg-gradient-to-r from-[#1456F0] via-[#855BDE] to-[#EA5EC1] w-full" />
 
-      {/* Grid Paper Backdrop Wash */}
-      <div className="absolute inset-0 grid-paper pointer-events-none opacity-20" />
+      {/* Subtle blueprint grid backdrop */}
+      <div className="absolute inset-0 grid-paper pointer-events-none opacity-25" />
 
-      {/* Main Container */}
-      <div className="relative z-10 w-full max-w-[1300px] mx-auto flex-grow flex flex-col justify-between p-6 md:p-12">
+      {/* Main Grid Wrapper */}
+      <div className="relative z-10 w-full max-w-[1300px] mx-auto flex-grow flex flex-col p-6 md:p-12 lg:px-16">
         
-        {/* Header Navigation */}
-        <header id="site-header" className="w-full py-8 flex items-center justify-between border-b border-[#E5E7EB] relative z-20">
-          {/* Logo Brand Lockup */}
-          <div id="main-logo" className="flex items-center gap-3 cursor-pointer group">
-            <VectorlessIcon size={32} />
+        {/* Header Block */}
+        <header className="w-full py-8 flex items-center justify-between border-b border-[#E5E7EB] relative z-20">
+          <div className="flex items-center gap-3 cursor-pointer group">
+            <VectorlessIcon size={34} />
             <div className="flex flex-col">
-              <span className="text-[#0A0A0A] text-xl font-display font-medium tracking-tight">
+              <span className="text-[#0A0A0A] text-2xl font-display font-medium tracking-tight">
                 Vectorless
               </span>
-              <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-[#71717A]">
-                Developer Blog
+              <span className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#71717A] font-semibold">
+                Intelligence Log
               </span>
             </div>
           </div>
 
-          {/* Desktop Navigation Links */}
-          <nav id="desktop-nav" className="hidden md:flex items-center gap-8 text-sm font-medium text-[#3F3F46]">
+          <nav className="hidden md:flex items-center gap-8 text-xs font-mono uppercase tracking-wider text-[#3F3F46]">
             {['Engine', 'SDKs', 'Documentation', 'Control Plane'].map((link) => (
               <a 
                 key={link} 
-                href={
-                  link === 'Documentation' 
-                    ? '/docs' 
-                    : link === 'Control Plane' 
-                      ? 'https://vectorless.store' 
-                      : '#'
-                }
-                className="hover:text-[#1456F0] transition-colors cursor-pointer"
+                href={link === 'Documentation' ? '/docs' : link === 'Control Plane' ? 'https://vectorless.store' : '#'}
+                className="hover:text-[#1456F0] transition-colors relative py-1"
               >
                 {link}
               </a>
             ))}
           </nav>
 
-          {/* Header Action Buttons */}
-          <div id="header-actions" className="flex items-center gap-4">
-            <button 
-              id="btn-live-demo"
-              onClick={() => setShowDemoModal(true)}
-              className="bg-[#0A0A0A] text-white hover:bg-[#1456F0] px-5 py-2.5 rounded-lg font-medium text-xs transition-all duration-300 shadow-sm flex items-center gap-2 cursor-pointer"
-            >
-              Try Retrieval Demo
-              <span className="w-1.5 h-1.5 rounded-full bg-[#EA5EC1] animate-pulse" />
-            </button>
-          </div>
+          <button 
+            onClick={() => setShowDemoModal(true)}
+            className="bg-[#0A0A0A] hover:bg-[#1456F0] text-white px-5 py-2.5 rounded-lg font-mono text-[10px] uppercase tracking-wider transition-all duration-300 shadow-sm flex items-center gap-2"
+          >
+            Terminal Sandbox
+            <span className="w-1.5 h-1.5 rounded-full bg-[#EA5EC1] animate-ping" />
+          </button>
         </header>
 
-        {/* Main Content Area */}
-        <main id="main-content" className="py-12 flex-grow w-full">
-          
-          {/* Main Hero Header */}
-          <section id="hero-title-section" className="mb-12">
-            <h1 className="text-4xl md:text-5xl lg:text-6xl font-display font-medium tracking-tight mb-8">
+        {/* Hero Section */}
+        <section className="py-16 md:py-24 border-b border-[#E5E7EB]">
+          <div className="max-w-[850px]">
+            <span className="font-mono text-xs uppercase tracking-[0.2em] text-[#1456F0] font-semibold mb-4 block">
+              Volume IV · Technical Library
+            </span>
+            <h1 className="text-5xl md:text-7xl font-display font-medium tracking-tight text-[#0A0A0A] leading-[1.05] mb-8">
               Document retrieval for the <span className="font-serif italic bg-gradient-to-r from-[#1456F0] to-[#EA5EC1] bg-clip-text text-transparent">reasoning era</span>.
             </h1>
+            <p className="text-lg md:text-xl font-light text-[#3F3F46] leading-relaxed max-w-[650px]">
+              Deep dives, implementation specifications, and performance analyses of structure-preserving retrieval architectures.
+            </p>
+          </div>
+        </section>
 
-            {/* Sub-Header Categories Toggle Bar */}
-            <div id="categories-filter-bar" className="w-full border border-[#E5E7EB] bg-white/70 backdrop-blur-md p-1 rounded-xl shadow-xs overflow-x-auto flex items-center gap-1 max-w-[650px]">
-              {categories.map((cat) => {
-                const isActive = selectedCategory === cat;
-                return (
-                  <button
-                    key={cat}
-                    onClick={() => setSelectedCategory(cat)}
-                    className={`px-4 py-2 rounded-lg text-xs font-medium whitespace-nowrap transition-all duration-300 cursor-pointer ${
-                      isActive 
-                      ? 'bg-[#0A0A0A] text-white font-semibold' 
-                      : 'text-[#71717A] hover:text-[#0A0A0A] hover:bg-slate-50'
-                    }`}
-                  >
-                    {cat}
-                  </button>
-                );
-              })}
-            </div>
-          </section>
+        {/* Categories Bar */}
+        <section className="py-8 flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-[#E5E7EB] sticky top-0 bg-[#FCFCFD]/90 backdrop-blur-md z-30">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {categories.map((cat) => {
+              const isActive = selectedCategory === cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-4 py-2 rounded-lg text-xs font-mono uppercase tracking-wider transition-all duration-200 cursor-pointer ${
+                    isActive 
+                    ? 'bg-[#0A0A0A] text-white font-semibold' 
+                    : 'text-[#71717A] hover:text-[#0A0A0A] hover:bg-slate-100/50'
+                  }`}
+                >
+                  {cat}
+                </button>
+              );
+            })}
+          </div>
+          
+          <div className="hidden lg:flex items-center gap-2 text-xs font-mono text-[#71717A]">
+            <BookOpen className="w-4 h-4 text-[#1456F0]" />
+            <span>Format: Structural / Open-Source Spec</span>
+          </div>
+        </section>
 
-          {/* Featured Hero Article Post */}
-          <AnimatePresence mode="wait">
-            {selectedCategory === 'All' && featuredPost && (
-              <motion.div
-                key="featured-hero-post"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                transition={{ duration: 0.4, ease: 'easeOut' }}
-                onClick={() => setActiveArticle(featuredPost)}
-                className="grid grid-cols-1 md:grid-cols-2 border border-[#E5E7EB] bg-white rounded-2xl shadow-xs overflow-hidden mb-16 hover:shadow-md transition-all duration-300 cursor-pointer group"
-              >
-                {/* Left Content Card */}
-                <div id="hero-card-left" className="p-8 md:p-12 lg:p-14 flex flex-col justify-between min-h-[350px]">
+        {/* Featured Editorial Hero Article */}
+        <AnimatePresence mode="wait">
+          {selectedCategory === 'All' && featuredPost && (
+            <motion.section 
+              key="hero-spec"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setActiveArticle(featuredPost)}
+              className="py-12 border-b border-[#E5E7EB] cursor-pointer group"
+            >
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16">
+                <div className="lg:col-span-8 flex flex-col justify-between">
                   <div>
-                    <span className="inline-block bg-[#1456f0]/10 text-[#1456f0] text-[10px] font-mono uppercase tracking-[0.16em] px-3 py-1 rounded-md mb-6 font-semibold">
-                      {featuredPost.category}
-                    </span>
-                    
-                    <h2 className="text-2xl md:text-3xl lg:text-4xl font-display font-medium tracking-tight mb-4 group-hover:text-[#1456F0] transition-colors leading-tight">
+                    <div className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-widest text-[#71717A] mb-6">
+                      <span className="text-[#1456F0] font-semibold">{featuredPost.category}</span>
+                      <span>•</span>
+                      <span>{featuredPost.date}</span>
+                      <span>•</span>
+                      <span>{featuredPost.readTime}</span>
+                    </div>
+
+                    <h2 className="text-3xl md:text-5xl font-display font-medium tracking-tight text-[#0A0A0A] group-hover:text-[#1456F0] transition-colors leading-[1.1] mb-6">
                       {featuredPost.title}
                     </h2>
-                    
-                    <p className="text-[#3F3F46] text-sm md:text-base leading-relaxed mb-6 font-normal">
+
+                    <p className="text-base text-[#3F3F46] font-light leading-relaxed max-w-[700px] mb-8">
                       {featuredPost.snippet}
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-4 mt-auto">
-                    <span className="w-10 h-10 rounded-lg bg-[#0A0A0A] text-white flex items-center justify-center transition-all duration-300 group-hover:bg-[#1456F0]">
-                      <ArrowRight className="w-4 h-4" />
-                    </span>
-                    <span className="font-medium text-xs uppercase tracking-[0.16em] text-[#0A0A0A] font-mono group-hover:underline">
-                      Read full article
-                    </span>
+                  <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-[0.2em] font-semibold group-hover:translate-x-1 transition-transform">
+                    <span>Analyze Specification</span>
+                    <ArrowRight className="w-4 h-4 text-[#EA5EC1]" />
                   </div>
                 </div>
 
-                {/* Right Illustration Card */}
-                <div id="hero-card-right" className="bg-[#F8FAFC] border-t md:border-t-0 md:border-l border-[#E5E7EB] flex items-center justify-center p-8 min-h-[250px] md:min-h-full">
-                  <VectorIllustration type={featuredPost.imageType} />
+                <div className="lg:col-span-4 bg-[#FCFCFD] border border-[#E5E7EB] rounded-2xl flex items-center justify-center p-8 min-h-[220px] shadow-xs group-hover:shadow-sm transition-all duration-300">
+                  <BlueprintIllustration type={featuredPost.imageType} />
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+              </div>
+            </motion.section>
+          )}
+        </AnimatePresence>
 
-          {/* Three-Column Grid of Blog Cards */}
-          <section id="posts-grid-section">
-            {selectedCategory !== 'All' && (
-              <h3 className="text-sm font-mono uppercase tracking-[0.16em] text-[#71717A] mb-8 flex items-center gap-2">
-                <span>Category:</span>
-                <span className="text-[#1456F0] font-semibold">{selectedCategory}</span>
-                <span className="text-xs font-normal lowercase">({filteredPosts.length} post{filteredPosts.length !== 1 ? 's' : ''})</span>
-              </h3>
-            )}
-
-            <motion.div 
-              id="grid-articles"
-              layout
-              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-y-12"
-            >
-              <AnimatePresence mode="popLayout">
-                {gridPosts.map((post, idx) => (
-                  <motion.article
-                    key={post.id}
-                    layout
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0, scale: 0.98 }}
-                    transition={{ duration: 0.3, delay: idx * 0.03 }}
-                    onClick={() => setActiveArticle(post)}
-                    className="flex flex-col justify-between group cursor-pointer border border-[#E5E7EB] bg-white p-6 rounded-2xl hover:shadow-md transition-all duration-300 h-full"
-                  >
-                    <div>
-                      {/* Image/Illustration Preview Container */}
-                      <div className="relative aspect-[16/10] rounded-xl overflow-hidden bg-[#F8FAFC] mb-5 border border-[#E5E7EB] flex items-center justify-center">
-                        <VectorIllustration type={post.imageType} />
-                      </div>
-
-                      {/* Header info */}
-                      <div className="flex items-center justify-between text-[10px] font-mono uppercase tracking-[0.16em] mb-4">
-                        <span className="text-[#1456F0] font-semibold">
-                          {post.category}
-                        </span>
-                        <span className="text-[#71717A]">
-                          {post.date}
-                        </span>
-                      </div>
-
-                      {/* Article Title */}
-                      <h4 className="text-lg font-display font-medium text-[#0A0A0A] group-hover:text-[#1456F0] transition-colors leading-snug mb-3">
-                        {post.title}
-                      </h4>
-
-                      <p className="text-xs text-[#3F3F46] leading-relaxed mb-6 font-normal">
-                        {post.snippet}
-                      </p>
+        {/* Magazine Grid List */}
+        <section className="py-12">
+          <motion.div 
+            layout
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 md:gap-x-12 md:gap-y-16"
+          >
+            <AnimatePresence mode="popLayout">
+              {displayPosts.map((post, idx) => (
+                <motion.article
+                  key={post.id}
+                  layout
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.3, delay: idx * 0.02 }}
+                  onClick={() => setActiveArticle(post)}
+                  className="flex flex-col justify-between cursor-pointer group h-full pb-8 border-b border-[#E5E7EB]/80"
+                >
+                  <div>
+                    {/* Header meta */}
+                    <div className="flex items-center justify-between font-mono text-[9px] uppercase tracking-widest text-[#71717A] mb-4">
+                      <span className="text-[#1456F0] font-semibold">{post.category}</span>
+                      <span>{post.date}</span>
                     </div>
 
-                    {/* Author layout */}
-                    <div className="flex items-center gap-3 mt-auto border-t border-[#E5E7EB] pt-4">
-                      <div className="relative w-8 h-8 rounded-full overflow-hidden border border-[#E5E7EB]">
-                        <img 
-                          src={post.author.avatarUrl} 
-                          alt={post.author.name}
-                          className="object-cover w-full h-full"
-                          referrerPolicy="no-referrer"
-                        />
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-xs font-medium text-[#0A0A0A]">
-                          {post.author.name}
-                        </span>
-                        <span className="text-[10px] text-[#71717A]">
-                          {post.author.role}
-                        </span>
-                      </div>
-                    </div>
-                  </motion.article>
-                ))}
-              </AnimatePresence>
+                    {/* Title */}
+                    <h3 className="text-xl font-display font-medium text-[#0A0A0A] group-hover:text-[#1456F0] transition-colors leading-snug mb-3">
+                      {post.title}
+                    </h3>
 
-              {/* Grid empty state */}
-              {gridPosts.length === 0 && (
-                <div className="col-span-1 md:col-span-3 py-16 text-center text-[#71717A] flex flex-col items-center justify-center gap-3 bg-[#F8FAFC] border border-[#E5E7EB] rounded-2xl">
-                  <span className="font-display font-medium text-base">No articles found in this category</span>
-                  <button 
-                    onClick={() => setSelectedCategory('All')}
-                    className="mt-2 text-[#1456F0] hover:underline text-xs font-semibold cursor-pointer"
-                  >
-                    View all articles
-                  </button>
-                </div>
-              )}
-            </motion.div>
-          </section>
-          
-        </main>
+                    {/* Snippet */}
+                    <p className="text-xs text-[#3F3F46] leading-relaxed font-light mb-6">
+                      {post.snippet}
+                    </p>
+                  </div>
+
+                  {/* Card Illustration */}
+                  <div className="bg-[#FCFCFD] border border-[#E5E7EB]/50 rounded-xl flex items-center justify-center p-6 min-h-[140px] mb-6 group-hover:border-[#E5E7EB] transition-colors">
+                    <BlueprintIllustration type={post.imageType} />
+                  </div>
+
+                  {/* Author */}
+                  <div className="flex items-center gap-3">
+                    <div className="relative w-8 h-8 rounded-full overflow-hidden border border-[#E5E7EB]">
+                      <img 
+                        src={post.author.avatarUrl} 
+                        alt={post.author.name}
+                        className="object-cover w-full h-full"
+                        referrerPolicy="no-referrer"
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-xs font-semibold text-[#0A0A0A]">{post.author.name}</span>
+                      <span className="text-[9px] font-mono text-[#71717A]">{post.author.role}</span>
+                    </div>
+                  </div>
+                </motion.article>
+              ))}
+            </AnimatePresence>
+
+            {/* Empty State */}
+            {displayPosts.length === 0 && (
+              <div className="col-span-1 md:col-span-3 py-20 text-center border border-dashed border-[#E5E7EB] rounded-2xl flex flex-col items-center justify-center gap-3 bg-[#FCFCFD]">
+                <span className="font-display font-medium text-slate-800">No matching logs found</span>
+                <button 
+                  onClick={() => setSelectedCategory('All')}
+                  className="text-xs font-mono uppercase tracking-wider text-[#1456F0] hover:underline cursor-pointer"
+                >
+                  Return to Index
+                </button>
+              </div>
+            )}
+          </motion.div>
+        </section>
 
         {/* Footer */}
-        <footer id="site-footer" className="text-[#71717A] py-10 border-t border-[#E5E7EB] mt-16 text-xs text-center">
-          <div className="w-full flex flex-col md:flex-row items-center justify-between gap-6">
-            <div className="flex items-center gap-2 text-[#0A0A0A]">
-              <VectorlessIcon size={24} />
-              <span className="font-display font-medium text-sm">Vectorless</span>
-            </div>
-            
-            <p className="text-xs text-[#71717A]">
-              © {new Date().getFullYear()} Vectorless. All rights reserved.
-            </p>
-
-            <div className="flex items-center gap-4 text-xs font-medium">
-              <a href="#" className="hover:text-[#0A0A0A] transition-colors">Privacy Policy</a>
-              <span className="text-[#E5E7EB]">•</span>
-              <a href="#" className="hover:text-[#0A0A0A] transition-colors">Terms of Service</a>
-            </div>
+        <footer className="py-12 border-t border-[#E5E7EB] flex flex-col sm:flex-row items-center justify-between gap-6 text-xs text-[#71717A] font-mono uppercase tracking-widest mt-12">
+          <div className="flex items-center gap-3 text-[#0A0A0A]">
+            <VectorlessIcon size={24} />
+            <span className="font-display font-medium text-sm normal-case tracking-normal">Vectorless</span>
+          </div>
+          <p className="text-[10px]">
+            © {new Date().getFullYear()} Vectorless. All rights reserved.
+          </p>
+          <div className="flex items-center gap-4 text-[10px]">
+            <a href="#" className="hover:text-[#0A0A0A] transition-colors">Privacy</a>
+            <span>/</span>
+            <a href="#" className="hover:text-[#0A0A0A] transition-colors">Terms</a>
           </div>
         </footer>
 
       </div>
 
-      {/* FULL ARTICLE MODAL PANEL */}
+      {/* FULL ARTICLE SIDE SHEET DRAWER */}
       <AnimatePresence>
         {activeArticle && (
-          <div id="modal-container" className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Overlay backdrop */}
+          <div className="fixed inset-0 z-50 flex justify-end">
+            {/* Backdrop */}
             <motion.div 
-              id="modal-overlay"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setActiveArticle(null)}
-              className="absolute inset-0 bg-[#0A0A0A]/40 backdrop-blur-xs"
+              className="absolute inset-0 bg-[#0A0A0A]/30 backdrop-blur-xs"
             />
 
-            {/* Modal Body */}
+            {/* Slide-out Sheet */}
             <motion.div 
-              id="modal-body"
-              initial={{ opacity: 0, scale: 0.98, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.98, y: 10 }}
-              transition={{ type: 'spring', damping: 25, stiffness: 350 }}
-              className="relative w-full max-w-[750px] max-h-[85vh] bg-white rounded-2xl overflow-y-auto shadow-xl z-10 flex flex-col border border-[#E5E7EB]"
+              initial={{ x: '100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '100%' }}
+              transition={{ type: 'spring', damping: 26, stiffness: 220 }}
+              className="relative w-full max-w-[680px] h-full bg-[#FCFCFD] border-l border-[#E5E7EB] shadow-2xl z-10 flex flex-col text-[#0A0A0A] p-6 md:p-12 overflow-y-auto"
             >
-              {/* Header */}
-              <div className="sticky top-0 bg-white/90 backdrop-blur-md px-6 md:px-8 py-5 border-b border-[#E5E7EB] flex items-center justify-between z-10">
-                <span className="bg-[#1456f0]/10 text-[#1456f0] text-[10px] font-mono uppercase tracking-[0.16em] px-3 py-1 rounded-md font-semibold">
-                  {activeArticle.category}
-                </span>
+              <button 
+                onClick={() => setActiveArticle(null)}
+                className="absolute top-6 right-6 border border-[#E5E7EB] hover:bg-slate-100 p-2 rounded-lg cursor-pointer transition-all"
+                aria-label="Close sheet"
+              >
+                <X className="w-4 h-4 text-[#71717A]" />
+              </button>
 
-                <button 
-                  onClick={() => setActiveArticle(null)}
-                  className="bg-[#FCFCFD] border border-[#E5E7EB] p-2 rounded-lg hover:bg-slate-50 transition-all cursor-pointer text-[#71717A]"
-                  aria-label="Close panel"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              </div>
-
-              {/* Scrollable Contents */}
-              <div id="modal-content-scroller" className="p-6 md:p-10 select-text flex-grow">
-                
-                {/* Meta details */}
-                <div className="flex flex-wrap items-center gap-6 text-xs text-[#71717A] mb-4 font-mono uppercase tracking-wider">
-                  <span className="flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-[#1456f0]" />
-                    {activeArticle.date}
-                  </span>
-                  <span className="flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-[#1456f0]" />
-                    {activeArticle.readTime}
-                  </span>
-                </div>
-
-                {/* Article Title */}
-                <h2 className="text-2xl md:text-3xl font-display font-medium tracking-tight text-[#0A0A0A] mb-6 leading-tight">
-                  {activeArticle.title}
-                </h2>
-
-                {/* Author Card */}
-                <div className="flex items-center gap-4 bg-[#FCFCFD] border border-[#E5E7EB] p-4 rounded-xl mb-8">
-                  <div className="relative w-10 h-10 rounded-full overflow-hidden border border-[#E5E7EB]">
-                    <img 
-                      src={activeArticle.author.avatarUrl} 
-                      alt={activeArticle.author.name}
-                      className="object-cover w-full h-full"
-                    />
+              <div className="mt-8 flex flex-col h-full justify-between">
+                <div>
+                  <div className="flex items-center gap-3 font-mono text-[9px] uppercase tracking-widest text-[#71717A] mb-8">
+                    <span className="text-[#1456F0] font-semibold">{activeArticle.category}</span>
+                    <span>•</span>
+                    <span>{activeArticle.date}</span>
+                    <span>•</span>
+                    <span>{activeArticle.readTime}</span>
                   </div>
-                  <div>
-                    <h5 className="font-semibold text-xs text-[#0A0A0A]">{activeArticle.author.name}</h5>
-                    <p className="text-[10px] text-[#71717A] leading-normal">{activeArticle.author.role}</p>
+
+                  <h2 className="text-3xl md:text-4xl font-display font-medium tracking-tight text-[#0A0A0A] mb-8 leading-tight">
+                    {activeArticle.title}
+                  </h2>
+
+                  {/* Author Card */}
+                  <div className="flex items-center gap-4 bg-[#FCFCFD] border border-[#E5E7EB] p-4 rounded-xl mb-8">
+                    <div className="relative w-10 h-10 rounded-full overflow-hidden border border-[#E5E7EB]">
+                      <img 
+                        src={activeArticle.author.avatarUrl} 
+                        alt={activeArticle.author.name}
+                        className="object-cover w-full h-full"
+                      />
+                    </div>
+                    <div>
+                      <h5 className="font-semibold text-xs text-[#0A0A0A]">{activeArticle.author.name}</h5>
+                      <p className="text-[10px] text-[#71717A] leading-normal">{activeArticle.author.role}</p>
+                    </div>
+                  </div>
+
+                  {/* Text Contents */}
+                  <div className="space-y-6 text-sm md:text-base leading-relaxed text-[#3F3F46] font-light">
+                    {activeArticle.content.map((paragraph, pIdx) => (
+                      <p key={pIdx}>
+                        {paragraph}
+                      </p>
+                    ))}
                   </div>
                 </div>
 
-                {/* Rich Image Preview */}
-                <div className="relative aspect-[16/9] w-full rounded-xl bg-[#F8FAFC] border border-[#E5E7EB] mb-8 flex items-center justify-center">
-                  <VectorIllustration type={activeArticle.imageType} />
+                <div className="border-t border-[#E5E7EB] pt-8 mt-12 text-[11px] font-mono uppercase tracking-widest text-[#71717A] flex items-center justify-between">
+                  <span>File: spec_dump.log</span>
+                  <button 
+                    onClick={() => setActiveArticle(null)}
+                    className="text-[#1456F0] hover:underline font-bold"
+                  >
+                    Close Log
+                  </button>
                 </div>
-
-                {/* Article Paragraphs */}
-                <div className="space-y-6 text-sm md:text-base leading-relaxed text-[#3F3F46]">
-                  {activeArticle.content.map((paragraph, pIdx) => (
-                    <p key={pIdx} className="font-light">
-                      {paragraph}
-                    </p>
-                  ))}
-                  
-                  {/* Decorative signoff */}
-                  <div className="pt-8 border-t border-[#E5E7EB] mt-10">
-                    <p className="text-xs italic text-[#71717A] font-serif">
-                      Looking to build with structure-preserving retrieval? Try the live interactive sandbox by clicking &quot;Try Retrieval Demo&quot; in the navigation header.
-                    </p>
-                  </div>
-                </div>
-
-              </div>
-              
-              {/* Footer Actions */}
-              <div className="p-6 border-t border-[#E5E7EB] bg-[#FCFCFD] flex justify-end gap-3 rounded-b-2xl">
-                <button 
-                  onClick={() => setActiveArticle(null)}
-                  className="px-5 py-2.5 text-xs font-semibold text-white bg-[#0A0A0A] hover:bg-[#1456F0] rounded-lg cursor-pointer transition-all shadow-sm"
-                >
-                  Close Article
-                </button>
               </div>
             </motion.div>
           </div>
         )}
       </AnimatePresence>
 
-      {/* DYNAMIC INTERACTIVE RETRIEVAL DEMO MODAL */}
+      {/* DYNAMIC INTERACTIVE RETRIEVAL TERMINAL SANDBOX */}
       <AnimatePresence>
         {showDemoModal && (
-          <div id="demo-modal-container" className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div 
-              id="demo-modal-overlay"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -686,210 +660,146 @@ export default function BlogPage() {
               className="absolute inset-0 bg-[#0A0A0A]/40 backdrop-blur-xs"
             />
 
+            {/* Split Screen Panel */}
             <motion.div 
-              id="demo-modal-body"
-              initial={{ opacity: 0, scale: 0.98, y: 10 }}
+              initial={{ opacity: 0, scale: 0.98, y: 15 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.98, y: 10 }}
-              className="relative w-full max-w-[650px] bg-white rounded-2xl overflow-hidden shadow-xl z-10 flex flex-col border border-[#E5E7EB] text-[#0A0A0A]"
+              exit={{ opacity: 0, scale: 0.98, y: 15 }}
+              className="relative w-full max-w-[850px] h-[90vh] md:h-[680px] bg-white rounded-2xl overflow-hidden shadow-2xl z-10 flex flex-col md:flex-row border border-[#E5E7EB]"
             >
-              {/* Header */}
-              <div className="bg-[#FCFCFD] border-b border-[#E5E7EB] p-6 relative">
-                <button 
-                  onClick={() => setShowDemoModal(false)}
-                  className="absolute top-6 right-6 border border-[#E5E7EB] bg-white hover:bg-slate-50 p-2 rounded-lg cursor-pointer transition-all text-[#71717A]"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-                
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="px-2.5 py-1 bg-[#1456F0]/10 text-[#1456F0] text-[9px] font-mono rounded uppercase tracking-wider font-semibold">Sandbox Simulation</span>
-                  <span className="text-[#ea5ec1] text-[10px] font-mono flex items-center gap-1">🟢 Gemini-1.5-Pro Active</span>
-                </div>
+              
+              {/* Left Panel: Control Deck (Light) */}
+              <div className="w-full md:w-1/2 p-6 flex flex-col justify-between border-b md:border-b-0 md:border-r border-[#E5E7EB]">
+                <div>
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className="px-2.5 py-1 bg-[#1456F0]/10 text-[#1456F0] text-[9px] font-mono rounded uppercase tracking-wider font-semibold">Step-by-step API</span>
+                    <span className="text-[#ea5ec1] text-[10px] font-mono animate-pulse">🟢 Active Server</span>
+                  </div>
 
-                <h3 className="text-xl font-display font-medium tracking-tight">
-                  Vectorless Retrieval Simulator
-                </h3>
-                <p className="text-xs text-[#71717A] mt-1">
-                  See how structure-preserving table-of-contents retrieval works in real-time.
-                </p>
-              </div>
+                  <h3 className="text-xl font-display font-medium tracking-tight mb-2">
+                    Retrieval Interface
+                  </h3>
+                  <p className="text-xs text-[#71717A] leading-relaxed mb-6">
+                    Choose a document, trigger structural ingestion, and execute reasoning queries locally.
+                  </p>
 
-              {/* Main Scheduler Panel */}
-              <div className="p-6 flex-grow overflow-y-auto max-h-[60vh]">
-                
-                {/* Select Document */}
-                <h4 className="text-[10px] uppercase font-mono font-bold text-[#71717A] mb-3 tracking-wider">
-                  1. Select a Document to Ingest
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-6">
-                  {[
-                    { id: 'vectorless-whitepaper.pdf', size: '2.4 MB', type: 'PDF' },
-                    { id: 'fastify-manual.md', size: '480 KB', type: 'Markdown' },
-                    { id: 'terms-of-service.docx', size: '1.1 MB', type: 'Word Doc' }
-                  ].map((doc) => {
-                    const isSel = selectedDoc === doc.id;
-                    return (
-                      <button
-                        key={doc.id}
-                        onClick={() => {
-                          setSelectedDoc(doc.id as any);
-                        }}
-                        className={`p-4 rounded-xl border flex flex-col justify-between items-start text-left cursor-pointer transition-all duration-300 ${
-                          isSel 
-                          ? 'border-[#1456F0] bg-[#1456F0]/5 ring-1 ring-[#1456F0]' 
-                          : 'border-[#E5E7EB] hover:border-[#1456F0]/55 bg-[#FCFCFD]'
-                        }`}
-                      >
-                        <span className="text-[9px] font-mono text-[#71717A] uppercase font-bold">{doc.type} • {doc.size}</span>
-                        <span className="text-xs font-semibold mt-1.5 break-all text-[#0A0A0A]">{doc.id}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Ingestion Steps Progress */}
-                <div className="border border-[#E5E7EB] bg-[#FCFCFD] rounded-xl p-4 mb-6">
-                  <h4 className="text-[9px] font-mono uppercase font-bold text-[#71717A] mb-3 tracking-wider">
-                    Processing Logs
+                  <h4 className="text-[9px] uppercase font-mono font-bold text-[#71717A] mb-3 tracking-wider">
+                    Select Document
                   </h4>
-                  <div className="space-y-2 text-xs font-mono">
-                    <div className="flex items-center gap-2">
-                      <span className="text-emerald-500">✓</span>
-                      <span className="text-[#3F3F46]">Node tree built successfully</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {ingestionStep >= 1 ? (
-                        <>
-                          <span className="text-emerald-500">✓</span>
-                          <span className="text-[#3F3F46]">ToC mapping verified</span>
-                        </>
-                      ) : (
-                        <>
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#1456F0] animate-ping" />
-                          <span className="text-[#71717A] italic">Verifying ToC map...</span>
-                        </>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {ingestionStep >= 2 ? (
-                        <>
-                          <span className="text-emerald-500">✓</span>
-                          <span className="text-[#3F3F46]">LLM summaries generated (Gemini)</span>
-                        </>
-                      ) : ingestionStep === 1 ? (
-                        <>
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#1456F0] animate-ping" />
-                          <span className="text-[#71717A] italic">Summarizing sections...</span>
-                        </>
-                      ) : (
-                        <span className="text-[#71717A] opacity-50">Pending summary triggers</span>
-                      )}
-                    </div>
+                  <div className="space-y-2 mb-6">
+                    {[
+                      { id: 'vectorless-whitepaper.pdf', size: '2.4 MB', type: 'PDF' },
+                      { id: 'fastify-manual.md', size: '480 KB', type: 'Markdown' },
+                      { id: 'terms-of-service.docx', size: '1.1 MB', type: 'Word Doc' }
+                    ].map((doc) => {
+                      const isSel = selectedDoc === doc.id;
+                      return (
+                        <button
+                          key={doc.id}
+                          onClick={() => setSelectedDoc(doc.id as any)}
+                          className={`w-full p-3 rounded-lg border text-left flex items-center justify-between cursor-pointer transition-all duration-200 ${
+                            isSel 
+                            ? 'border-[#1456F0] bg-[#1456F0]/5' 
+                            : 'border-[#E5E7EB] hover:border-slate-400 bg-[#FCFCFD]'
+                          }`}
+                        >
+                          <span className="text-xs font-semibold text-[#0A0A0A]">{doc.id}</span>
+                          <span className="text-[9px] font-mono text-[#71717A]">{doc.type} · {doc.size}</span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* Ingestion Output Document Map */}
                 {ingestionStep >= 2 && (
-                  <div className="mb-6">
-                    <h4 className="text-[10px] uppercase font-mono font-bold text-[#71717A] mb-3 tracking-wider">
-                      2. Generated Document Map
+                  <form onSubmit={handleRetrieve} className="space-y-3">
+                    <h4 className="text-[9px] uppercase font-mono font-bold text-[#71717A] tracking-wider">
+                      Execute Query
                     </h4>
-                    <div className="space-y-2 max-h-[160px] overflow-y-auto border border-[#E5E7EB] rounded-xl p-2 bg-white">
-                      {selectedDoc === 'vectorless-whitepaper.pdf' ? (
-                        <>
-                          <div className={`p-2.5 rounded-lg border text-xs transition-colors ${highlightedSection === 1 ? 'bg-emerald-50 border-emerald-300' : 'border-slate-100'}`}>
-                            <span className="font-semibold text-slate-800">Section 1: Introduction</span>
-                            <p className="text-[11px] text-[#71717A] mt-0.5">Summary of structure-preserving retrieval logic over chunking.</p>
-                          </div>
-                          <div className={`p-2.5 rounded-lg border text-xs transition-colors ${highlightedSection === 2 ? 'bg-emerald-50 border-emerald-300' : 'border-slate-100'}`}>
-                            <span className="font-semibold text-slate-800">Section 2: Architecture Stack</span>
-                            <p className="text-[11px] text-[#71717A] mt-0.5">Details on the Go core parser and Neon PostgreSQL storage endpoints.</p>
-                          </div>
-                          <div className={`p-2.5 rounded-lg border text-xs transition-colors ${highlightedSection === 3 ? 'bg-emerald-50 border-emerald-300' : 'border-slate-100'}`}>
-                            <span className="font-semibold text-slate-800">Section 3: Performance & Benchmarks</span>
-                            <p className="text-[11px] text-[#71717A] mt-0.5">Tabular data results comparing LLM retrieval accuracy on FinanceBench.</p>
-                          </div>
-                        </>
-                      ) : selectedDoc === 'fastify-manual.md' ? (
-                        <>
-                          <div className={`p-2.5 rounded-lg border text-xs transition-colors ${highlightedSection === 1 ? 'bg-emerald-50 border-emerald-300' : 'border-slate-100'}`}>
-                            <span className="font-semibold text-slate-800">Section 1: Getting Started</span>
-                            <p className="text-[11px] text-[#71717A] mt-0.5">Fastify v5 initialization and simple plugin registration sequences.</p>
-                          </div>
-                          <div className={`p-2.5 rounded-lg border text-xs transition-colors ${highlightedSection === 2 ? 'bg-emerald-50 border-emerald-300' : 'border-slate-100'}`}>
-                            <span className="font-semibold text-slate-800">Section 2: Routing Primitives</span>
-                            <p className="text-[11px] text-[#71717A] mt-0.5">Prefix and Radix tree path evaluation mechanisms inside request flows.</p>
-                          </div>
-                        </>
-                      ) : (
-                        <>
-                          <div className={`p-2.5 rounded-lg border text-xs transition-colors ${highlightedSection === 1 ? 'bg-emerald-50 border-emerald-300' : 'border-slate-100'}`}>
-                            <span className="font-semibold text-slate-800">Section 1: Definitions & Scope</span>
-                            <p className="text-[11px] text-[#71717A] mt-0.5">API guidelines, user account terms, and database ownership boundaries.</p>
-                          </div>
-                        </>
-                      )}
+                    <div className="relative">
+                      <input 
+                        type="text" 
+                        value={demoQuery}
+                        onChange={(e) => setDemoQuery(e.target.value)}
+                        placeholder="e.g., How does performance compare?"
+                        className="w-full text-xs border border-[#E5E7EB] rounded-lg pl-3 pr-8 py-2.5 bg-[#FCFCFD] focus:outline-none focus:border-[#1456F0]"
+                      />
+                      <Search className="w-3.5 h-3.5 text-gray-400 absolute right-3 top-3" />
+                    </div>
+                    <button 
+                      type="submit"
+                      disabled={isRetrieving || !demoQuery.trim()}
+                      className="w-full bg-[#0A0A0A] hover:bg-[#1456F0] text-white py-2 rounded-lg text-xs font-mono uppercase tracking-wider font-semibold transition-colors disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    >
+                      {isRetrieving ? 'Evaluating Outline...' : 'Retrieve Target'}
+                    </button>
+                  </form>
+                )}
+              </div>
+
+              {/* Right Panel: Terminal Output (Dark) */}
+              <div className="w-full md:w-1/2 bg-[#0A0A0A] text-white p-6 flex flex-col justify-between font-mono">
+                <div className="flex-grow flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between border-b border-[#3F3F46] pb-3 mb-4 text-[#71717A] text-[10px]">
+                      <span className="flex items-center gap-1.5">
+                        <Terminal className="w-3.5 h-3.5 text-[#1456F0]" />
+                        <span>vectorless_core_stdout</span>
+                      </span>
+                      <button 
+                        onClick={() => setShowDemoModal(false)}
+                        className="hover:text-white"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
                     </div>
 
-                    {/* Retrieval sandbox form */}
-                    <form onSubmit={handleRetrieve} className="mt-6">
-                      <h4 className="text-[10px] uppercase font-mono font-bold text-[#71717A] mb-3 tracking-wider">
-                        3. Type a query to retrieve sections
-                      </h4>
-                      <div className="flex gap-2">
-                        <div className="relative flex-grow">
-                          <input 
-                            type="text" 
-                            value={demoQuery}
-                            onChange={(e) => setDemoQuery(e.target.value)}
-                            placeholder={selectedDoc === 'vectorless-whitepaper.pdf' ? 'e.g. How does performance compare?' : 'e.g. Tell me about routing.'}
-                            className="w-full text-xs border border-[#E5E7EB] rounded-lg px-3 py-2.5 bg-white focus:outline-none focus:border-[#1456F0]"
-                          />
-                          <Search className="w-3.5 h-3.5 text-gray-400 absolute right-3 top-3" />
+                    <div className="space-y-3 text-[11px] leading-relaxed">
+                      <div className="text-slate-500">$ ./vectorless ingest {selectedDoc}</div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-emerald-500">✓</span>
+                        <span>[1/3] File parsed: created node tree</span>
+                      </div>
+                      
+                      {ingestionStep >= 1 && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-emerald-500">✓</span>
+                          <span>[2/3] Structural outline mapped (ToC)</span>
                         </div>
-                        <button 
-                          type="submit"
-                          disabled={isRetrieving || !demoQuery.trim()}
-                          className="bg-[#0A0A0A] hover:bg-[#1456F0] text-white px-5 rounded-lg text-xs font-medium cursor-pointer transition-all disabled:bg-gray-300 disabled:cursor-not-allowed whitespace-nowrap"
-                        >
-                          {isRetrieving ? 'Reasoning...' : 'Retrieve'}
-                        </button>
-                      </div>
-                    </form>
+                      )}
+
+                      {ingestionStep >= 2 && (
+                        <div className="flex items-center gap-2">
+                          <span className="text-emerald-500">✓</span>
+                          <span>[3/3] Gemini-1.5 summary manifests generated</span>
+                        </div>
+                      )}
+
+                      {isRetrieving && (
+                        <div className="text-[#ea5ec1] animate-pulse">
+                          $ querying LLM agent reasoning engine...
+                        </div>
+                      )}
+
+                      {retrievedResult && (
+                        <div className="border-t border-[#3F3F46] pt-3 mt-4 text-[#A1A1AA] space-y-2">
+                          <div className="text-[#ea5ec1] text-[10px]">REASONING OUTLINE SELECTION:</div>
+                          <p className="text-[10px] text-white bg-slate-900 p-2 rounded">
+                            {retrievedResult}
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
-                )}
 
-                {/* Retrieval Results Output */}
-                <AnimatePresence>
-                  {retrievedResult && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="bg-slate-50 rounded-xl p-4 border border-slate-200 mt-4"
-                    >
-                      <div className="flex items-center gap-1.5 text-[9px] font-mono text-[#ea5ec1] font-bold uppercase mb-2">
-                        <Sparkles className="w-3.5 h-3.5 text-[#ea5ec1]" />
-                        <span>LLM Agent Retrieval Output</span>
-                      </div>
-                      <pre className="text-xs text-[#0A0A0A] font-sans whitespace-pre-wrap leading-relaxed">
-                        {retrievedResult}
-                      </pre>
-                    </motion.div>
+                  {ingestionStep >= 2 && (
+                    <div className="text-[9px] text-[#71717A] border-t border-[#3F3F46] pt-3 mt-6">
+                      * Structural citations are generated dynamically matching header paths.
+                    </div>
                   )}
-                </AnimatePresence>
+                </div>
               </div>
 
-              {/* Footer */}
-              <div className="bg-slate-50 p-5 px-6 border-t border-slate-200 flex justify-end rounded-b-2xl">
-                <button 
-                  onClick={() => setShowDemoModal(false)}
-                  className="px-5 py-2 hover:bg-slate-200 text-slate-700 bg-slate-100 rounded-lg text-xs font-bold transition-all cursor-pointer"
-                >
-                  Close Window
-                </button>
-              </div>
             </motion.div>
           </div>
         )}
