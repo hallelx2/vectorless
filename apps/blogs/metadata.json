@@ -1,0 +1,6 @@
+{
+  "name": "ProAgenda Blog",
+  "description": "A pixel-perfect recreation of the premium ProAgenda golf scheduling blog landing page with rich interactive filters and gorgeous illustrations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
