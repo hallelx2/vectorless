@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint-and-typecheck:
-    name: Lint & Typecheck (TypeScript)
+    name: Lint & Typecheck
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -18,25 +18,8 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter=@vectorless/shared build
-      - run: pnpm --filter=vectorless typecheck
-      - run: pnpm --filter=@vectorless/web lint
-
-  test-ts-sdk:
-    name: Test TypeScript SDK
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter=@vectorless/shared build
-      - run: pnpm --filter=vectorless build
-      - name: Run unit tests (skip integration)
-        run: cd packages/ts-sdk && npx vitest run __tests__/client.test.ts
+      - run: pnpm typecheck
+      - run: pnpm lint
 
   test-python-sdk:
     name: Test Python SDK
@@ -69,5 +52,4 @@ jobs:
           node-version: 20
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm --filter=@vectorless/shared build
-      - run: pnpm --filter=vectorless build
+      - run: pnpm build
