@@ -261,8 +261,11 @@ export default function BlogPage() {
   // Auto processing steps on mock document load
   useEffect(() => {
     if (showDemoModal) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIngestionStep(0);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setRetrievedResult(null);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setHighlightedSection(null);
       
       const timer1 = setTimeout(() => setIngestionStep(1), 700);

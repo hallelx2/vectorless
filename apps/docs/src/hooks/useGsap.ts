@@ -28,7 +28,6 @@ export function useGsapEffect<T extends HTMLElement>(
       if (typeof cleanup === 'function') return cleanup;
     }, el);
     return () => ctx.revert();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 }
 

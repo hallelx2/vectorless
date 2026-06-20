@@ -182,9 +182,9 @@ export default function HomePage() {
           </div>
           <pre className="overflow-x-auto p-6 font-mono text-[13px] leading-relaxed text-white/90">
             <code>
-              <span className="text-white/40">// 1. Install</span>{'\n'}
+              <span className="text-white/40">{"// 1. Install"}</span>{'\n'}
               <span className="text-primary-500">npm</span> i @vectorless/sdk{'\n\n'}
-              <span className="text-white/40">// 2. Ask with citations</span>{'\n'}
+              <span className="text-white/40">{"// 2. Ask with citations"}</span>{'\n'}
               <span className="text-vl-pink">const</span> {'{'} answer, citations {'}'} = <span className="text-primary-500">await</span> vl.<span className="text-primary-500">ask</span>(doc, <span className="text-vl-pink">&quot;what changed?&quot;</span>)
             </code>
           </pre>
