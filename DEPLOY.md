@@ -151,3 +151,37 @@ and need control plane endpoints + adapter rewrites:
 Once those are done, the dashboard's `apps/web/lib/db/` and
 `drizzle.config.ts` can be deleted entirely and `drizzle-orm` /
 `@neondatabase/serverless` removed from dependencies.
+
+---
+
+## Monorepo → Vercel: three projects, one repo (HAL-333)
+
+This repo is a pnpm + turbo monorepo. Each app deploys as its **own Vercel project**, all pointed at this same Git repo, differentiated by **Root Directory**. `turbo build` is green across all apps.
+
+| App | Package | Vercel Root Directory | Suggested domain |
+| --- | --- | --- | --- |
+| Landing + dashboard | `@vectorless/web` | `apps/web` | `vectorless.store` (+ `app.`) |
+| Blog | `@vectorless/blog` | `apps/blogs` | `blog.vectorless.store` |
+| Docs | `@vectorless/docs` | `apps/docs` | `docs.vectorless.store` |
+
+### Per-project settings (Vercel dashboard → New Project → import this repo)
+1. **Root Directory** = the app path above. Enable **"Include source files outside of the Root Directory"** (needed for workspace packages like `@vectorless/shared`, `@vectorless/control-plane`).
+2. Framework preset: **Next.js** (auto). Package manager: **pnpm** (auto from `pnpm-lock.yaml`).
+3. Build / install / ignore are pinned by each app's `vercel.json`:
+   - `buildCommand`: `turbo run build --filter=@vectorless/<app>` (builds the app + its workspace deps, uses remote cache)
+   - `ignoreCommand`: `npx turbo-ignore @vectorless/<app>` → the project only redeploys when that app or a dependency actually changed (no cross-app rebuilds)
+4. **Turbo Remote Cache**: link the repo to Vercel Remote Cache (`npx turbo login && npx turbo link`) so all three projects share build cache.
+5. **Env vars** (Project → Settings → Environment Variables):
+   - `web`: database URL, control-plane/engine base URL, auth secrets (see `apps/web/.env.example`)
+   - `blog`, `docs`: minimal (site URL for OG/RSS canonical)
+6. **Domains**: add the subdomain per project; point DNS (Spaceship) CNAME → Vercel.
+
+### One-time CLI alternative
+```bash
+# from repo root, per app:
+vercel login            # run via `! vercel login` (interactive browser)
+cd apps/blogs && vercel link && vercel --prod   # repeat for web, docs
+```
+Root Directory is still set in the dashboard or via `vercel.json` `rootDirectory` once linked.
+
+> Verified locally 2026-06-21: `turbo run build --filter=@vectorless/{web,blog,docs}` all succeed.
